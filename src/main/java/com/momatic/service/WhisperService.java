@@ -2,6 +2,7 @@ package com.momatic.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,6 +21,11 @@ public class WhisperService {
 
     @Value("${openai.api.key}")
     private String openaiApiKey;
+
+    @PostConstruct
+    public void checkApiKey() {
+        log.info("🔐 Loaded API Key: {}", openaiApiKey); // 일부만 마스킹해서 확인해도 됨
+    }
 
     public String transcribe(String filePath) {
         File audioFile = new File(filePath);

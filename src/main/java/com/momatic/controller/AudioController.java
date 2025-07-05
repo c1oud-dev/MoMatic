@@ -1,6 +1,7 @@
 package com.momatic.controller;
 
 import com.momatic.service.AudioService;
+import com.momatic.service.LLMService;
 import com.momatic.service.WhisperService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,20 +22,29 @@ public class AudioController {
 
     private final AudioService audioService;
     private final WhisperService whisperService;
+    private final LLMService llmService;
 
     @PostMapping("/upload")
-    public ResponseEntity<String> uploadAudio(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<?> uploadAudio(@RequestParam("file") MultipartFile file) {
         try {
             // 1. 파일 저장
-            String filePath = audioService.saveFile(file);
+            String savedFilePath = audioService.saveFile(file);
+            log.info("파일 저장 경로: {}", savedFilePath);
 
-            // 2. Whisper STT 요청
-            String transcription = whisperService.transcribe(filePath);
+            // 2. Whisper로 전사
+            String transcript = whisperService.transcribe(savedFilePath);
+            log.info("Transcription: {}", transcript);
 
-            return ResponseEntity.ok("Transcription:\n" + transcription);
+            // 3. GPT로 요약 및 TODO 추출
+            String result = llmService.summarizeAndExtractTodos(transcript);
+            log.info("LLM 결과: {}", result);
+
+            // 4. 응답 반환
+            return ResponseEntity.ok(result);
+
         } catch (Exception e) {
-            log.error("오디오 업로드 또는 전사 실패", e);
-            return ResponseEntity.internalServerError().body("에러 발생: " + e.getMessage());
+            log.error("오디오 업로드 중 오류 발생", e);
+            return ResponseEntity.internalServerError().body("오류: " + e.getMessage());
         }
     }
 }
