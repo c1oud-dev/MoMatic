@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -13,69 +13,64 @@ import java.io.IOException;
 @Service
 public class LLMService {
 
-    @Value("${openai.api.key")
-    private String apiKey;
-
+    private final String openaiApiKey;
     private static final String API_URL = "https://api.openai.com/v1/chat/completions";
+
     private final OkHttpClient client = new OkHttpClient();
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper mapper = new ObjectMapper();
+
+    public LLMService(Environment env) {       // ← Environment 주입
+        this.openaiApiKey = env.getProperty("openai.api.key");
+        if (openaiApiKey == null || openaiApiKey.contains("${")) {
+            throw new IllegalStateException("❌ OpenAI API Key not loaded!");
+        }
+    }
 
     public String summarizeAndExtractTodos(String transcript) {
         String prompt = """
-                아래는 회의에서 전사된 텍스트입니다.
+                아래는 회의 전사 텍스트입니다.
 
                 ---
                 %s
                 ---
 
-                위 내용을 요약하고, 회의에서 나온 '할 일 목록(TODO)'을 정리해줘.
-                출력 형식은 JSON으로 다음과 같이 해줘:
-
+                위 내용을 한국어로 간결히 요약하고,
+                JSON 형식으로 액션 아이템을 추출해줘:
                 {
                   "summary": "...",
                   "actionItems": [
-                    { "task": "...", "assignee": "...", "dueDate": "..." },
-                    ...
+                    { "task": "...", "assignee": "...", "dueDate": "..." }
                   ]
                 }
                 """.formatted(transcript);
 
         try {
-            RequestBody body = RequestBody.create(
-                    objectMapper.writeValueAsString(
-                            objectMapper.readTree("""
-                        {
-                          "model": "gpt-3.5-turbo",
-                          "messages": [
-                            { "role": "system", "content": "너는 회의 요약 및 액션 아이템을 정리하는 비서야." },
-                            { "role": "user", "content": %s }
-                          ]
-                        }
-                        """.formatted(objectMapper.writeValueAsString(prompt)))
-                ),
-                MediaType.get("application/json")
-            );
+            String bodyJson = mapper.writeValueAsString(mapper.readTree("""
+              {
+                "model":"gpt-3.5-turbo",
+                "messages":[
+                  { "role":"system","content":"너는 회의 비서야" },
+                  { "role":"user","content":%s }
+                ]
+              }
+              """.formatted(mapper.writeValueAsString(prompt))));
 
             Request request = new Request.Builder()
                     .url(API_URL)
-                    .header("Authorization", "Bearer " + apiKey)
-                    .post(body)
+                    .addHeader("Authorization", "Bearer " + openaiApiKey)   // ✅ 확실히 주입
+                    .post(RequestBody.create(bodyJson, MediaType.get("application/json")))
                     .build();
 
-            try (Response response = client.newCall(request).execute()) {
-                String responseBody = response.body().string();
-                log.info("LLM 응답: {}", responseBody);
+            try (Response res = client.newCall(request).execute()) {
+                String resBody = res.body().string();
+                if (!res.isSuccessful())
+                    throw new RuntimeException("GPT 호출 실패: " + resBody);
 
-                if (!response.isSuccessful()) {
-                    throw new RuntimeException("GPT API 호출 실패: " + responseBody);
-                }
-
-                JsonNode root = objectMapper.readTree(responseBody);
+                JsonNode root = mapper.readTree(resBody);
                 return root.get("choices").get(0).get("message").get("content").asText();
             }
-
         } catch (IOException e) {
-            throw new RuntimeException("GPT API 호출 중 오류 발생", e);
+            throw new RuntimeException("GPT 요청 중 오류", e);
         }
     }
 }
