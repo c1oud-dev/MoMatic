@@ -1,7 +1,12 @@
 package com.momatic.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.momatic.domain.ActionItem;
+import com.momatic.domain.Meeting;
 import com.momatic.service.AudioService;
 import com.momatic.service.LLMService;
+import com.momatic.service.MeetingService;
 import com.momatic.service.WhisperService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +18,10 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Slf4j
 @RestController
@@ -24,27 +33,43 @@ public class AudioController {
     private final WhisperService whisperService;
     private final LLMService llmService;
 
+    private final MeetingService meetingService;
+
     @PostMapping("/upload")
     public ResponseEntity<?> uploadAudio(@RequestParam("file") MultipartFile file) {
         try {
             // 1. 파일 저장
-            String savedFilePath = audioService.saveFile(file);
-            log.info("파일 저장 경로: {}", savedFilePath);
+            String path = audioService.saveFile(file);
 
-            // 2. Whisper로 전사
-            String transcript = whisperService.transcribe(savedFilePath);
-            log.info("Transcription: {}", transcript);
+            // 2. STT
+            String transcript = whisperService.transcribe(path);
 
-            // 3. GPT로 요약 및 TODO 추출
-            String result = llmService.summarizeAndExtractTodos(transcript);
-            log.info("LLM 결과: {}", result);
+            // 3. 요약 + TODO 추출
+            String resultJson = llmService.summarizeAndExtractTodos(transcript);
 
-            // 4. 응답 반환
-            return ResponseEntity.ok(result);
+            // 4. JSON → 객체 파싱 (간단히 Map 사용 예시)
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode root = mapper.readTree(resultJson);
+            String summary = root.get("summary").asText();
+            List<ActionItem> items = new ArrayList<>();
+            root.get("actionItems").forEach(n ->
+                    items.add(ActionItem.builder()
+                            .task(n.get("task").asText())
+                            .assignee(n.get("assignee").asText())
+                            .dueDate(n.get("dueDate").asText())
+                            .build()));
 
+            // 5. Meeting 저장 + Slack 전송
+            Meeting meeting = Meeting.builder()
+                    .title("Auto-upload")     // 필요시 파라미터화
+                    .summary(summary)
+                    .startedAt(LocalDateTime.now())
+                    .build();
+            meetingService.saveAndNotify(meeting, transcript, items);
+
+            return ResponseEntity.ok(resultJson);
         } catch (Exception e) {
-            log.error("오디오 업로드 중 오류 발생", e);
-            return ResponseEntity.internalServerError().body("오류: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(e.getMessage());
         }
     }
 }

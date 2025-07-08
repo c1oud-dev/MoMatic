@@ -10,36 +10,53 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class MeetingService {
-    private final MeetingRepository meetingRepo;
+    private final MeetingRepository meetingRepo;   // ✅ 주입
+    private final SlackService slackService;       // ✅ 주입
 
-    public Long saveFullMeeting(String title,
-                                String summary,
-                                List<Transcript> transcripts,
-                                List<ActionItem> actionItems) {
+    /**
+     * 회의 저장 후 Slack 전송
+     */
+    public Long saveAndNotify(Meeting meeting,
+                              String rawTranscript,
+                              List<ActionItem> items) {
 
-        Meeting meeting = Meeting.builder()
-                .title(title)
-                .startedAt(LocalDateTime.now())
-                .summary(summary)
+        // Transcript 엔티티 생성
+        Transcript transcript = Transcript.builder()
+                .speaker("system")
+                .content(rawTranscript)
+                .startSec(0.0)
+                .endSec(0.0)
+                .meeting(meeting)
                 .build();
 
-        transcripts.forEach(t -> t.setMeeting(meeting));
-        actionItems.forEach(a -> a.setMeeting(meeting));
-
-        meeting.getTranscripts().addAll(transcripts);
-        meeting.getActionItems().addAll(actionItems);
+        items.forEach(a -> a.setMeeting(meeting));
+        meeting.getTranscripts().add(transcript);
+        meeting.getActionItems().addAll(items);
 
         Meeting saved = meetingRepo.save(meeting);
+
+        // Slack 전송
+        slackService.send(buildSlackMessage(saved));
         return saved.getId();
     }
 
-    public Optional<Meeting> findById(Long id) {
-        return meetingRepo.findById(id);
+    /* Slack 메시지 포맷 헬퍼 */
+    private String buildSlackMessage(Meeting m) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("*📝 Meeting Summary*\n")
+                .append("> ").append(m.getSummary()).append("\n\n")
+                .append("*✅ Action Items*");
+        m.getActionItems().forEach(a ->
+                sb.append("\n• ")
+                        .append(a.getTask())
+                        .append(" — _").append(a.getAssignee()).append("_")
+                        .append(" (due ").append(a.getDueDate()).append(")")
+        );
+        return sb.toString();
     }
 }

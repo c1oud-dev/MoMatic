@@ -26,9 +26,11 @@ public class Meeting {
     @Lob
     private String summary;   // GPT 요약 저장
 
+    @Builder.Default
     @OneToMany(mappedBy = "meeting", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Transcript> transcripts = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "meeting", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ActionItem> actionItems = new ArrayList<>();
 }

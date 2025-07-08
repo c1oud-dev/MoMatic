@@ -14,8 +14,9 @@ public class ActionItem {
 
     private String task;          // 해야 할 일
     private String assignee;      // 담당자
-    private LocalDate dueDate;    // 마감일
+    private String dueDate;    // 마감일
 
+    @Builder.Default
     @Enumerated(EnumType.STRING)
     private Status status = Status.TODO;
 
