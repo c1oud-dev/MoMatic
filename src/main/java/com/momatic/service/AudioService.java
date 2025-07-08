@@ -17,6 +17,9 @@ public class AudioService {
     @Value("${file.upload-dir}")
     private String uploadDir;
 
+    /**
+     * 클라이언트로부터 받은 파일(MultipartFile)을 서버 디스크에 저장하고, 저장된 전체 경로를 반환하는 메서드
+     */
     public String saveFile(MultipartFile file) {
         try {
             String originalFilename = file.getOriginalFilename();
