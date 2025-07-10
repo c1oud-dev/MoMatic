@@ -29,7 +29,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter'
 	implementation("com.squareup.okhttp3:okhttp:4.12.0")
-
+	implementation 'org.springframework.boot:spring-boot-starter-security'
 	compileOnly 'org.projectlombok:lombok'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	runtimeOnly   'com.mysql:mysql-connector-j'   // prod
@@ -39,6 +39,8 @@ dependencies {
 	implementation 'com.google.api-client:google-api-client:2.6.0'          // Calendar
 	implementation 'com.google.apis:google-api-services-calendar:v3-rev411-1.25.0'
 	implementation 'com.squareup.okhttp3:okhttp:4.12.0'                     // Jira REST
+	implementation 'com.google.http-client:google-http-client-jackson2:1.43.3'
+
 
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
