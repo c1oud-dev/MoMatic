@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
+@Table(schema = "PUBLIC", name = "meeting")
 @Getter
 @Setter
 @Builder
@@ -33,4 +34,10 @@ public class Meeting {
     @Builder.Default
     @OneToMany(mappedBy = "meeting", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ActionItem> actionItems = new ArrayList<>();
+
+    @ManyToOne(optional = false)
+    private Team team;
+
+    @ManyToOne(optional = false)
+    private User owner;
 }

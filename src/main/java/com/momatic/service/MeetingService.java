@@ -7,6 +7,7 @@ import com.momatic.repository.MeetingRepository;
 import com.momatic.util.SimpleKoreanDateParser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -80,5 +81,15 @@ public class MeetingService {
                 .append(" — _").append(a.getAssignee()).append("_")
                 .append(" (").append(a.getDueDate()).append(")"));
         return sb.toString();
+    }
+
+    @PreAuthorize("#meeting.team.id == principal.team.id")
+    public Meeting createMeeting(Meeting meeting) {
+        return meetingRepo.save(meeting);
+    }
+
+    @PreAuthorize("#teamId == principal.team.id")
+    public List<Meeting> getTeamMeetings(String teamId) {
+        return meetingRepo.findByTeamId(teamId);
     }
 }
