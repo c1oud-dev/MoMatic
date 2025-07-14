@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -25,11 +26,13 @@ public class MeetingService {
     private final JiraService jiraService;
     private final SimpleKoreanDateParser dateParser;
 
+    /**
+     * 저장 및 Slack/Calendar/Jira 알림 수행
+     */
     public Long saveAndNotify(Meeting meeting,
                               String rawTranscript,
                               List<ActionItem> items) {
-
-        // Transcript
+        // Transcript 생성
         Transcript t = Transcript.builder()
                 .speaker("system")
                 .content(rawTranscript)
@@ -43,24 +46,18 @@ public class MeetingService {
 
         Meeting saved = meetingRepo.save(meeting);
 
-        /* Slack */
+        // Slack 알림
         slackService.send(buildSlackMessage(saved));
 
-        /* Calendar & Jira */
+        // Google Calendar 및 Jira 연동
         items.forEach(ai -> {
-
-            /* ① Google Calendar ------------------------------------ */
             dateParser.parse(ai.getDueDate()).ifPresent(date -> {
-                // 로그인 사용자가 있으면 email, 없으면 "system"으로 처리
                 Authentication auth = SecurityContextHolder.getContext().getAuthentication();
                 String username = (auth != null && auth.isAuthenticated())
-                        ? auth.getName()          // 예: user@example.com
-                        : "system";               // 옵션 A(permitAll) 테스트용
-
+                        ? auth.getName()
+                        : "system";
                 calendarService.createEvent(username, ai.getTask(), date);
             });
-
-            /* ② Jira ------------------------------------------------ */
             jiraService.createIssue(
                     ai.getTask(),
                     "Generated from MoMatic meeting #" + saved.getId()
@@ -70,12 +67,14 @@ public class MeetingService {
         return saved.getId();
     }
 
-    /* ---------------- private helpers ---------------- */
-
+    /**
+     * Slack 메시지 본문 생성 헬퍼
+     */
     private String buildSlackMessage(Meeting m) {
         StringBuilder sb = new StringBuilder();
-        sb.append("*📝 Meeting Summary*\n> ").append(m.getSummary()).append("\n\n")
-                .append("*✅ Action Items*");
+        sb.append("*📝 Meeting Summary*\n> ")
+                .append(m.getSummary())
+                .append("\n\n*✅ Action Items*");
         m.getActionItems().forEach(a -> sb.append("\n• ")
                 .append(a.getTask())
                 .append(" — _").append(a.getAssignee()).append("_")
@@ -91,5 +90,23 @@ public class MeetingService {
     @PreAuthorize("#teamId == principal.team.id")
     public List<Meeting> getTeamMeetings(String teamId) {
         return meetingRepo.findByTeamId(teamId);
+    }
+
+    /**
+     * identifier로 받은 ID로 조회,
+     * 유효하지 않거나 존재하지 않으면 가장 최신 회의를 반환
+     */
+    public Meeting getLatestMeeting(String identifier) {
+        if (identifier != null && !identifier.isBlank()) {
+            try {
+                Long id = Long.parseLong(identifier);
+                return meetingRepo.findById(id)
+                        .orElseGet(() -> meetingRepo.findTopByOrderByIdDesc()
+                                .orElseThrow(() -> new RuntimeException("No meetings found")));
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        return meetingRepo.findTopByOrderByIdDesc()
+                .orElseThrow(() -> new RuntimeException("No meetings found"));
     }
 }
