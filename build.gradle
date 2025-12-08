@@ -38,10 +38,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 	implementation 'com.google.api-client:google-api-client:2.6.0'          // Calendar
 	implementation 'com.google.apis:google-api-services-calendar:v3-rev411-1.25.0'
-	implementation 'com.squareup.okhttp3:okhttp:4.12.0'                     // Jira REST
 	implementation 'com.google.http-client:google-http-client-jackson2:1.43.3'
-	implementation 'com.slack.api:slack-api-client:1.45.3'
-	implementation 'com.slack.api:slack-app-backend:1.45.3'
 
 
 	annotationProcessor 'org.projectlombok:lombok'

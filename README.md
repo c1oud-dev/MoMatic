@@ -7,10 +7,9 @@
 ### 주요 특징
 - 🎙️ **음성 자동 전사**: OpenAI Whisper API를 활용한 STT(Speech-to-Text)
 - 🤖 **AI 회의 요약**: GPT를 통한 회의 내용 자동 요약 및 액션 아이템 추출
-- 💬 **Slack 통합**: 회의 결과 자동 알림 및 슬래시 커맨드 지원
+- 📒 **Notion 정리(계획)**: 회의 결과와 일정 관리를 Notion 워크스페이스로 정리
 - 📅 **Google Calendar 연동**: 액션 아이템 자동 일정 등록
-- 🎫 **Jira 이슈 생성**: 추출된 작업을 자동으로 Jira 티켓으로 변환
-- 🔐 **OAuth2 인증**: Google 및 Slack OAuth2 로그인 지원
+- 🔐 **OAuth2 인증**: Google OAuth2 로그인 지원
 
 ## 🛠️ 기술 스택
 
@@ -26,14 +25,12 @@
 
 ### Security
 - Spring Security
-- OAuth2 Client (Google, Slack)
+- OAuth2 Client (Google)
 - SSL/TLS (HTTPS)
 
 ### External APIs & Libraries
 - **OpenAI**: Whisper (STT), GPT-3.5 (텍스트 처리)
 - **Google**: Calendar API
-- **Atlassian**: Jira REST API
-- **Slack**: Web API, OAuth2
 - **HTTP Client**: OkHttp3
 - **JSON Processing**: Jackson
 
@@ -42,11 +39,11 @@
 ```
 momatic/
 ├── src/main/java/com/momatic/
-│   ├── config/           # 설정 클래스 (Security, OAuth2, Slack)
+│   ├── config/           # 설정 클래스 (Security, OAuth2)
 │   ├── controller/       # REST API 컨트롤러
 │   ├── domain/          # JPA 엔티티 (Meeting, User, Team, ActionItem 등)
 │   ├── repository/      # 데이터 접근 계층
-│   ├── service/         # 비즈니스 로직 (Audio, Whisper, LLM, Slack, Jira 등)
+│   ├── service/         # 비즈니스 로직 (Audio, Whisper, LLM, 등)
 │   └── util/            # 유틸리티 클래스
 ├── src/main/resources/
 │   ├── application.properties      # 메인 설정
@@ -61,7 +58,7 @@ momatic/
 ### 필수 요구사항
 - Java 17+
 - MySQL (운영 환경)
-- 각종 API 키 (OpenAI, Google, Slack, Jira)
+- 각종 API 키 (OpenAI, Google)
 
 ### 환경 변수 설정
 
@@ -71,20 +68,9 @@ momatic/
 # OpenAI
 OPENAI_API_KEY=your-openai-api-key
 
-# Slack
-SLACK_BOT_TOKEN=xoxb-your-bot-token
-SLACK_CHANNEL_ID=your-channel-id
-SLACK_SIGNING_SECRET=your-signing-secret
-SLACK_CLIENT_ID=your-client-id
-SLACK_CLIENT_SECRET=your-client-secret
-
 # Google OAuth2
 GOOGLE_CLIENT_ID=your-google-client-id
 GOOGLE_CLIENT_SECRET=your-google-client-secret
-
-# Jira
-JIRA_EMAIL=your-jira-email
-JIRA_API_TOKEN=your-jira-api-token
 ```
 
 ### 실행 방법
@@ -118,9 +104,6 @@ keytool -genkeypair -alias tomcat -keyalg RSA -keysize 2048 \
 - `POST /api/audio/upload` - 음성 파일 업로드 및 처리
   - Request: `multipart/form-data` with audio file
   - Response: JSON (요약 및 액션 아이템)
-
-### Slack 통합
-- `POST /slack/commands` - Slack 슬래시 커맨드 처리
 
 ### 사용자 관리
 - `GET /api/users/me` - 현재 로그인 사용자 정보
@@ -165,7 +148,7 @@ keytool -genkeypair -alias tomcat -keyalg RSA -keysize 2048 \
 - `roles`: 권한 (CSV 형태)
 
 #### Team (팀)
-- `id`: 팀 ID (Slack team_id)
+- `id`: 팀 ID
 - `name`: 팀 이름
 
 ## 🔄 워크플로우
@@ -175,9 +158,8 @@ keytool -genkeypair -alias tomcat -keyalg RSA -keysize 2048 \
 3. **AI 처리**: GPT가 전사 내용을 분석하여 요약 및 액션 아이템 추출
 4. **데이터 저장**: Meeting, Transcript, ActionItem 데이터베이스 저장
 5. **통합 알림**:
-   - Slack 채널에 요약 및 액션 아이템 전송
    - Google Calendar에 액션 아이템 일정 추가
-   - Jira에 작업 티켓 생성
+   - 회의 결과/일정은 Notion으로 정리
 
 ## 🔧 주요 서비스 컴포넌트
 
@@ -190,14 +172,8 @@ keytool -genkeypair -alias tomcat -keyalg RSA -keysize 2048 \
 ### LLMService
 - GPT를 활용한 회의 요약 및 액션 아이템 추출
 
-### SlackService
-- Slack 메시지 전송 및 슬래시 커맨드 처리
-
 ### GoogleCalendarService
 - Google Calendar API를 통한 일정 생성
-
-### JiraService
-- Jira REST API를 통한 이슈/티켓 생성
 
 ### MeetingService
 - 회의 데이터 통합 관리 및 외부 서비스 연동 조율
@@ -206,7 +182,6 @@ keytool -genkeypair -alias tomcat -keyalg RSA -keysize 2048 \
 
 ### OAuth2 Provider 설정
 - **Google**: 프로필, 이메일, 캘린더 권한
-- **Slack**: identity.basic, identity.email 권한
 
 ### API 접근 권한
 - `/api/**` - 인증 없이 접근 가능 (개발 편의)

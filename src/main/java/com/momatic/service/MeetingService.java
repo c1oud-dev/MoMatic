@@ -14,20 +14,17 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class MeetingService {
     private final MeetingRepository meetingRepo;
-    private final SlackService slackService;
     private final GoogleCalendarService calendarService;
-    private final JiraService jiraService;
     private final SimpleKoreanDateParser dateParser;
 
     /**
-     * 저장 및 Slack/Calendar/Jira 알림 수행
+     * 저장 및 후처리 알림 수행
      */
     public Long saveAndNotify(Meeting meeting,
                               String rawTranscript,
@@ -46,10 +43,7 @@ public class MeetingService {
 
         Meeting saved = meetingRepo.save(meeting);
 
-        // Slack 알림
-        slackService.send(buildSlackMessage(saved));
-
-        // Google Calendar 및 Jira 연동
+        // Google Calendar 연동 (Due date가 존재하는 ActionItem만)
         items.forEach(ai -> {
             dateParser.parse(ai.getDueDate()).ifPresent(date -> {
                 Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -58,28 +52,9 @@ public class MeetingService {
                         : "system";
                 calendarService.createEvent(username, ai.getTask(), date);
             });
-            jiraService.createIssue(
-                    ai.getTask(),
-                    "Generated from MoMatic meeting #" + saved.getId()
-            );
         });
 
         return saved.getId();
-    }
-
-    /**
-     * Slack 메시지 본문 생성 헬퍼
-     */
-    private String buildSlackMessage(Meeting m) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("*📝 Meeting Summary*\n> ")
-                .append(m.getSummary())
-                .append("\n\n*✅ Action Items*");
-        m.getActionItems().forEach(a -> sb.append("\n• ")
-                .append(a.getTask())
-                .append(" — _").append(a.getAssignee()).append("_")
-                .append(" (").append(a.getDueDate()).append(")"));
-        return sb.toString();
     }
 
     @PreAuthorize("#meeting.team.id == principal.team.id")

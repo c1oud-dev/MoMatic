@@ -59,7 +59,7 @@ public class AudioController {
                             .dueDate(n.get("dueDate").asText())
                             .build()));
 
-            // 5. Meeting 저장 + Slack 전송
+            // 5. Meeting 저장 및 후속 처리
             Meeting meeting = Meeting.builder()
                     .title("Auto-upload")     // 필요시 파라미터화
                     .summary(summary)

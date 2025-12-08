@@ -11,8 +11,8 @@ import lombok.NoArgsConstructor;
 public class Team {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private String id;            // ex: Slack team_id
-    private String name;          // ex: Slack team name
+    private String id;
+    private String name;
 
     public Team(String id, String name) {
         this.id = id;
