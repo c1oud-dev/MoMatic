@@ -45,7 +45,7 @@ public class DataInitializer {
             ActionItem actionItem1 = new ActionItem(
                     "Wake-word 검출 정확도 90% 이상 달성 계획 수립",
                     "DSP Park",
-                    LocalDate.now().plusDays(7),
+                    LocalDate.now().plusDays(7).toString(),
                     ActionStatus.IN_PROGRESS
             );
             actionItem1.setMeeting(meeting);
@@ -53,7 +53,7 @@ public class DataInitializer {
             ActionItem actionItem2 = new ActionItem(
                     "테스터 10명 대상 사용자 피드백 수집",
                     "QA Lee",
-                    LocalDate.now().plusDays(10),
+                    LocalDate.now().plusDays(10).toString(),
                     ActionStatus.TODO
             );
             actionItem2.setMeeting(meeting);

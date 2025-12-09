@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -53,9 +52,9 @@ public class AudioController {
             String summary = root.get("summary").asText();
             List<ActionItem> items = new ArrayList<>();
             root.get("actionItems").forEach(n -> {
-                LocalDate dueDate = null;
+                String dueDate = null;
                 if (n.hasNonNull("dueDate") && !n.get("dueDate").asText().isBlank()) {
-                    dueDate = LocalDate.parse(n.get("dueDate").asText());
+                    dueDate = n.get("dueDate").asText();
                 }
                 items.add(new ActionItem(
                         n.get("task").asText(),

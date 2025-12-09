@@ -17,7 +17,7 @@ public class ActionItem {
 
     private String assignee;
 
-    private LocalDate dueDate;
+    private String dueDate;
 
     @Enumerated(EnumType.STRING)
     private ActionStatus status = ActionStatus.TODO;
@@ -30,7 +30,7 @@ public class ActionItem {
     public ActionItem() {
     }
 
-    public ActionItem(String task, String assignee, LocalDate dueDate, ActionStatus status) {
+    public ActionItem(String task, String assignee, String dueDate, ActionStatus status) {
         this.task = task;
         this.assignee = assignee;
         this.dueDate = dueDate;
@@ -57,11 +57,11 @@ public class ActionItem {
         this.assignee = assignee;
     }
 
-    public LocalDate getDueDate() {
+    public String getDueDate() {
         return dueDate;
     }
 
-    public void setDueDate(LocalDate dueDate) {
+    public void setDueDate(String dueDate) {
         this.dueDate = dueDate;
     }
 
