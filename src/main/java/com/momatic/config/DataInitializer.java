@@ -64,16 +64,16 @@ public class DataInitializer {
             Transcript transcript1 = new Transcript(
                     "김프로",
                     "이번 스프린트에서는 웨이크워드 정확도를 먼저 끌어올리는 게 목표입니다.",
-                    10,
-                    42
+                    10.0,
+                    42.0
             );
             transcript1.setMeeting(meeting);
 
             Transcript transcript2 = new Transcript(
                     "박엔지니어",
                     "데이터셋을 재정비하면 1주일 내 베타 모델을 만들 수 있어요.",
-                    43,
-                    85
+                    43.0,
+                    85.0
             );
             transcript2.setMeeting(meeting);
 

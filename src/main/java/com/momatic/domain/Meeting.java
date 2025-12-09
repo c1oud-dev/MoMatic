@@ -22,7 +22,7 @@ public class Meeting {
 
     private LocalDateTime endedAt;
 
-    @Column(length = 5000)
+    @Lob
     private String summary;   // GPT 요약 저장
 
     @ManyToOne(fetch = FetchType.LAZY)

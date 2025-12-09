@@ -15,12 +15,12 @@ public class Transcript {
 
     private String speaker;
 
-    @Column(length = 5000)
+    @Lob
     private String content;
 
-    private Integer startSec;
+    private Double startSec;
 
-    private Integer endSec;
+    private Double endSec;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "meeting_id")
@@ -30,7 +30,7 @@ public class Transcript {
     public Transcript() {
     }
 
-    public Transcript(String speaker, String content, Integer startSec, Integer endSec) {
+    public Transcript(String speaker, String content, Double startSec, Double endSec) {
         this.speaker = speaker;
         this.content = content;
         this.startSec = startSec;
@@ -57,19 +57,19 @@ public class Transcript {
         this.content = content;
     }
 
-    public Integer getStartSec() {
+    public Double getStartSec() {
         return startSec;
     }
 
-    public void setStartSec(Integer startSec) {
+    public void setStartSec(Double startSec) {
         this.startSec = startSec;
     }
 
-    public Integer getEndSec() {
+    public Double getEndSec() {
         return endSec;
     }
 
-    public void setEndSec(Integer endSec) {
+    public void setEndSec(Double endSec) {
         this.endSec = endSec;
     }
 

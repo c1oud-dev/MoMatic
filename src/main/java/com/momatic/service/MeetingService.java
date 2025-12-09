@@ -59,7 +59,11 @@ public class MeetingService {
             actionItemRepository.save(item);
         }
         if (rawTranscript != null && !rawTranscript.isBlank()) {
-            Transcript transcript = new Transcript("Auto", rawTranscript, 0, rawTranscript.length());
+            Transcript transcript = new Transcript(
+                    "Auto",
+                    rawTranscript,
+                    0d,
+                    (double) rawTranscript.length());
             transcript.setMeeting(savedMeeting);
             transcriptRepository.save(transcript);
         }
