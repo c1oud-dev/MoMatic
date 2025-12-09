@@ -8,6 +8,7 @@ import com.momatic.repository.MeetingRepository;
 import com.momatic.repository.TranscriptRepository;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,5 +46,24 @@ public class MeetingService {
     @Transactional(readOnly = true)
     public List<Transcript> findTranscripts(Long meetingId) {
         return transcriptRepository.findByMeetingId(meetingId);
+    }
+
+    @Transactional
+    public Meeting saveWithDetails(Meeting meeting,
+                                   @Nullable String rawTranscript,
+                                   List<ActionItem> actionItems) {
+        Meeting savedMeeting = meetingRepository.save(meeting);
+
+        for (ActionItem item : actionItems) {
+            item.setMeeting(savedMeeting);
+            actionItemRepository.save(item);
+        }
+        if (rawTranscript != null && !rawTranscript.isBlank()) {
+            Transcript transcript = new Transcript("Auto", rawTranscript, 0, rawTranscript.length());
+            transcript.setMeeting(savedMeeting);
+            transcriptRepository.save(transcript);
+        }
+
+        return savedMeeting;
     }
 }
