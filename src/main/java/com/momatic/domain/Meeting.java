@@ -35,9 +35,9 @@ public class Meeting {
     @OneToMany(mappedBy = "meeting", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ActionItem> actionItems = new ArrayList<>();
 
-    @ManyToOne(optional = false)
+    @ManyToOne(optional = true)
     private Team team;
 
-    @ManyToOne(optional = false)
+    @ManyToOne(optional = true)
     private User owner;
 }

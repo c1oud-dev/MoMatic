@@ -13,6 +13,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -29,6 +30,8 @@ public class MeetingService {
     public Long saveAndNotify(Meeting meeting,
                               String rawTranscript,
                               List<ActionItem> items) {
+        List<ActionItem> safeItems = items != null ? new ArrayList<>(items) : new ArrayList<>();
+
         // Transcript 생성
         Transcript t = Transcript.builder()
                 .speaker("system")
@@ -36,15 +39,19 @@ public class MeetingService {
                 .meeting(meeting)
                 .build();
 
-        meeting.setStartedAt(LocalDateTime.now());
+        if (meeting.getStartedAt() == null) {
+            meeting.setStartedAt(LocalDateTime.now());
+        }
+
+        meeting.setEndedAt(LocalDateTime.now());
         meeting.getTranscripts().add(t);
-        meeting.getActionItems().addAll(items);
-        items.forEach(a -> a.setMeeting(meeting));
+        meeting.getActionItems().addAll(safeItems);
+        safeItems.forEach(a -> a.setMeeting(meeting));
 
         Meeting saved = meetingRepo.save(meeting);
 
         // Google Calendar 연동 (Due date가 존재하는 ActionItem만)
-        items.forEach(ai -> {
+        safeItems.forEach(ai -> {
             dateParser.parse(ai.getDueDate()).ifPresent(date -> {
                 Authentication auth = SecurityContextHolder.getContext().getAuthentication();
                 String username = (auth != null && auth.isAuthenticated())
@@ -56,6 +63,7 @@ public class MeetingService {
 
         return saved.getId();
     }
+
 
     @PreAuthorize("#meeting.team.id == principal.team.id")
     public Meeting createMeeting(Meeting meeting) {
