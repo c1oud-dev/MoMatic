@@ -3,11 +3,10 @@ package com.momatic.domain;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.*;
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "action_items")
+@Table(name = "action_item")
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class ActionItem {
     @Id
