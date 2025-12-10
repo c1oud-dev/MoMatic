@@ -13,7 +13,7 @@
 <div class="app">
     <aside class="sidebar">
         <div class="brand">
-            <div class="brand__mark">📘</div>
+            <div class="brand__mark">Mo</div>
             <div>
                 <div class="brand__name">MoMatic</div>
                 <div class="brand__tagline">회의 결과 & 일정 관리</div>
@@ -22,9 +22,9 @@
         <nav class="nav">
             <div class="nav__section">
                 <p class="nav__label">Menu</p>
-                <a class="nav__item active" href="#"><span class="nav__icon">👥</span> Dashboard</a>
-                <a class="nav__item" href="#"><span class="nav__icon">📄</span> Task</a>
-                <a class="nav__item" href="#"><span class="nav__icon">📑</span> Meeting Note</a>
+                <a class="nav__item active" href="#"><img class="nav__icon" src="assets/icons/dashboard.png" alt="Dashboard" /> Dashboard</a>
+                <a class="nav__item" href="#"><img class="nav__icon" src="assets/icons/task.png" alt="Task" /> Task</a>
+                <a class="nav__item" href="#"><img class="nav__icon" src="assets/icons/meeting.png" alt="Meeting Note" /> Meeting Note</a>
             </div>
             <div class="nav__section" id="project-section">
                 <p class="nav__label">Projects</p>
@@ -37,14 +37,9 @@
         <header class="hero">
             <div>
                 <p class="hero__eyebrow" id="greeting">로그인 해주세요.</p>
-                <h1 class="hero__title" id="subheadline">Summarize every meeting and manage your schedule in one place.</h1>
-                <p class="hero__subtitle">오늘도 MoMatic과 함께 회의록과 Task를 한눈에 관리하세요.</p>
+                <h1 class="hero__title">Summarize every meeting and manage your schedule in one place.</h1>
             </div>
             <div class="hero__actions">
-                <div class="hero__profile">
-                    <div class="hero__avatar">MJ</div>
-                    <div class="hero__bubble">반가워요!</div>
-                </div>
                 <button class="ghost" id="login-toggle">Google로 로그인</button>
             </div>
         </header>
@@ -71,7 +66,6 @@
             <div class="card grid-card">
                 <div class="card__header">
                     <div>
-                        <div class="pill">Github</div>
                         <div class="card__title">완료한 Task를 잔디로 기록해요.</div>
                     </div>
                     <div class="legend">
@@ -89,12 +83,9 @@
             </div>
         </section>
 
-        <section class="panel">
+        <section class="panel panel--plain">
             <div class="panel__header">
-                <div>
-                    <p class="eyebrow">Recent Meetings</p>
-                    <h2>최근 회의</h2>
-                </div>
+                <p class="eyebrow">Recent Meetings</p>
                 <div class="carousel__controls">
                     <button class="control" data-target="meeting-track" data-direction="-1">◀</button>
                     <button class="control" data-target="meeting-track" data-direction="1">▶</button>
@@ -103,12 +94,9 @@
             <div class="carousel" id="meeting-track"></div>
         </section>
 
-        <section class="panel">
+        <section class="panel panel--plain">
             <div class="panel__header">
-                <div>
-                    <p class="eyebrow">Upcoming Task</p>
-                    <h2>다가오는 작업</h2>
-                </div>
+                <p class="eyebrow">Upcoming Task</p>
                 <div class="carousel__controls">
                     <button class="control" data-target="task-track" data-direction="-1">◀</button>
                     <button class="control" data-target="task-track" data-direction="1">▶</button>

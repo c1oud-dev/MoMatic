@@ -104,7 +104,6 @@ function seedContributions() {
 
 const elements = {
     greeting: document.getElementById('greeting'),
-    subheadline: document.getElementById('subheadline'),
     loginToggle: document.getElementById('login-toggle'),
     sidebarLogin: document.getElementById('sidebar-login'),
     projectSection: document.getElementById('project-section'),
@@ -131,16 +130,14 @@ const elements = {
 function updateAuthUI() {
     if (state.loggedIn) {
         elements.greeting.textContent = `Hi, ${state.userName}`;
-        elements.subheadline.textContent = "Let's finish your task today!";
         elements.loginToggle.textContent = '로그아웃';
         elements.sidebarLogin.textContent = '로그아웃';
         } else {
         elements.greeting.textContent = '로그인 해주세요.';
-                elements.subheadline.textContent = 'Summarize every meeting and manage your schedule in one place.';
-                elements.loginToggle.textContent = 'Google로 로그인';
-                elements.sidebarLogin.textContent = 'Google로 로그인';
-            }
-        }
+        elements.loginToggle.textContent = 'Google로 로그인';
+        elements.sidebarLogin.textContent = 'Google로 로그인';
+    }
+}
 
 function renderProjects() {
     elements.projectSection.querySelectorAll('.nav__item').forEach((el) => el.remove());
