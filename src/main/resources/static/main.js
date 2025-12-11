@@ -110,6 +110,11 @@ const elements = {
     greeting: document.getElementById('greeting'),
     loginToggle: document.getElementById('login-toggle'),
     sidebarLogin: document.getElementById('sidebar-login'),
+
+    heroProfile: document.getElementById('hero-profile'),
+    heroAvatar: document.getElementById('hero-avatar'),
+    heroBubble: document.getElementById('hero-bubble'),
+
     projectSection: document.getElementById('project-section'),
     running: {
         count: document.getElementById('running-count'),
@@ -134,13 +139,40 @@ const elements = {
 // 로그인 상태에 따라 인사말과 버튼 문구 업데이트
 function updateAuthUI() {
     if (state.loggedIn) {
+        // 상단 타이틀
         elements.greeting.textContent = `Hi, ${state.userName}`;
-        elements.loginToggle.textContent = '로그아웃';
+
+        // 오른쪽 버튼/프로필 토글
+        elements.loginToggle.textContent = 'Log Out';
+        elements.loginToggle.style.display = 'none';          // 로그인 후 버튼 숨김
         elements.sidebarLogin.textContent = '로그아웃';
-        } else {
+
+        // 프로필 / 아바타 / 말풍선 노출
+        if (elements.heroProfile) {
+            elements.heroProfile.style.display = 'flex';
+        }
+        if (elements.heroAvatar) {
+            elements.heroAvatar.textContent = state.userName.charAt(0).toUpperCase();
+        }
+        if (elements.heroBubble) {
+            elements.heroBubble.textContent = '오늘 회의 정리와 할 일을 한 번에 관리 중이에요.';
+        }
+    } else {
+        // 상단 타이틀
         elements.greeting.textContent = '로그인 해주세요.';
-        elements.loginToggle.textContent = 'Google로 로그인';
+
+        // 버튼 다시 보이게
+        elements.loginToggle.textContent = 'Log In';
+        elements.loginToggle.style.display = 'inline-flex';
         elements.sidebarLogin.textContent = 'Google로 로그인';
+
+        // 프로필 영역 숨김
+        if (elements.heroProfile) {
+            elements.heroProfile.style.display = 'none';
+        }
+        if (elements.heroBubble) {
+            elements.heroBubble.textContent = 'Google로 로그인하고 회의 결과를 잔디로 남겨보세요.';
+        }
     }
 }
 
