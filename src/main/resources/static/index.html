@@ -10,7 +10,9 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<!-- 전체 페이지 레이아웃: 좌측 사이드바, 중앙 메인 콘텐츠, 우측 보조 패널 -->
 <div class="app">
+    <!-- 브랜드, 메뉴, 프로젝트, 로그인 버튼을 담는 사이드바 -->
     <aside class="sidebar">
         <div class="brand">
             <div class="brand__mark">Mo</div>
@@ -20,12 +22,14 @@
             </div>
         </div>
         <nav class="nav">
+            <!-- 고정 메뉴 영역 -->
             <div class="nav__section">
                 <p class="nav__label">Menu</p>
                 <a class="nav__item active" href="#"><img class="nav__icon" src="assets/icons/dashboard.png" alt="Dashboard" /> Dashboard</a>
                 <a class="nav__item" href="#"><img class="nav__icon" src="assets/icons/task.png" alt="Task" /> Task</a>
                 <a class="nav__item" href="#"><img class="nav__icon" src="assets/icons/meeting.png" alt="Meeting Note" /> Meeting Note</a>
             </div>
+            <!-- 프로젝트 목록을 JS로 주입하는 영역 -->
             <div class="nav__section" id="project-section">
                 <p class="nav__label">Projects</p>
             </div>
@@ -34,6 +38,7 @@
     </aside>
 
     <main class="main">
+        <!-- 사용자 인사말과 로그인 버튼을 보여주는 상단 히어로 -->
         <header class="hero">
             <div>
                 <p class="hero__eyebrow" id="greeting">로그인 해주세요.</p>
@@ -43,6 +48,7 @@
                 <button class="ghost" id="login-toggle">Google로 로그인</button>
             </div>
         </header>
+        <!-- 러닝 태스크 카드와 완료 잔디 그리드 -->
         <section class="metrics">
             <div class="card running" id="running-task">
                 <div class="card__header">
@@ -66,7 +72,7 @@
             <div class="card grid-card">
                 <div class="card__header">
                     <div>
-                        <div class="card__title">완료한 Task를 잔디로 기록해요.</div>
+                        <div class="card__title">완료한 Task를 잔디로 기록하세요.</div>
                     </div>
                     <div class="legend">
                         <span>Low</span>
@@ -83,6 +89,7 @@
             </div>
         </section>
 
+        <!-- 최근 회의 카드 캐러셀 -->
         <section class="panel panel--plain">
             <div class="panel__header">
                 <p class="eyebrow">Recent Meetings</p>
@@ -94,6 +101,7 @@
             <div class="carousel" id="meeting-track"></div>
         </section>
 
+        <!-- 예정된 할 일 카드 캐러셀 -->
         <section class="panel panel--plain">
             <div class="panel__header">
                 <p class="eyebrow">Upcoming Task</p>
@@ -106,6 +114,7 @@
         </section>
     </main>
 
+    <!-- 오른쪽 보조 패널: 캘린더와 오늘 일정 카드 -->
     <aside class="rail">
         <section class="panel calendar">
             <div class="calendar__header">

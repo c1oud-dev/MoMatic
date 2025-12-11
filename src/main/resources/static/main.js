@@ -1,3 +1,4 @@
+// 데모용 초기 데이터와 전역 상태
 const state = {
     loggedIn: false,
     userName: 'Haneul',
@@ -86,12 +87,14 @@ const state = {
     today: new Date()
 };
 
+// 오늘 날짜에서 원하는 만큼 더하고 ISO 문자열(yyyy-mm-dd)만 반환
 function offsetDate(delta) {
     const d = new Date();
     d.setDate(d.getDate() + delta);
     return d.toISOString().split('T')[0];
 }
 
+// 최근 60일의 랜덤 완료 횟수를 생성해 잔디 데이터로 사용
 function seedContributions() {
     const map = new Map();
     for (let i = 0; i < 60; i++) {
@@ -102,6 +105,7 @@ function seedContributions() {
     return map;
 }
 
+// 자주 쓰는 DOM 요소 캐시
 const elements = {
     greeting: document.getElementById('greeting'),
     loginToggle: document.getElementById('login-toggle'),
@@ -127,6 +131,7 @@ const elements = {
     todayContent: document.getElementById('today-content')
 };
 
+// 로그인 상태에 따라 인사말과 버튼 문구 업데이트
 function updateAuthUI() {
     if (state.loggedIn) {
         elements.greeting.textContent = `Hi, ${state.userName}`;
@@ -139,6 +144,7 @@ function updateAuthUI() {
     }
 }
 
+// 사이드바 프로젝트 링크 렌더링
 function renderProjects() {
     elements.projectSection.querySelectorAll('.nav__item').forEach((el) => el.remove());
     state.projects.forEach((project) => {
@@ -150,6 +156,7 @@ function renderProjects() {
     });
 }
 
+// 전체/완료/진행 중 태스크 통계 카드 갱신
 function renderRunningTask() {
     const totalTasks = state.tasks.length;
     const completedTasks = state.tasks.filter((task) => isTaskCompleted(task)).length;
@@ -162,11 +169,13 @@ function renderRunningTask() {
     elements.running.total.textContent = `${totalTasks}개`;
 }
 
+// 체크리스트가 모두 완료되었는지 또는 상태가 완료인지 판단
 function isTaskCompleted(task) {
     const allDone = task.checklist.every((item) => item.done);
     return task.status === 'Completed' || allDone;
 }
 
+// 완료 횟수를 기반으로 잔디 스타일 그리드 생성
 function renderContributionGrid() {
     const cells = [];
     for (let i = 62; i >= 0; i--) {
@@ -183,6 +192,7 @@ function renderContributionGrid() {
         });
     }
 
+// 최근 회의 정보를 카드 캐러셀로 렌더링
 function renderMeetings() {
     elements.meetingTrack.innerHTML = '';
     state.meetings
@@ -204,6 +214,7 @@ function renderMeetings() {
         });
 }
 
+// 태스크 상태에 맞는 CSS 클래스 반환
 function statusClass(status) {
     const map = {
         'To Do': 'todo',
@@ -214,6 +225,7 @@ function statusClass(status) {
     return map[status] || 'todo';
 }
 
+// 예정된 할 일 목록을 카드와 체크리스트로 렌더링
 function renderTasks() {
     elements.taskTrack.innerHTML = '';
     state.tasks
@@ -257,6 +269,7 @@ function renderTasks() {
         });
 }
 
+// 체크리스트 항목 토글 시 상태 업데이트 및 관련 UI 재렌더링
 function toggleChecklist(taskId, itemIdx, checked) {
     const task = state.tasks.find((t) => t.id === taskId);
     if (!task) return;
@@ -283,6 +296,7 @@ function toggleChecklist(taskId, itemIdx, checked) {
         renderTasks();
 }
 
+// 좌우 이동 버튼에 스크롤 이벤트 연결
 function attachCarousel() {
     elements.controls.forEach((control) => {
         control.addEventListener('click', () => {
@@ -297,6 +311,7 @@ function attachCarousel() {
 const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 let currentMonth = new Date();
 
+// 월 이동 시 캘린더 격자와 날짜 표시 갱신
 function renderCalendar(date = new Date()) {
     currentMonth = new Date(date);
     const month = currentMonth.getMonth();
@@ -329,10 +344,12 @@ function renderCalendar(date = new Date()) {
     }
 }
 
+// yyyy-mm-dd 문자열과 Date 객체가 같은 날짜인지 비교
 function sameDate(dateStr, dateObj) {
     return dateStr === dateObj.toISOString().split('T')[0];
 }
 
+// 오늘 회의/할 일 유무에 따라 카드 타이틀, 배지, 리스트 구성
 function renderTodayCard() {
     const todayStr = state.today.toISOString().split('T')[0];
     const todaysMeetings = state.meetings.filter((m) => m.date === todayStr);
@@ -369,6 +386,7 @@ function renderTodayCard() {
         renderTaskList(todaysTasks);
     }
 
+// 오늘 회의 목록을 스포트라이트 섹션으로 렌더링
 function renderMeetingSummary(list) {
     const box = document.createElement('div');
     box.className = 'spotlight__section';
@@ -383,6 +401,7 @@ function renderMeetingSummary(list) {
     elements.todayContent.appendChild(box);
 }
 
+// 오늘 할 일 목록을 스포트라이트 섹션으로 렌더링
 function renderTaskList(list) {
     const box = document.createElement('div');
     box.className = 'spotlight__section';
@@ -397,6 +416,7 @@ function renderTaskList(list) {
     elements.todayContent.appendChild(box);
 }
 
+// 버튼/캐러셀 등 모든 이벤트 리스너 설정
 function bindEvents() {
     elements.loginToggle.addEventListener('click', toggleLogin);
     elements.sidebarLogin.addEventListener('click', toggleLogin);
@@ -405,17 +425,20 @@ function bindEvents() {
     attachCarousel();
 }
 
+// 로그인/로그아웃 토글
 function toggleLogin() {
     state.loggedIn = !state.loggedIn;
     updateAuthUI();
 }
 
+// 캘린더 월 이동 후 재렌더링
 function changeMonth(delta) {
     const next = new Date(currentMonth);
     next.setMonth(next.getMonth() + delta);
     renderCalendar(next);
 }
 
+// 초기 렌더링 및 이벤트 바인딩 실행 진입점
 function bootstrap() {
     updateAuthUI();
     renderProjects();
