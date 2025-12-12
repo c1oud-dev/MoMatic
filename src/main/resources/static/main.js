@@ -233,13 +233,26 @@ function renderMeetings() {
             const card = document.createElement('div');
             card.className = 'meeting-card';
             card.innerHTML = `
-                <div class="title">${meeting.title}</div>
-                <div class="meta">${meeting.date} · ${meeting.time}</div>
-                <div class="summary">${meeting.summary}</div>
-                <div class="meta-row">
-                    <span class="badge">Actions ${meeting.tasks.total}</span>
-                    <span>미완료 ${meeting.tasks.pending}개</span>
-                    <span>총 ${meeting.duration}</span>
+                <div>
+                    <p class="meeting-card__title">${meeting.title}</p>
+                    <p class="meeting-card__meta">${meeting.date} · ${meeting.time}</p>
+                </div>
+                <p class="meeting-card__summary">${meeting.summary}</p>
+                <div class="meeting-card__meta-group">
+                    <div class="meeting-card__row">
+                        <span class="meta-icon meta-icon--actions" aria-hidden="true">✓</span>
+                        <div class="meeting-card__row-text">
+                            <span class="meeting-card__label">Action Items</span>
+                            <span class="meeting-card__value">${meeting.tasks.total}개 (${meeting.tasks.pending}개 미완료)</span>
+                        </div>
+                    </div>
+                    <div class="meeting-card__row">
+                        <span class="meta-icon meta-icon--time" aria-hidden="true">★</span>
+                        <div class="meeting-card__row-text">
+                            <span class="meeting-card__label">회의 시간</span>
+                            <span class="meeting-card__value">${meeting.duration}</span>
+                        </div>
+                    </div>
                 </div>
             `;
             elements.meetingTrack.appendChild(card);

@@ -93,10 +93,10 @@
         <!-- 최근 회의 카드 캐러셀 -->
         <section class="panel panel--plain">
             <div class="panel__header">
-                <p class="eyebrow">Recent Meetings</p>
+                <h2 class="section-title">Recent Meetings</h2>
                 <div class="carousel__controls">
-                    <button class="control" data-target="meeting-track" data-direction="-1">◀</button>
-                    <button class="control" data-target="meeting-track" data-direction="1">▶</button>
+                    <button class="control" data-target="meeting-track" data-direction="-1" aria-label="지난 미팅 보기">◀</button>
+                    <button class="control" data-target="meeting-track" data-direction="1" aria-label="다음 미팅 보기">▶</button>
                 </div>
             </div>
             <div class="carousel" id="meeting-track"></div>
@@ -105,10 +105,10 @@
         <!-- 예정된 할 일 카드 캐러셀 -->
         <section class="panel panel--plain">
             <div class="panel__header">
-                <p class="eyebrow">Upcoming Task</p>
+                <h2 class="section-title">Upcoming Task</h2>
                 <div class="carousel__controls">
-                    <button class="control" data-target="task-track" data-direction="-1">◀</button>
-                    <button class="control" data-target="task-track" data-direction="1">▶</button>
+                    <button class="control" data-target="task-track" data-direction="-1" aria-label="이전 할 일 보기">◀</button>
+                    <button class="control" data-target="task-track" data-direction="1" aria-label="다음 할 일 보기">▶</button>
                 </div>
             </div>
             <div class="carousel" id="task-track"></div>
