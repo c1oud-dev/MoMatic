@@ -3,6 +3,7 @@ package com.momatic.controller;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.momatic.domain.ActionItem;
+import com.momatic.domain.ActionStatus;
 import com.momatic.domain.Meeting;
 import com.momatic.service.AudioService;
 import com.momatic.service.LLMService;
@@ -50,20 +51,27 @@ public class AudioController {
             JsonNode root = mapper.readTree(resultJson);
             String summary = root.get("summary").asText();
             List<ActionItem> items = new ArrayList<>();
-            root.get("actionItems").forEach(n ->
-                    items.add(ActionItem.builder()
-                            .task(n.get("task").asText())
-                            .assignee(n.get("assignee").asText())
-                            .dueDate(n.get("dueDate").asText())
-                            .build()));
+            root.get("actionItems").forEach(n -> {
+                String dueDate = null;
+                if (n.hasNonNull("dueDate") && !n.get("dueDate").asText().isBlank()) {
+                    dueDate = n.get("dueDate").asText();
+                }
+                items.add(new ActionItem(
+                        n.get("task").asText(),
+                        n.get("assignee").asText(),
+                        dueDate,
+                        ActionStatus.TODO
+                ));
+            });
 
             // 5. Meeting 저장 및 후속 처리
-            Meeting meeting = Meeting.builder()
-                    .title("Auto-upload")     // 필요시 파라미터화
-                    .summary(summary)
-                    .startedAt(LocalDateTime.now())
-                    .build();
-            meetingService.saveAndNotify(meeting, transcript, items);
+            Meeting meeting = new Meeting(
+                    "Auto-upload", // 필요시 파라미터화
+                    LocalDateTime.now(),
+                    LocalDateTime.now(),
+                    summary
+            );
+            meetingService.saveWithDetails(meeting, transcript, items);
 
             return ResponseEntity.ok(resultJson);
         } catch (Exception e) {

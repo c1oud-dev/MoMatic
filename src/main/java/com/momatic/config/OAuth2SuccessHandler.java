@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -28,28 +29,38 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
     public void onAuthenticationSuccess(HttpServletRequest req,
                                         HttpServletResponse res,
                                         Authentication auth) throws IOException, ServletException {
-        OAuth2AuthenticationToken token = (OAuth2AuthenticationToken) auth;
+        if (!(auth instanceof OAuth2AuthenticationToken token)) {
+            res.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unsupported authentication type");
+            return;
+        }
         OAuth2User principal = token.getPrincipal();
         Map<String, Object> attrs = principal.getAttributes();
 
-        // 구글 vs 슬랙 공통 필드 매핑
         String email = (String) attrs.get("email");
+        if (email == null || email.isBlank()) {
+            res.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing email attribute from provider");
+            return;
+        }
         String name  = (String) attrs.getOrDefault("name", email);
-        String teamId = (String) attrs.getOrDefault("team_id", "GLOBAL");
-        String teamName = (String) attrs.getOrDefault("team_name", teamId);
+        String teamName = (String) attrs.getOrDefault("team_name", "GLOBAL");
 
-        Team team = teamRepo.findById(teamId)
-                .orElseGet(() -> teamRepo.save(new Team(teamId, teamName)));
+        Team team = teamRepo.findByName(teamName)
+                .orElseGet(() -> {
+                    Team created = new Team(teamName);
+                    return teamRepo.save(created);
+                });
 
-        User user = userRepo.findByEmail(email)
-                .orElseGet(() -> userRepo.save(
-                        User.builder()
-                                .email(email)
-                                .name(name)
-                                .team(team)
-                                .roles("ROLE_USER")
-                                .build()
-                ));
+        Optional<User> existingUser = userRepo.findByEmail(email);
+        User user = existingUser.orElseGet(() -> {
+            User created = new User(email, name, "ROLE_USER");
+            created.setTeam(team);
+            return userRepo.save(created);
+        });
+
+        if (user.getTeam() == null) {
+            user.setTeam(team);
+            userRepo.save(user);
+        }
 
         // 세션에 직접 주입하면 SecurityContext authentication.name 은 email
         req.getSession().setAttribute("currentUserId", user.getId());

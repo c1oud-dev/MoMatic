@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MoMatic Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700&family=Inter:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<!-- 전체 페이지 레이아웃: 좌측 사이드바, 중앙 메인 콘텐츠, 우측 보조 패널 -->
+<div class="app">
+    <!-- 브랜드, 메뉴, 프로젝트, 로그인 버튼을 담는 사이드바 -->
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="brand__mark">Mo</div>
+            <div>
+                <div class="brand__name">MoMatic</div>
+                <div class="brand__tagline">회의 결과 & 일정 관리</div>
+            </div>
+        </div>
+        <nav class="nav">
+            <!-- 고정 메뉴 영역 -->
+            <div class="nav__section">
+                <p class="nav__label">Menu</p>
+                <a class="nav__item active" href="#"><img class="nav__icon" src="assets/icons/dashboard.png" alt="Dashboard" /> Dashboard</a>
+                <a class="nav__item" href="#"><img class="nav__icon" src="assets/icons/task.png" alt="Task" /> Task</a>
+                <a class="nav__item" href="#"><img class="nav__icon" src="assets/icons/meeting.png" alt="Meeting Note" /> Meeting Note</a>
+            </div>
+            <!-- 프로젝트 목록을 JS로 주입하는 영역 -->
+            <div class="nav__section" id="project-section">
+                <p class="nav__label">Projects</p>
+            </div>
+        </nav>
+        <button class="nav__login" id="sidebar-login">Google로 로그인</button>
+    </aside>
+
+    <main class="main">
+        <!-- 사용자 인사말과 로그인 버튼을 보여주는 상단 히어로 -->
+        <header class="hero">
+            <div class="hero__top">
+                <div>
+                    <!-- 작은 영어 문구(항상 노출) -->
+                    <p class="hero__eyebrow" id="hero-subtitle">Let’s finish your task today!</p>
+                    <!-- 큰 타이틀: 로그인 전에는 "로그인 해주세요.", 후에는 "Hi, Haneul" -->
+                    <h1 class="hero__title" id="greeting">로그인 해주세요.</h1>
+                </div>
+
+                <!-- 오른쪽 액션 영역: 로그인 전에는 버튼만, 로그인 후에는 프로필만 보이도록 JS에서 토글 -->
+                <div class="hero__actions">
+                    <div class="hero__profile" id="hero-profile">
+                        <div class="hero__avatar" id="hero-avatar">H</div>
+                        <div class="hero__bubble" id="hero-bubble">
+                            오늘 회의 결과를 정리하고 할 일을 완료해 보세요.
+                        </div>
+                    </div>
+                    <button class="hero__login" id="login-toggle">Log In</button>
+                </div>
+            </div>
+            <div class="hero__metrics">
+                <div class="card running" id="running-task">
+                    <div class="card__header">
+                        <div class="pill">Running Task</div>
+                        <div class="card__meta" id="running-percentage">0%</div>
+                    </div>
+                    <div class="running__content">
+                        <div class="running__stat">
+                            <div class="running__number" id="running-count">0</div>
+                            <div class="running__label">진행 중인 Task</div>
+                        </div>
+                        <div class="running__divider"></div>
+                        <div class="running__group">
+                            <div class="running__label">Completed</div>
+                            <div class="running__summary" id="running-completed">0개</div>
+                            <div class="running__label">전체 Task</div>
+                            <div class="running__summary" id="running-total">0개</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card grid-card">
+                    <div class="card__header">
+                        <div>
+                            <div class="card__title">완료한 Task를 잔디로 기록하세요.</div>
+                        </div>
+                    </div>
+                    <div id="contribution-grid" class="grid"></div>
+                </div>
+            </div>
+        </header>
+
+        <!-- 최근 회의 카드 캐러셀 -->
+        <section class="panel panel--plain">
+            <div class="panel__header">
+                <h2 class="section-title">Recent Meetings</h2>
+                <div class="carousel__controls">
+                    <button class="control" data-target="meeting-track" data-direction="-1" aria-label="지난 미팅 보기">◀</button>
+                    <button class="control" data-target="meeting-track" data-direction="1" aria-label="다음 미팅 보기">▶</button>
+                </div>
+            </div>
+            <div class="carousel" id="meeting-track"></div>
+        </section>
+
+        <!-- 예정된 할 일 카드 캐러셀 -->
+        <section class="panel panel--plain">
+            <div class="panel__header">
+                <h2 class="section-title">Upcoming Task</h2>
+                <div class="carousel__controls">
+                    <button class="control" data-target="task-track" data-direction="-1" aria-label="이전 할 일 보기">◀</button>
+                    <button class="control" data-target="task-track" data-direction="1" aria-label="다음 할 일 보기">▶</button>
+                </div>
+            </div>
+            <div class="carousel" id="task-track"></div>
+        </section>
+    </main>
+
+    <!-- 오른쪽 보조 패널: 캘린더와 오늘 일정 카드 -->
+    <aside class="rail">
+        <section class="panel calendar">
+            <div class="calendar__header">
+                <div class="calendar__title">Calendar</div>
+                <div class="calendar__nav">
+                    <button class="control" id="prev-month">◀</button>
+                    <div id="month-label"></div>
+                    <button class="control" id="next-month">▶</button>
+                </div>
+            </div>
+            <div class="calendar__weekdays" id="weekday-row"></div>
+            <div class="calendar__grid" id="calendar-grid"></div>
+        </section>
+        <section class="panel spotlight" id="today-card">
+            <div class="panel__header">
+                <div>
+                    <p class="eyebrow">오늘 회의 & 할 일 (Today)</p>
+                    <h3 id="today-title">오늘 일정이 없어요.</h3>
+                </div>
+                <div class="pill" id="today-status">-</div>
+            </div>
+            <div class="spotlight__content" id="today-content"></div>
+            <button class="primary" id="go-task">Go To Task</button>
+        </section>
+    </aside>
+</div>
+<script src="main.js"></script>
+</body>
+</html>

@@ -1,28 +1,83 @@
 package com.momatic.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.*;
-
 import java.time.LocalDate;
 
 @Entity
-@Getter @Setter @Builder
-@NoArgsConstructor @AllArgsConstructor
+@Table(name = "action_item")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class ActionItem {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String task;          // 해야 할 일
-    private String assignee;      // 담당자
-    private String dueDate;    // 마감일
+    private String task;
 
-    @Builder.Default
+    private String assignee;
+
+    private String dueDate;
+
     @Enumerated(EnumType.STRING)
-    private Status status = Status.TODO;
-
-    public enum Status { TODO, IN_PROGRESS, DONE }
+    private ActionStatus status = ActionStatus.TODO;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "meeting_id")
+    @JsonIgnore
     private Meeting meeting;
+
+    public ActionItem() {
+    }
+
+    public ActionItem(String task, String assignee, String dueDate, ActionStatus status) {
+        this.task = task;
+        this.assignee = assignee;
+        this.dueDate = dueDate;
+        this.status = status;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public String getTask() {
+        return task;
+    }
+
+    public void setTask(String task) {
+        this.task = task;
+    }
+
+    public String getAssignee() {
+        return assignee;
+    }
+
+    public void setAssignee(String assignee) {
+        this.assignee = assignee;
+    }
+
+    public String getDueDate() {
+        return dueDate;
+    }
+
+    public void setDueDate(String dueDate) {
+        this.dueDate = dueDate;
+    }
+
+    public ActionStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(ActionStatus status) {
+        this.status = status;
+    }
+
+    public Meeting getMeeting() {
+        return meeting;
+    }
+
+    public void setMeeting(Meeting meeting) {
+        this.meeting = meeting;
+    }
 }
