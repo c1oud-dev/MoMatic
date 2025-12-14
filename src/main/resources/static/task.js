@@ -198,17 +198,17 @@ const state = {
 let tabContainer;
 let board;
 let searchInput;
-let toggleChecklist;
+let checklistToggle;
 let toggleTodo;
 
 function initDomReferences() {
     tabContainer = document.getElementById('status-tabs');
     board = document.getElementById('board');
     searchInput = document.getElementById('search');
-    toggleChecklist = document.getElementById('toggle-checklist');
+    checklistToggle = document.getElementById('toggle-checklist');
     toggleTodo = document.getElementById('toggle-todo');
 
-    const missingElements = [tabContainer, board, searchInput, toggleChecklist, toggleTodo].includes(null);
+    const missingElements = [tabContainer, board, searchInput, checklistToggle, toggleTodo].includes(null);
     if (missingElements) {
         console.error('필수 DOM 요소를 찾지 못했습니다. 렌더링을 중단합니다.');
         return false;
@@ -445,7 +445,7 @@ function init() {
         renderBoard();
     });
 
-    toggleChecklist.addEventListener('change', (e) => {
+    checklistToggle.addEventListener('change', (e) => {
         state.showChecklist = e.target.checked;
         renderBoard();
     });
