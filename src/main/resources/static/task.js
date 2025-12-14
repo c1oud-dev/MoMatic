@@ -195,11 +195,26 @@ const state = {
     search: ''
 };
 
-const tabContainer = document.getElementById('status-tabs');
-const board = document.getElementById('board');
-const searchInput = document.getElementById('search');
-const toggleChecklist = document.getElementById('toggle-checklist');
-const toggleTodo = document.getElementById('toggle-todo');
+let tabContainer;
+let board;
+let searchInput;
+let toggleChecklist;
+let toggleTodo;
+
+function initDomReferences() {
+    tabContainer = document.getElementById('status-tabs');
+    board = document.getElementById('board');
+    searchInput = document.getElementById('search');
+    toggleChecklist = document.getElementById('toggle-checklist');
+    toggleTodo = document.getElementById('toggle-todo');
+
+    const missingElements = [tabContainer, board, searchInput, toggleChecklist, toggleTodo].includes(null);
+    if (missingElements) {
+        console.error('필수 DOM 요소를 찾지 못했습니다. 렌더링을 중단합니다.');
+        return false;
+    }
+    return true;
+}
 
 function formatDate(dateStr) {
     const date = new Date(dateStr);
@@ -419,21 +434,29 @@ function handleDelete(taskId) {
     renderBoard();
 }
 
-searchInput.addEventListener('input', (e) => {
-    state.search = e.target.value;
+function init() {
+    if (!initDomReferences()) {
+        return;
+    }
+
+    searchInput.addEventListener('input', (e) => {
+        state.search = e.target.value;
+        renderTabs();
+        renderBoard();
+    });
+
+    toggleChecklist.addEventListener('change', (e) => {
+        state.showChecklist = e.target.checked;
+        renderBoard();
+    });
+
+    toggleTodo.addEventListener('change', (e) => {
+        state.showTodo = e.target.checked;
+        renderBoard();
+    });
+
     renderTabs();
     renderBoard();
-});
+}
 
-toggleChecklist.addEventListener('change', (e) => {
-    state.showChecklist = e.target.checked;
-    renderBoard();
-});
-
-toggleTodo.addEventListener('change', (e) => {
-    state.showTodo = e.target.checked;
-    renderBoard();
-});
-
-renderTabs();
-renderBoard();
+document.addEventListener('DOMContentLoaded', init);
