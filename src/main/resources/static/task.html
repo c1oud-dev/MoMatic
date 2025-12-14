@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MoMatic Task Board</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&family=Pretendard:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="task.css">
+</head>
+<body>
+<div class="app">
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="brand__mark">Mo</div>
+            <div>
+                <div class="brand__name">MoMatic</div>
+                <div class="brand__tagline">회의 결과 & 일정 관리</div>
+            </div>
+        </div>
+        <nav class="nav">
+            <div class="nav__section">
+                <p class="nav__label">Menu</p>
+                <a class="nav__item" href="index.html"><img class="nav__icon" src="assets/icons/dashboard.png" alt="Dashboard"> Dashboard</a>
+                <a class="nav__item active" href="task.html"><img class="nav__icon" src="assets/icons/task.png" alt="Task"> Task</a>
+                <a class="nav__item" href="#"><img class="nav__icon" src="assets/icons/meeting.png" alt="Meeting"> Meeting Note</a>
+            </div>
+            <div class="nav__section">
+                <p class="nav__label">Projects</p>
+                <a class="nav__item" href="#">Project #1</a>
+                <a class="nav__item" href="#">Project #2</a>
+            </div>
+        </nav>
+        <div class="nav__footer">
+            <div class="nav__quick">
+                <span class="nav__dot"></span>
+                <span>라모리스</span>
+            </div>
+            <div class="nav__logout">Log out</div>
+        </div>
+    </aside>
+
+    <main class="content">
+        <header class="page-header">
+            <div class="page-header__title">
+                <p class="eyebrow">페이지 / Task Menu</p>
+                <div class="page-header__row">
+                    <h1>Explore Task</h1>
+                    <span class="timestamp">Just now you updated task</span>
+                </div>
+            </div>
+            <div class="page-header__actions">
+                <label class="search">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 4a7 7 0 015.63 11.06l3.15 3.16a1 1 0 01-1.42 1.42l-3.16-3.15A7 7 0 1111 4zm0 2a5 5 0 100 10 5 5 0 000-10z" fill="currentColor"></path></svg>
+                    <input id="search" type="search" placeholder="Search..." aria-label="태스크 검색">
+                </label>
+                <button class="ghost" id="filter-button">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16a1 1 0 01.78 1.63l-5.44 6.53v3.84a1 1 0 01-.55.9l-4 2A1 1 0 019 19v-5.84L3.22 6.63A1 1 0 014 5z" fill="currentColor"></path></svg>
+                    필터
+                </button>
+                <button class="primary" id="new-task">+ 새 Task</button>
+            </div>
+        </header>
+
+        <section class="toolbar">
+            <div class="tabs" id="status-tabs"></div>
+            <div class="view-toggle">
+                <button class="icon-button" aria-label="리스트 보기">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v2H4V6zm0 5h16v2H4v-2zm0 5h16v2H4v-2z" fill="currentColor"></path></svg>
+                </button>
+                <button class="icon-button active" aria-label="보드 보기">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h4a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V6a1 1 0 011-1zm6 0h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V6a1 1 0 011-1zm0 6h4a1 1 0 011 1v6a1 1 0 01-1 1h-4a1 1 0 01-1-1v-6a1 1 0 011-1zm6-6h4a1 1 0 011 1v12a1 1 0 01-1 1h-4a1 1 0 01-1-1V6a1 1 0 011-1z" fill="currentColor"></path></svg>
+                </button>
+            </div>
+        </section>
+
+        <section class="filters">
+            <button class="chip" id="project-filter">
+                <div class="chip__label">Projects</div>
+                <div class="chip__value" id="project-value">Project #1</div>
+                <span class="caret">▾</span>
+            </button>
+            <button class="chip" id="meeting-filter">
+                <div class="chip__label">Meetings</div>
+                <div class="chip__value" id="meeting-value">회의록: 요약</div>
+                <span class="caret">▾</span>
+            </button>
+            <label class="toggle">
+                <input type="checkbox" id="toggle-checklist" checked>
+                <span class="toggle__pill"></span>
+                <span class="toggle__text">체크리스트 노출</span>
+            </label>
+            <label class="toggle">
+                <input type="checkbox" id="toggle-todo" checked>
+                <span class="toggle__pill"></span>
+                <span class="toggle__text">할 일 (To-do item)</span>
+            </label>
+        </section>
+
+        <section class="board" id="board"></section>
+    </main>
+</div>
+<script src="task.js"></script>
+</body>
+</html>
