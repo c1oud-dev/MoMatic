@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MoMatic Meeting Note</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Pretendard:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="meeting.css">
+</head>
+<body>
+<div class="app">
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="brand__mark">Mo</div>
+            <div>
+                <div class="brand__name">MoMatic</div>
+                <div class="brand__tagline">회의 결과 & 일정 관리</div>
+            </div>
+        </div>
+        <nav class="nav">
+            <div class="nav__section">
+                <p class="nav__label">Menu</p>
+                <a class="nav__item" href="index.html"><img class="nav__icon" src="assets/icons/dashboard.png" alt="Dashboard"> Dashboard</a>
+                <a class="nav__item" href="task.html"><img class="nav__icon" src="assets/icons/task.png" alt="Task"> Task</a>
+                <a class="nav__item active" href="meeting.html"><img class="nav__icon" src="assets/icons/meeting.png" alt="Meeting"> Meeting Note</a>
+            </div>
+            <div class="nav__section">
+                <p class="nav__label">Projects</p>
+                <a class="nav__item" href="#">Meeting Note</a>
+                <a class="nav__item" href="#">Project #3</a>
+                <a class="nav__item" href="#">Project #2</a>
+            </div>
+        </nav>
+        <div class="nav__footer">
+            <div class="nav__quick">
+                <span class="nav__dot"></span>
+                <span>라모리스</span>
+            </div>
+            <div class="nav__logout">Log out</div>
+        </div>
+    </aside>
+
+    <main class="content">
+        <header class="page-header">
+            <div>
+                <p class="breadcrumb">페이지 / Meeting Note Menu</p>
+                <h1 class="page-title">Explore Meetings</h1>
+            </div>
+            <label class="search">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 4a7 7 0 015.63 11.06l3.15 3.16a1 1 0 01-1.42 1.42l-3.16-3.15A7 7 0 1111 4zm0 2a5 5 0 100 10 5 5 0 000-10z" fill="currentColor"></path></svg>
+                <input id="search" type="search" placeholder="Search..." aria-label="회의 검색">
+            </label>
+        </header>
+
+        <div class="toolbar">
+            <div class="toolbar__actions">
+                <button class="toolbar__button secondary" id="upload-manual">회의 녹음 업로드 하기</button>
+                <button class="toolbar__button" id="upload-auto">회의 녹음 자동 업로드 (다른 프로그램)</button>
+                <div class="chips">
+                    <button class="chip active" data-sort="newest">Newest</button>
+                    <button class="chip" data-sort="oldest">Oldest</button>
+                    <button class="chip" data-filter="summary">요약 완료</button>
+                    <button class="chip" data-filter="pending">요약 전</button>
+                </div>
+            </div>
+            <div class="legend">
+                <span class="dot-red"></span> 긴급
+                <span class="dot-orange"></span> 진행 중
+                <span class="dot-green"></span> 완료
+            </div>
+        </div>
+
+        <div class="layout">
+            <section class="panel table-panel">
+                <div class="panel__header">
+                    <div>
+                        <h2 class="panel__title">회의 리스트</h2>
+                        <p class="panel__subtitle">회의한 녹음 파일을 자동/수동 업로드 후, 요약 결과와 Task를 추가해 주세요.</p>
+                    </div>
+                    <div class="small" id="list-count"></div>
+                </div>
+                <div class="table-wrapper">
+                    <table class="table" aria-label="회의 리스트">
+                        <thead>
+                        <tr>
+                            <th>회의 진행 프로젝트</th>
+                            <th>회의 날짜</th>
+                            <th>회의 진행 타입</th>
+                            <th>요약 완료 여부</th>
+                            <th>추가할 Task 개수 (분야)</th>
+                        </tr>
+                        </thead>
+                        <tbody id="meeting-body"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <aside class="right-panel" id="detail-panel">
+                <div class="right-panel__header">
+                    <div class="right-panel__thumb">🎙️</div>
+                    <div>
+                        <p class="right-panel__meta" id="detail-date">회의 녹음 파일</p>
+                        <h3 class="right-panel__title" id="detail-title">Meeting Info</h3>
+                    </div>
+                </div>
+                <div class="audio-card">
+                    <div class="audio-card__top">
+                        <div>
+                            <p class="audio-card__title">회의 녹음 파일</p>
+                            <p class="audio-card__info" id="detail-filename">선택된 회의의 녹음 파일을 다시 재생하세요.</p>
+                        </div>
+                        <span class="badge badge--outline" id="detail-duration">--:--</span>
+                    </div>
+                    <audio id="detail-audio" controls></audio>
+                </div>
+
+                <div class="section">
+                    <div class="section__title">회의 제목</div>
+                    <p class="section__body" id="detail-heading">-</p>
+                </div>
+
+                <div class="section">
+                    <div class="section__title">요약</div>
+                    <p class="section__body" id="detail-summary">회의 리스트에서 회의를 선택하면 요약이 표시됩니다.</p>
+                </div>
+
+                <div class="section">
+                    <div class="section__title">Task</div>
+                    <div class="task-list" id="task-list"></div>
+                </div>
+
+                <div class="footer-actions">
+                    <button class="ghost">Send to mail</button>
+                    <button class="primary">Task에서 계속 진행하기</button>
+                </div>
+            </aside>
+        </div>
+    </main>
+</div>
+<script src="meeting.js"></script>
+</body>
+</html>
