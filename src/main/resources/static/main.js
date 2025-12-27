@@ -116,6 +116,7 @@ const elements = {
     heroBubble: document.getElementById('hero-bubble'),
 
     projectSection: document.getElementById('project-section'),
+    projectAdd: document.getElementById('add-project'),
     running: {
         count: document.getElementById('running-count'),
         percentage: document.getElementById('running-percentage'),
@@ -145,7 +146,6 @@ function updateAuthUI() {
         // 오른쪽 버튼/프로필 토글
         elements.loginToggle.textContent = 'Log Out';
         elements.loginToggle.style.display = 'none';          // 로그인 후 버튼 숨김
-        elements.sidebarLogin.textContent = '로그아웃';
 
         // 프로필 / 아바타 / 말풍선 노출
         if (elements.heroProfile) {
@@ -164,7 +164,6 @@ function updateAuthUI() {
         // 버튼 다시 보이게
         elements.loginToggle.textContent = 'Log In';
         elements.loginToggle.style.display = 'inline-flex';
-        elements.sidebarLogin.textContent = 'Google로 로그인';
 
         // 프로필 영역 숨김
         if (elements.heroProfile) {
@@ -464,16 +463,26 @@ function renderTaskList(list) {
 // 버튼/캐러셀 등 모든 이벤트 리스너 설정
 function bindEvents() {
     elements.loginToggle.addEventListener('click', toggleLogin);
-    elements.sidebarLogin.addEventListener('click', toggleLogin);
+    elements.sidebarLogin.addEventListener('click', redirectToGoogleLogin);
     elements.prevMonth.addEventListener('click', () => changeMonth(-1));
     elements.nextMonth.addEventListener('click', () => changeMonth(1));
     attachCarousel();
+    if (elements.projectAdd) {
+        elements.projectAdd.addEventListener('click', () => {
+            window.location.href = 'project.html';
+        });
+    }
 }
 
 // 로그인/로그아웃 토글
 function toggleLogin() {
     state.loggedIn = !state.loggedIn;
     updateAuthUI();
+}
+
+// Google 로그인 페이지로 이동
+function redirectToGoogleLogin() {
+    window.location.href = 'https://accounts.google.com';
 }
 
 // 캘린더 월 이동 후 재렌더링

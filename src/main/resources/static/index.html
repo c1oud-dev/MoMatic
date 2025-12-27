@@ -31,7 +31,10 @@
             </div>
             <!-- 프로젝트 목록을 JS로 주입하는 영역 -->
             <div class="nav__section" id="project-section">
-                <p class="nav__label">Projects</p>
+                <div class="nav__label-row">
+                    <p class="nav__label">Projects</p>
+                    <button class="nav__add" id="add-project" type="button" aria-label="프로젝트 추가">+</button>
+                </div>
             </div>
         </nav>
         <button class="nav__login" id="sidebar-login">Google로 로그인</button>
@@ -42,10 +45,10 @@
         <header class="hero">
             <div class="hero__top">
                 <div>
-                    <!-- 작은 영어 문구(항상 노출) -->
-                    <p class="hero__eyebrow" id="hero-subtitle">Let’s finish your task today!</p>
                     <!-- 큰 타이틀: 로그인 전에는 "로그인 해주세요.", 후에는 "Hi, Haneul" -->
                     <h1 class="hero__title" id="greeting">로그인 해주세요.</h1>
+                    <!-- 작은 영어 문구(항상 노출) -->
+                    <p class="hero__eyebrow" id="hero-subtitle">Let’s finish your task today!</p>
                 </div>
 
                 <!-- 오른쪽 액션 영역: 로그인 전에는 버튼만, 로그인 후에는 프로필만 보이도록 JS에서 토글 -->
@@ -83,6 +86,17 @@
                     <div class="card__header">
                         <div>
                             <div class="card__title">완료한 Task를 잔디로 기록하세요.</div>
+                            <div class="legend">
+                                <span class="legend__label">기준</span>
+                                <span class="legend__swatches">
+                                    <span class="cell level-0" aria-hidden="true"></span>
+                                    <span class="cell level-1" aria-hidden="true"></span>
+                                    <span class="cell level-2" aria-hidden="true"></span>
+                                    <span class="cell level-3" aria-hidden="true"></span>
+                                    <span class="cell level-4" aria-hidden="true"></span>
+                                </span>
+                                <span class="legend__text">0개 · 1~2개 · 3개 · 4개 이상</span>
+                            </div>
                         </div>
                     </div>
                     <div id="contribution-grid" class="grid"></div>
@@ -95,8 +109,12 @@
             <div class="panel__header">
                 <h2 class="section-title">Recent Meetings</h2>
                 <div class="carousel__controls">
-                    <button class="control" data-target="meeting-track" data-direction="-1" aria-label="지난 미팅 보기">◀</button>
-                    <button class="control" data-target="meeting-track" data-direction="1" aria-label="다음 미팅 보기">▶</button>
+                    <button class="control" data-target="meeting-track" data-direction="-1" aria-label="지난 미팅 보기">
+                        <img class="control__icon" src="assets/icons/arrow-left.png" alt="" aria-hidden="true" />
+                    </button>
+                    <button class="control" data-target="meeting-track" data-direction="1" aria-label="다음 미팅 보기">
+                        <img class="control__icon" src="assets/icons/arrow-right.png" alt="" aria-hidden="true" />
+                    </button>
                 </div>
             </div>
             <div class="carousel" id="meeting-track"></div>
@@ -107,8 +125,12 @@
             <div class="panel__header">
                 <h2 class="section-title">Upcoming Task</h2>
                 <div class="carousel__controls">
-                    <button class="control" data-target="task-track" data-direction="-1" aria-label="이전 할 일 보기">◀</button>
-                    <button class="control" data-target="task-track" data-direction="1" aria-label="다음 할 일 보기">▶</button>
+                    <button class="control" data-target="task-track" data-direction="-1" aria-label="이전 할 일 보기">
+                        <img class="control__icon" src="assets/icons/arrow-left.png" alt="" aria-hidden="true" />
+                    </button>
+                    <button class="control" data-target="task-track" data-direction="1" aria-label="다음 할 일 보기">
+                        <img class="control__icon" src="assets/icons/arrow-right.png" alt="" aria-hidden="true" />
+                    </button>
                 </div>
             </div>
             <div class="carousel" id="task-track"></div>
