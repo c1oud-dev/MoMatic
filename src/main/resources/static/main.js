@@ -341,7 +341,6 @@ function renderTasks() {
             card.innerHTML = `
                 <div class="task-card__header">
                     <span class="status ${statusClass(task.status)}">${task.status}</span>
-                    <span class="meta">${remaining > 0 ? `${remaining} Days Left` : 'Due Today'}</span>
                 </div>
                 <div class="title">${task.title}</div>
                 <div class="meta">${task.meeting} · ${task.project}</div>
@@ -454,105 +453,140 @@ function sameDate(dateStr, dateObj) {
 
 // 오늘 회의/할 일 유무에 따라 카드 타이틀, 배지, 리스트 구성
 function renderTodayCard() {
+    const todayStr = state.today.toISOString().split('T')[0];
+
+    // reset
+    elements.todayContent.className = 'spotlight__content';
+    elements.todayContent.innerHTML = '';
+
+    // 로그인 전: 디자인 프리뷰용 더미 UI
     if (!state.loggedIn) {
         elements.todayTitle.textContent = '오늘 대표 회의 제목';
+
+        const previewItems = [
+            { text: 'to-do item', done: false, indent: false },
+            { text: 'to-do item', done: false, indent: false },
+            { text: 'Indented to-do item', done: false, indent: true }
+        ];
+
         elements.todayContent.innerHTML = `
-            <div class="spotlight__section">
-                <ul class="spotlight__list">
-                    <li>
-                        <div class="spotlight__pill">오늘 대표 회의록</div>
-                        <div>프로젝트명 · 시간대</div>
-                    </li>
-                </ul>
-            </div>
+            ${renderTodayMeetingBlock({ metaLine: '프로젝트명 · 시간대', duration: '' })}
             <div class="spotlight__divider"></div>
-            <div class="spotlight__section">
-                <div class="spotlight__row">
-                    <div class="spotlight__pill">오늘 할일</div>
-                    <div class="spotlight__pill">On Going</div>
-                </div>
-                <ul class="spotlight__list">
-                    <li><input type="checkbox" /> to-do item</li>
-                    <li><input type="checkbox" /> to-do item</li>
-                    <li><input type="checkbox" /> Indented to-do item</li>
-                </ul>
-            </div>
+            ${renderTodayTasksBlock(previewItems, 'On Going')}
         `;
         return;
     }
-    const todayStr = state.today.toISOString().split('T')[0];
     const todaysMeetings = state.meetings.filter((m) => m.date === todayStr);
-    const todaysTasks = state.tasks.filter((t) => t.dueDate === todayStr || !isTaskCompleted(t));
-    const hasMeetings = todaysMeetings.length > 0;
-    const hasTasks = todaysTasks.length > 0;
+    const todaysTasks = state.tasks.filter((t) => t.dueDate === todayStr);
 
-    elements.todayContent.innerHTML = '';
+    const meeting = todaysMeetings[0] || null;
+    const checklistItems = collectTodayChecklistItems(todaysTasks, 3);
 
-    if (!hasMeetings && !hasTasks) {
-        elements.todayTitle.textContent = '오늘은 일정이 없어요.';
-        elements.todayContent.innerHTML = '<p>휴식을 취하고 다음 스프린트를 준비해 볼까요?</p>';
+    // 1) 회의도, 할 일도 없는 날
+    if (!meeting && checklistItems.length === 0) {
+        elements.todayTitle.textContent = '';
+        elements.todayContent.classList.add('spotlight__content--center');
+        elements.todayContent.innerHTML = `<p class="today__empty">오늘은 회의와 일정이 없는 날이에요.</p>`;
         return;
     }
 
-    if (!hasMeetings && hasTasks) {
-        elements.todayTitle.textContent = '오늘 회의는 없어요.';
-        renderTaskList(todaysTasks, 'On Going');
+    // 2) 회의는 없고, 할 일만 있는 날
+    if (!meeting && checklistItems.length > 0) {
+        elements.todayTitle.textContent = '오늘 회의한게 없어요.';
+        elements.todayContent.innerHTML = `
+            <div class="spotlight__divider"></div>
+            ${renderTodayTasksBlock(checklistItems, 'On Going')}
+        `;
         return;
     }
 
-    if (hasMeetings && !hasTasks) {
-        elements.todayTitle.textContent = '오늘 회의만 있어요.';
-        renderMeetingSummary(todaysMeetings);
+    // 3) 회의만 있고, 할 일이 없는 날
+    if (meeting && checklistItems.length === 0) {
+        elements.todayTitle.textContent = meeting.title;
+        elements.todayContent.innerHTML = `
+            ${renderTodayMeetingBlock({ metaLine: `MoMatic · ${meeting.time}`, duration: meeting.duration })}
+            <div class="spotlight__divider"></div>
+            ${renderTodayTasksEmptyBlock()}
+        `;
         return;
     }
 
-    elements.todayTitle.textContent = '오늘 회의도 할 일도 있어요!';
-    renderMeetingSummary(todaysMeetings);
-    elements.todayContent.appendChild(createDivider());
-    renderTaskList(todaysTasks, 'On Going');
-    }
-
-// 오늘 회의 목록을 스포트라이트 섹션으로 렌더링
-function renderMeetingSummary(list) {
-    const box = document.createElement('div');
-    box.className = 'spotlight__section';
-    const ul = document.createElement('ul');
-    ul.className = 'spotlight__list';
-    list.forEach((m) => {
-        const li = document.createElement('li');
-        li.innerHTML = `<div class="spotlight__pill">오늘 대표 회의록</div><div>${m.title} · ${m.time}</div>`;
-        ul.appendChild(li);
-    });
-    box.appendChild(ul);
-    elements.todayContent.appendChild(box);
+    // 4) 회의도 있고, 할 일도 있는 날
+    elements.todayTitle.textContent = meeting.title;
+    elements.todayContent.innerHTML = `
+        ${renderTodayMeetingBlock({ metaLine: `MoMatic · ${meeting.time}`, duration: meeting.duration })}
+        <div class="spotlight__divider"></div>
+        ${renderTodayTasksBlock(checklistItems, 'On Going')}
+    `;
 }
 
-// 오늘 할 일 목록을 스포트라이트 섹션으로 렌더링
-function renderTaskList(list, statusLabel) {
-    const box = document.createElement('div');
-    box.className = 'spotlight__section';
-    const header = document.createElement('div');
-    header.className = 'spotlight__row';
-    header.innerHTML = `
-        <div class="spotlight__pill">오늘 할일</div>
-        <div class="spotlight__pill">${statusLabel || 'On Going'}</div>
-    `;
-    const ul = document.createElement('ul');
-    ul.className = 'spotlight__list';
-    list.forEach((task) => {
-        const li = document.createElement('li');
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.checked = isTaskCompleted(task);
-        const text = document.createElement('span');
-        text.textContent = task.title;
-        li.appendChild(checkbox);
-        li.appendChild(text);
-        ul.appendChild(li);
+// Today 카드용 체크리스트 항목을 모아 제한된 개수만 반환
+function collectTodayChecklistItems(tasks, limit = 3) {
+    const items = [];
+    tasks.forEach((task) => {
+        if (Array.isArray(task.checklist) && task.checklist.length) {
+            task.checklist.forEach((it) => {
+                items.push({ text: it.text, done: !!it.done });
+            });
+        } else {
+            items.push({ text: task.title, done: isTaskCompleted(task) });
+        }
     });
-    box.appendChild(header);
-    box.appendChild(ul);
-    elements.todayContent.appendChild(box);
+
+    return items.slice(0, limit).map((it) => ({
+        text: it.text,
+        done: it.done,
+        indent: /(^|\\b)Indented\\b/i.test(it.text)
+    }));
+}
+
+function renderTodayMeetingBlock({ metaLine, duration }) {
+    const durationHtml = duration ? `<span class="today__timeValue">${duration}</span>` : '';
+    return `
+        <div class="today__meeting">
+            <div class="today__meta">${metaLine || ''}</div>
+            <a class="today__summaryLink" href="meeting.html">MoMatic가 만든 요약 보여주기</a>
+            <div class="today__timeRow">
+                <span class="today__timeIcon">🕒</span>
+                <span class="today__timeLabel">회의 시간</span>
+                ${durationHtml}
+            </div>
+        </div>
+    `;
+}
+
+function renderTodayTasksBlock(items, statusLabel) {
+    const listHtml = (items || [])
+        .map((it) => `
+            <li class="today__checkItem${it.indent ? ' today__checkItem--indent' : ''}">
+                <input type="checkbox" ${it.done ? 'checked' : ''} />
+                <span>${it.text}</span>
+            </li>
+        `)
+        .join('');
+
+    return `
+        <div class="today__tasks">
+            <div class="today__tasksHeader">
+                <div class="today__sectionTitle">오늘 할 일</div>
+                <div class="spotlight__pill">${statusLabel || 'On Going'}</div>
+            </div>
+            <ul class="today__checklist">
+                ${listHtml}
+            </ul>
+        </div>
+    `;
+}
+
+function renderTodayTasksEmptyBlock() {
+    return `
+        <div class="today__tasks">
+            <div class="today__tasksHeader">
+                <div class="today__sectionTitle">오늘 할 일</div>
+            </div>
+            <p class="today__emptyTasks">오늘은 일정이 없어요.</p>
+        </div>
+    `;
 }
 
 function createDivider() {
