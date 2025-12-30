@@ -205,7 +205,7 @@ function getContributionColumns() {
     const cellSize = parseFloat(styles.getPropertyValue('--grid-cell-size')) || 16;
     const gap = parseFloat(styles.getPropertyValue('--grid-gap')) || 6;
     const width = elements.contributionGrid.clientWidth;
-    const columns = Math.max(7, Math.floor((width + gap) / (cellSize + gap)));
+    const columns = Math.min(52, Math.max(7, Math.floor((width + gap) / (cellSize + gap))));
     elements.contributionGrid.style.setProperty('--grid-columns', columns);
     return columns;
 }
@@ -274,14 +274,14 @@ function renderMeetings() {
                 <p class="meeting-card__summary">${meeting.summary}</p>
                 <div class="meeting-card__meta-group">
                     <div class="meeting-card__row">
-                        <span class="meta-icon meta-icon--actions" aria-hidden="true">✓</span>
+                        <img class="meta-icon meta-icon--actions" src="assets/icons/action-items.png" alt="Action Items" />
                         <div class="meeting-card__row-text">
                             <span class="meeting-card__label">Action Items</span>
                             <span class="meeting-card__value">${meeting.tasks.total}개 (${meeting.tasks.pending}개 미완료)</span>
                         </div>
                     </div>
                     <div class="meeting-card__row">
-                        <span class="meta-icon meta-icon--time" aria-hidden="true">★</span>
+                        <img class="meta-icon meta-icon--time" src="assets/icons/meeting-time.png" alt="회의 시간" />
                         <div class="meeting-card__row-text">
                             <span class="meeting-card__label">회의 시간</span>
                             <span class="meeting-card__value">${meeting.duration}</span>
