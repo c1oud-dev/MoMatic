@@ -118,7 +118,6 @@ const elements = {
     projectSection: document.getElementById('project-section'),
     projectAdd: document.getElementById('add-project'),
     running: {
-        count: document.getElementById('running-count'),
         percentage: document.getElementById('running-percentage'),
         completed: document.getElementById('running-completed'),
         total: document.getElementById('running-total'),
@@ -185,10 +184,9 @@ function renderRunningTask() {
     const runningTasks = totalTasks - completedTasks;
     const percentage = totalTasks === 0 ? 0 : Math.round((completedTasks / totalTasks) * 100);
 
-    elements.running.count.textContent = runningTasks;
     elements.running.percentage.textContent = `${percentage}%`;
-    elements.running.completed.textContent = `${completedTasks} Task`;
-    elements.running.total.textContent = `${totalTasks} Task`;
+    elements.running.completed.textContent = completedTasks;
+    elements.running.total.textContent = totalTasks;
     if (elements.running.ring) {
         elements.running.ring.style.background = `conic-gradient(#546fff ${percentage * 3.6}deg, #2d2d2d 0deg)`;
     }
@@ -201,9 +199,22 @@ function isTaskCompleted(task) {
 }
 
 // 완료 횟수를 기반으로 잔디 스타일 그리드 생성
+function getContributionColumns() {
+    if (!elements.contributionGrid) return 0;
+    const styles = getComputedStyle(elements.contributionGrid);
+    const cellSize = parseFloat(styles.getPropertyValue('--grid-cell-size')) || 16;
+    const gap = parseFloat(styles.getPropertyValue('--grid-gap')) || 6;
+    const width = elements.contributionGrid.clientWidth;
+    const columns = Math.max(7, Math.floor((width + gap) / (cellSize + gap)));
+    elements.contributionGrid.style.setProperty('--grid-columns', columns);
+    return columns;
+}
+
 function renderContributionGrid() {
     const cells = [];
-    for (let i = 62; i >= 0; i--) {
+    const columns = getContributionColumns();
+        const totalCells = Math.max(columns * 7, 0);
+        for (let i = totalCells - 1; i >= 0; i--) {
         const date = offsetDate(-i);
         const count = state.loggedIn ? state.contributions.get(date) || 0 : 0;
         cells.push({ date, count });
@@ -557,6 +568,7 @@ function bindEvents() {
     elements.prevMonth.addEventListener('click', () => changeMonth(-1));
     elements.nextMonth.addEventListener('click', () => changeMonth(1));
     attachCarousel();
+    window.addEventListener('resize', renderContributionGrid);
     if (elements.projectAdd) {
         elements.projectAdd.addEventListener('click', () => {
             window.location.href = 'project.html';
@@ -593,6 +605,10 @@ function bootstrap() {
     renderCalendar(state.today);
     renderTodayCard();
     bindEvents();
+    if (elements.contributionGrid && 'ResizeObserver' in window) {
+        const observer = new ResizeObserver(() => renderContributionGrid());
+        observer.observe(elements.contributionGrid);
+    }
 }
 
 bootstrap();

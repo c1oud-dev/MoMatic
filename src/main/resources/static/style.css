@@ -32,7 +32,7 @@ a { color: inherit; text-decoration: none; }
 /* 전체 3열 레이아웃(사이드바-메인-보조) */
 .app {
     display: grid;
-    grid-template-columns: 240px 1fr 320px;
+    grid-template-columns: 240px minmax(520px, 1fr) minmax(320px, 360px);
     gap: 20px;
     padding: 24px;
     min-height: 100vh;
@@ -164,7 +164,7 @@ a { color: inherit; text-decoration: none; }
     box-shadow: none;
 }
 .hero__top { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-.hero__eyebrow { color: var(--muted); margin: 6px 0 0; font-weight: 600; letter-spacing: -0.01em; }
+.hero__eyebrow { color: var(--muted); margin: 6px 0 12px; font-weight: 600; letter-spacing: -0.01em; }
 .hero__title { margin: 0; font-size: 24px; line-height: 1.35; font-weight: 800; letter-spacing: -0.03em; }
 .hero__actions { display: flex; gap: 14px; align-items: center; }
 .hero__profile { display: flex; align-items: center; gap: 10px; }
@@ -178,7 +178,7 @@ a { color: inherit; text-decoration: none; }
     color: var(--text);
 }
 
-.hero__metrics { display: grid; grid-template-columns: 220px 1fr; gap: 16px; align-items: stretch; }
+.hero__metrics { display: grid; grid-template-columns: minmax(220px, 260px) minmax(320px, 1fr); gap: 16px; align-items: stretch; }
 
 .ghost {
     background: #ffffff;
@@ -203,7 +203,7 @@ a { color: inherit; text-decoration: none; }
 }
 .card__header { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .card__meta { color: var(--muted); font-weight: 600; font-size: 12px; }
-.card__title { font-weight: 700; margin-top: 6px; font-size: 14px; }
+.card__title { font-weight: 700; margin-top: 6px; margin-bottom: 12px; font-size: 14px; }
 
 .pill {
     display: inline-flex;
@@ -227,13 +227,12 @@ a { color: inherit; text-decoration: none; }
     flex-direction: column;
     justify-content: space-between;
 }
-.running__content { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 18px; }
+.running__content { display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+.running__left { display: flex; align-items: center; gap: 18px; }
 .running__stat { text-align: center; }
+.running__total { text-align: center; }
 .running__number { font-size: 36px; font-weight: 800; }
 .running__label { color: #b4b4b4; font-size: 12px; }
-.running__summary { font-weight: 700; color: #e8eaee; font-size: 13px; }
-.running__progress { display: flex; align-items: center; gap: 14px; justify-content: flex-end; }
-.running__group { display: grid; gap: 4px; text-align: left; }
 .progress-ring {
     width: 66px;
     height: 66px;
@@ -262,8 +261,18 @@ a { color: inherit; text-decoration: none; }
 /* 완료 잔디 그리드 카드 */
 .grid-card { background: #ffffff; }
 .grid-card .legend { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 11px; }
-.grid { display: grid; grid-template-columns: repeat(23, 1fr); gap: 6px; margin-top: 16px; }
+.grid {
+    --grid-cell-size: 16px;
+    --grid-gap: 6px;
+    --grid-columns: 23;
+    display: grid;
+    grid-template-columns: repeat(var(--grid-columns), minmax(var(--grid-cell-size), 1fr));
+    grid-auto-rows: var(--grid-cell-size);
+    gap: var(--grid-gap);
+    margin-top: 20px;
+}
 .dot, .cell { width: 16px; height: 16px; border-radius: 4px; display: inline-block; background: #e8eaee; }
+.grid .cell { width: 100%; height: 100%; }
 .legend__label { font-weight: 600; }
 .legend__text { font-weight: 500; }
 .level-1 { background: #dceee7; }
@@ -374,6 +383,12 @@ a { color: inherit; text-decoration: none; }
 
 /* 오른쪽 보조 컬럼(캘린더/오늘 카드) */
 .rail { display: flex; flex-direction: column; gap: 20px; }
+
+@media (min-width: 1400px) {
+    .app {
+        grid-template-columns: 240px minmax(560px, 1fr) minmax(360px, 420px);
+    }
+}
 .calendar__header { display: flex; justify-content: space-between; align-items: center; }
 .calendar__title { font-weight: 700; }
 .calendar__nav { display: flex; align-items: center; gap: 8px; }
