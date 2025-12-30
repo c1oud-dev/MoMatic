@@ -15,7 +15,9 @@
     <!-- 브랜드, 메뉴, 프로젝트, 로그인 버튼을 담는 사이드바 -->
     <aside class="sidebar">
         <div class="brand">
-            <div class="brand__mark">Mo</div>
+            <div class="brand__mark">
+                <span class="brand__logo"></span>
+            </div>
             <div>
                 <div class="brand__name">MoMatic</div>
                 <div class="brand__tagline">회의 결과 & 일정 관리</div>
@@ -37,7 +39,11 @@
                 </div>
             </div>
         </nav>
-        <button class="nav__login" id="sidebar-login">Google로 로그인</button>
+        <div class="sidebar__auth">
+            <div class="sidebar__auth-title" id="sidebar-auth-title">Log In</div>
+            <button class="nav__login" id="sidebar-login">구글로 로그인</button>
+            <button class="nav__logout" id="sidebar-logout">Log out</button>
+        </div>
     </aside>
 
     <main class="main">
@@ -55,30 +61,29 @@
                 <div class="hero__actions">
                     <div class="hero__profile" id="hero-profile">
                         <div class="hero__avatar" id="hero-avatar">H</div>
-                        <div class="hero__bubble" id="hero-bubble">
-                            오늘 회의 결과를 정리하고 할 일을 완료해 보세요.
-                        </div>
                     </div>
-                    <button class="hero__login" id="login-toggle">Log In</button>
                 </div>
             </div>
             <div class="hero__metrics">
                 <div class="card running" id="running-task">
                     <div class="card__header">
                         <div class="pill">Running Task</div>
-                        <div class="card__meta" id="running-percentage">0%</div>
+                        <div class="card__meta">Task Progress</div>
                     </div>
                     <div class="running__content">
                         <div class="running__stat">
                             <div class="running__number" id="running-count">0</div>
-                            <div class="running__label">진행 중인 Task</div>
+                            <div class="running__label">Running</div>
                         </div>
-                        <div class="running__divider"></div>
-                        <div class="running__group">
-                            <div class="running__label">Completed</div>
-                            <div class="running__summary" id="running-completed">0개</div>
-                            <div class="running__label">전체 Task</div>
-                            <div class="running__summary" id="running-total">0개</div>
+                        <div class="running__progress">
+                            <div class="progress-ring" id="running-ring">
+                                <span id="running-percentage">0%</span>
+                            </div>
+                            <div class="running__group">
+                                <div class="running__summary" id="running-completed">0 Task</div>
+                                <div class="running__label">/</div>
+                                <div class="running__summary" id="running-total">0 Task</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -157,7 +162,7 @@
                     <p class="eyebrow">오늘 회의 & 할 일 (Today)</p>
                     <h3 id="today-title">오늘 일정이 없어요.</h3>
                 </div>
-                <div class="pill" id="today-status">-</div>
+                <button class="panel__menu" aria-label="오늘 카드 메뉴">•••</button>
             </div>
             <div class="spotlight__content" id="today-content"></div>
             <button class="primary" id="go-task">Go To Task</button>

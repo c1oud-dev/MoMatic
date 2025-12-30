@@ -108,12 +108,12 @@ function seedContributions() {
 // 자주 쓰는 DOM 요소 캐시
 const elements = {
     greeting: document.getElementById('greeting'),
-    loginToggle: document.getElementById('login-toggle'),
     sidebarLogin: document.getElementById('sidebar-login'),
+    sidebarLogout: document.getElementById('sidebar-logout'),
+    sidebarAuthTitle: document.getElementById('sidebar-auth-title'),
 
     heroProfile: document.getElementById('hero-profile'),
     heroAvatar: document.getElementById('hero-avatar'),
-    heroBubble: document.getElementById('hero-bubble'),
 
     projectSection: document.getElementById('project-section'),
     projectAdd: document.getElementById('add-project'),
@@ -121,7 +121,8 @@ const elements = {
         count: document.getElementById('running-count'),
         percentage: document.getElementById('running-percentage'),
         completed: document.getElementById('running-completed'),
-        total: document.getElementById('running-total')
+        total: document.getElementById('running-total'),
+        ring: document.getElementById('running-ring')
     },
     contributionGrid: document.getElementById('contribution-grid'),
     meetingTrack: document.getElementById('meeting-track'),
@@ -133,7 +134,6 @@ const elements = {
     prevMonth: document.getElementById('prev-month'),
     nextMonth: document.getElementById('next-month'),
     todayTitle: document.getElementById('today-title'),
-    todayStatus: document.getElementById('today-status'),
     todayContent: document.getElementById('today-content')
 };
 
@@ -143,35 +143,25 @@ function updateAuthUI() {
         // 상단 타이틀
         elements.greeting.textContent = `Hi, ${state.userName}`;
 
-        // 오른쪽 버튼/프로필 토글
-        elements.loginToggle.textContent = 'Log Out';
-        elements.loginToggle.style.display = 'none';          // 로그인 후 버튼 숨김
-
-        // 프로필 / 아바타 / 말풍선 노출
-        if (elements.heroProfile) {
-            elements.heroProfile.style.display = 'flex';
-        }
+        // 프로필 / 아바타 노출
+        elements.heroProfile.style.display = 'flex';
         if (elements.heroAvatar) {
             elements.heroAvatar.textContent = state.userName.charAt(0).toUpperCase();
         }
-        if (elements.heroBubble) {
-            elements.heroBubble.textContent = '오늘 회의 정리와 할 일을 한 번에 관리 중이에요.';
-        }
+
+        elements.sidebarAuthTitle.textContent = 'Log out';
+        elements.sidebarLogin.style.display = 'none';
+        elements.sidebarLogout.style.display = 'inline-flex';
     } else {
         // 상단 타이틀
         elements.greeting.textContent = '로그인 해주세요.';
 
-        // 버튼 다시 보이게
-        elements.loginToggle.textContent = 'Log In';
-        elements.loginToggle.style.display = 'inline-flex';
+        elements.heroProfile.style.display = 'flex';
+        elements.heroAvatar.textContent = 'H';
 
-        // 프로필 영역 숨김
-        if (elements.heroProfile) {
-            elements.heroProfile.style.display = 'none';
-        }
-        if (elements.heroBubble) {
-            elements.heroBubble.textContent = 'Google로 로그인하고 회의 결과를 잔디로 남겨보세요.';
-        }
+        elements.sidebarAuthTitle.textContent = 'Log In';
+        elements.sidebarLogin.style.display = 'inline-flex';
+        elements.sidebarLogout.style.display = 'none';
     }
 }
 
@@ -189,15 +179,19 @@ function renderProjects() {
 
 // 전체/완료/진행 중 태스크 통계 카드 갱신
 function renderRunningTask() {
-    const totalTasks = state.tasks.length;
-    const completedTasks = state.tasks.filter((task) => isTaskCompleted(task)).length;
+    const tasks = state.loggedIn ? state.tasks : [];
+    const totalTasks = tasks.length;
+    const completedTasks = tasks.filter((task) => isTaskCompleted(task)).length;
     const runningTasks = totalTasks - completedTasks;
     const percentage = totalTasks === 0 ? 0 : Math.round((completedTasks / totalTasks) * 100);
 
     elements.running.count.textContent = runningTasks;
     elements.running.percentage.textContent = `${percentage}%`;
-    elements.running.completed.textContent = `${completedTasks}개`;
-    elements.running.total.textContent = `${totalTasks}개`;
+    elements.running.completed.textContent = `${completedTasks} Task`;
+    elements.running.total.textContent = `${totalTasks} Task`;
+    if (elements.running.ring) {
+        elements.running.ring.style.background = `conic-gradient(#546fff ${percentage * 3.6}deg, #2d2d2d 0deg)`;
+    }
 }
 
 // 체크리스트가 모두 완료되었는지 또는 상태가 완료인지 판단
@@ -211,23 +205,53 @@ function renderContributionGrid() {
     const cells = [];
     for (let i = 62; i >= 0; i--) {
         const date = offsetDate(-i);
-        const count = state.contributions.get(date) || 0;
+        const count = state.loggedIn ? state.contributions.get(date) || 0 : 0;
         cells.push({ date, count });
     }
     elements.contributionGrid.innerHTML = '';
-        cells.forEach(({ date, count }) => {
-            const cell = document.createElement('div');
-            cell.className = `cell level-${Math.min(4, count)}`;
-            cell.title = `${date} · ${count} task`;
-            elements.contributionGrid.appendChild(cell);
-        });
-    }
+    cells.forEach(({ date, count }) => {
+        const cell = document.createElement('div');
+        cell.className = `cell level-${Math.min(4, count)}`;
+        cell.title = `${date} · ${count} task`;
+        elements.contributionGrid.appendChild(cell);
+    });
+}
 
 // 최근 회의 정보를 카드 캐러셀로 렌더링
 function renderMeetings() {
     elements.meetingTrack.innerHTML = '';
-    state.meetings
+    const meetings = state.loggedIn ? state.meetings : [];
+        const renderList = meetings.length > 0
+            ? meetings
+            : [
+                {
+                    title: '회의 제목',
+                    date: '2025-09-28',
+                    time: '10:00am - 11:00am',
+                    summary: 'MoMatic로 간단 요약을 확인할 수 있어요.',
+                    tasks: { total: 5, pending: 3 },
+                    duration: '45분'
+                },
+                {
+                    title: '회의 제목',
+                    date: '2025-09-24',
+                    time: '1:00pm - 2:00pm',
+                    summary: '회의 결과를 놓치지 않도록 정리해요.',
+                    tasks: { total: 5, pending: 3 },
+                    duration: '1Hour'
+                },
+                {
+                    title: '회의 제목',
+                    date: '2025-09-20',
+                    time: '3:00pm - 4:00pm',
+                    summary: '오늘 회의록을 빠르게 확인할 수 있어요.',
+                    tasks: { total: 5, pending: 3 },
+                    duration: '45분'
+                }
+            ];
+        renderList
         .sort((a, b) => new Date(b.date) - new Date(a.date))
+        .slice(0, 3)
         .forEach((meeting) => {
             const card = document.createElement('div');
             card.className = 'meeting-card';
@@ -272,8 +296,32 @@ function statusClass(status) {
 // 예정된 할 일 목록을 카드와 체크리스트로 렌더링
 function renderTasks() {
     elements.taskTrack.innerHTML = '';
-    state.tasks
+        const tasks = state.loggedIn ? state.tasks : [];
+        const renderList = tasks.length > 0
+            ? tasks
+            : [
+                {
+                    id: 'placeholder-1',
+                    title: 'Task 제목(무엇을 할지)',
+                    project: 'Project #1',
+                    meeting: '어떤 소회의 / 프로젝트에서 나온 Task',
+                    status: 'Completed',
+                    dueDate: offsetDate(3),
+                    checklist: [{ text: 'to-do item', done: false }]
+                },
+                {
+                    id: 'placeholder-2',
+                    title: 'Task 제목(무엇을 할지)',
+                    project: 'Project #2',
+                    meeting: '어떤 소회의 / 프로젝트에서 나온 Task',
+                    status: 'On Going',
+                    dueDate: offsetDate(7),
+                    checklist: [{ text: 'to-do item', done: false }]
+                }
+            ];
+        renderList
         .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
+        .slice(0, 2)
         .forEach((task) => {
             const card = document.createElement('div');
             card.className = 'task-card';
@@ -287,12 +335,12 @@ function renderTasks() {
                 <div class="title">${task.title}</div>
                 <div class="meta">${task.meeting} · ${task.project}</div>
                 <div class="checklist" id="checklist-${task.id}"></div>
-                <div class="deadline">마감: ${task.dueDate}</div>
+                <div class="deadline">${remaining > 0 ? `${remaining} Days Left` : 'Due Today'}</div>
             `;
             elements.taskTrack.appendChild(card);
 
             const checklistEl = card.querySelector(`#checklist-${task.id}`);
-            task.checklist.forEach((item, idx) => {
+            task.checklist.slice(0, 2).forEach((item, idx) => {
                 const id = `task-${task.id}-item-${idx}`;
                 const label = document.createElement('label');
                 const checkbox = document.createElement('input');
@@ -334,10 +382,10 @@ function toggleChecklist(taskId, itemIdx, checked) {
     }
 
     renderRunningTask();
-        renderContributionGrid();
-        renderCalendar(currentMonth);
-        renderTodayCard();
-        renderTasks();
+    renderContributionGrid();
+    renderCalendar(currentMonth);
+    renderTodayCard();
+    renderTasks();
 }
 
 // 좌우 이동 버튼에 스크롤 이벤트 연결
@@ -395,6 +443,32 @@ function sameDate(dateStr, dateObj) {
 
 // 오늘 회의/할 일 유무에 따라 카드 타이틀, 배지, 리스트 구성
 function renderTodayCard() {
+    if (!state.loggedIn) {
+        elements.todayTitle.textContent = '오늘 대표 회의 제목';
+        elements.todayContent.innerHTML = `
+            <div class="spotlight__section">
+                <ul class="spotlight__list">
+                    <li>
+                        <div class="spotlight__pill">오늘 대표 회의록</div>
+                        <div>프로젝트명 · 시간대</div>
+                    </li>
+                </ul>
+            </div>
+            <div class="spotlight__divider"></div>
+            <div class="spotlight__section">
+                <div class="spotlight__row">
+                    <div class="spotlight__pill">오늘 할일</div>
+                    <div class="spotlight__pill">On Going</div>
+                </div>
+                <ul class="spotlight__list">
+                    <li><input type="checkbox" /> to-do item</li>
+                    <li><input type="checkbox" /> to-do item</li>
+                    <li><input type="checkbox" /> Indented to-do item</li>
+                </ul>
+            </div>
+        `;
+        return;
+    }
     const todayStr = state.today.toISOString().split('T')[0];
     const todaysMeetings = state.meetings.filter((m) => m.date === todayStr);
     const todaysTasks = state.tasks.filter((t) => t.dueDate === todayStr || !isTaskCompleted(t));
@@ -405,29 +479,26 @@ function renderTodayCard() {
 
     if (!hasMeetings && !hasTasks) {
         elements.todayTitle.textContent = '오늘은 일정이 없어요.';
-        elements.todayStatus.textContent = '-';
         elements.todayContent.innerHTML = '<p>휴식을 취하고 다음 스프린트를 준비해 볼까요?</p>';
         return;
     }
 
     if (!hasMeetings && hasTasks) {
         elements.todayTitle.textContent = '오늘 회의는 없어요.';
-        elements.todayStatus.textContent = '할 일 집중';
-        renderTaskList(todaysTasks);
+        renderTaskList(todaysTasks, 'On Going');
         return;
     }
 
     if (hasMeetings && !hasTasks) {
         elements.todayTitle.textContent = '오늘 회의만 있어요.';
-        elements.todayStatus.textContent = '회의 집중';
         renderMeetingSummary(todaysMeetings);
         return;
     }
 
     elements.todayTitle.textContent = '오늘 회의도 할 일도 있어요!';
-        elements.todayStatus.textContent = '바쁜 하루';
-        renderMeetingSummary(todaysMeetings);
-        renderTaskList(todaysTasks);
+    renderMeetingSummary(todaysMeetings);
+    elements.todayContent.appendChild(createDivider());
+    renderTaskList(todaysTasks, 'On Going');
     }
 
 // 오늘 회의 목록을 스포트라이트 섹션으로 렌더링
@@ -446,24 +517,43 @@ function renderMeetingSummary(list) {
 }
 
 // 오늘 할 일 목록을 스포트라이트 섹션으로 렌더링
-function renderTaskList(list) {
+function renderTaskList(list, statusLabel) {
     const box = document.createElement('div');
     box.className = 'spotlight__section';
+    const header = document.createElement('div');
+    header.className = 'spotlight__row';
+    header.innerHTML = `
+        <div class="spotlight__pill">오늘 할일</div>
+        <div class="spotlight__pill">${statusLabel || 'On Going'}</div>
+    `;
     const ul = document.createElement('ul');
     ul.className = 'spotlight__list';
     list.forEach((task) => {
         const li = document.createElement('li');
-        li.innerHTML = `<span class="spotlight__pill">${task.status}</span> ${task.title}`;
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = isTaskCompleted(task);
+        const text = document.createElement('span');
+        text.textContent = task.title;
+        li.appendChild(checkbox);
+        li.appendChild(text);
         ul.appendChild(li);
     });
+    box.appendChild(header);
     box.appendChild(ul);
     elements.todayContent.appendChild(box);
 }
 
+function createDivider() {
+    const divider = document.createElement('div');
+    divider.className = 'spotlight__divider';
+    return divider;
+}
+
 // 버튼/캐러셀 등 모든 이벤트 리스너 설정
 function bindEvents() {
-    elements.loginToggle.addEventListener('click', toggleLogin);
-    elements.sidebarLogin.addEventListener('click', redirectToGoogleLogin);
+    elements.sidebarLogin.addEventListener('click', toggleLogin);
+    elements.sidebarLogout.addEventListener('click', toggleLogin);
     elements.prevMonth.addEventListener('click', () => changeMonth(-1));
     elements.nextMonth.addEventListener('click', () => changeMonth(1));
     attachCarousel();
@@ -478,11 +568,11 @@ function bindEvents() {
 function toggleLogin() {
     state.loggedIn = !state.loggedIn;
     updateAuthUI();
-}
-
-// Google 로그인 페이지로 이동
-function redirectToGoogleLogin() {
-    window.location.href = 'https://accounts.google.com';
+    renderRunningTask();
+    renderContributionGrid();
+    renderMeetings();
+    renderTasks();
+    renderTodayCard();
 }
 
 // 캘린더 월 이동 후 재렌더링
