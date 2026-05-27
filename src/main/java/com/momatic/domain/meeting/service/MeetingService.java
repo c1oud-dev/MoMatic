@@ -8,8 +8,9 @@ import com.momatic.domain.meeting.repository.MeetingRepository;
 import com.momatic.domain.transcript.repository.TranscriptRepository;
 import com.momatic.global.error.CustomException;
 import com.momatic.global.error.ErrorCode;
-import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
+
+import lombok.RequiredArgsConstructor;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,21 +19,11 @@ import org.springframework.transaction.annotation.Transactional;
  * 회의 도메인 서비스입니다.
  */
 @Service
+@RequiredArgsConstructor
 public class MeetingService {
     private final MeetingRepository meetingRepository;
     private final ActionItemRepository actionItemRepository;
     private final TranscriptRepository transcriptRepository;
-
-    /**
-     * 생성자입니다.
-     */
-    public MeetingService(final MeetingRepository meetingRepository,
-                          final ActionItemRepository actionItemRepository,
-                          final TranscriptRepository transcriptRepository) {
-        this.meetingRepository = meetingRepository;
-        this.actionItemRepository = actionItemRepository;
-        this.transcriptRepository = transcriptRepository;
-    }
 
     /**
      * 전체 회의를 조회합니다.
@@ -72,6 +63,11 @@ public class MeetingService {
 
     /**
      * 회의 및 부가 데이터를 저장합니다.
+     *
+     * @param meeting 저장할 회의 엔티티
+     * @param rawTranscript 원문 전사 텍스트
+     * @param actionItems 저장할 액션 아이템 목록
+     * @return 저장된 회의 엔티티
      */
     @Transactional
     public Meeting saveWithDetails(final Meeting meeting,
