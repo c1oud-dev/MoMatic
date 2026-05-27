@@ -1,25 +1,30 @@
 package com.momatic.domain.meeting.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.momatic.domain.team.entity.Team;
 import com.momatic.domain.transcript.entity.Transcript;
 import com.momatic.domain.user.entity.User;
 import com.momatic.domain.action.entity.ActionItem;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/** 회의 정보를 표현하는 엔티티입니다. */
 @Entity
-@Table(name = "meeting")
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+@Table(name = "meetings")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Meeting {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private String title;
 
     private LocalDateTime startedAt;
@@ -27,16 +32,12 @@ public class Meeting {
     private LocalDateTime endedAt;
 
     @Lob
-    private String summary;   // GPT 요약 저장
+    private String summary;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "team_id")
-    @JsonIgnoreProperties({"members", "meetings"})
+    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "team_id", nullable = false)
     private Team team;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "owner_id")
-    @JsonIgnoreProperties({"team"})
+    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "owner_id", nullable = false)
     private User owner;
 
     @OneToMany(mappedBy = "meeting", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -44,74 +45,4 @@ public class Meeting {
 
     @OneToMany(mappedBy = "meeting", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Transcript> transcripts = new ArrayList<>();
-
-    public Meeting() {
-    }
-
-    public Meeting(String title, LocalDateTime startedAt, LocalDateTime endedAt, String summary) {
-        this.title = title;
-        this.startedAt = startedAt;
-        this.endedAt = endedAt;
-        this.summary = summary;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public LocalDateTime getStartedAt() {
-        return startedAt;
-    }
-
-    public void setStartedAt(LocalDateTime startedAt) {
-        this.startedAt = startedAt;
-    }
-
-    public LocalDateTime getEndedAt() {
-        return endedAt;
-    }
-
-    public void setEndedAt(LocalDateTime endedAt) {
-        this.endedAt = endedAt;
-    }
-
-    public String getSummary() {
-        return summary;
-    }
-
-    public void setSummary(String summary) {
-        this.summary = summary;
-    }
-
-    public Team getTeam() {
-        return team;
-    }
-
-    public void setTeam(Team team) {
-        this.team = team;
-    }
-
-    public User getOwner() {
-        return owner;
-    }
-
-    public void setOwner(User owner) {
-        this.owner = owner;
-    }
-
-    public List<ActionItem> getActionItems() {
-        return actionItems;
-    }
-
-    public List<Transcript> getTranscripts() {
-        return transcripts;
-    }
 }

@@ -3,10 +3,15 @@ package com.momatic.domain.usage.entity;
 import com.momatic.domain.user.entity.User;
 import com.momatic.global.entity.BaseEntity;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 /** 사용자 사용량 기록을 표현하는 엔티티입니다. */
 @Entity
 @Table(name = "usage_records")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class UsageRecord extends BaseEntity {
 
     @Id

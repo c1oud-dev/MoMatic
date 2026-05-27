@@ -3,10 +3,15 @@ package com.momatic.domain.transcript.entity;
 import com.momatic.domain.meeting.entity.Meeting;
 import com.momatic.global.entity.BaseEntity;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 /** 회의 발화 전사 정보를 표현하는 엔티티입니다. */
 @Entity
 @Table(name = "transcripts")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Transcript extends BaseEntity {
 
     @Id

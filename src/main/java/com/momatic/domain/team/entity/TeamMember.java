@@ -3,10 +3,15 @@ package com.momatic.domain.team.entity;
 import com.momatic.domain.user.entity.User;
 import com.momatic.global.entity.BaseEntity;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 /** 팀 소속 구성원 정보를 표현하는 엔티티입니다. */
 @Entity
 @Table(name = "team_members")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class TeamMember extends BaseEntity {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -19,6 +24,4 @@ public class TeamMember extends BaseEntity {
 
     @Column(nullable = false)
     private String role;
-
-    protected TeamMember() {}
 }

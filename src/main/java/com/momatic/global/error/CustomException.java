@@ -1,7 +1,5 @@
 package com.momatic.global.error;
 
-import org.flywaydb.core.api.ErrorCode;
-
 /**
  * 서비스 공통 커스텀 예외입니다.
  */

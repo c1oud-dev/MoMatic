@@ -4,6 +4,9 @@ import com.momatic.domain.subscription.entity.Subscription;
 import com.momatic.domain.team.entity.TeamMember;
 import com.momatic.global.entity.BaseEntity;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,6 +16,8 @@ import java.util.List;
  */
 @Entity
 @Table(name = "users")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class User extends BaseEntity {
 
     @Id
@@ -40,8 +45,7 @@ public class User extends BaseEntity {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Subscription> subscriptions = new ArrayList<>();
 
-    protected User() {}
-
+    /** 사용자 엔티티를 생성합니다. */
     public static User create(final String email, final String name, final String role,
                               final String provider, final String providerId) {
         User user = new User();
@@ -56,20 +60,5 @@ public class User extends BaseEntity {
     public void updateProfile(final String name, final String role) {
         this.name = name;
         this.role = role;
-    }
-    public Long getId() {
-        return id;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getRole() {
-        return role;
     }
 }
