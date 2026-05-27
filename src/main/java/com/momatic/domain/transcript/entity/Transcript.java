@@ -30,4 +30,34 @@ public class Transcript extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "meeting_id", nullable = false)
     private Meeting meeting;
+
+    /**
+     * 전사 엔티티 생성 정적 팩토리 메서드입니다.
+     *
+     * @param speaker 화자
+     * @param content 내용
+     * @param startSec 시작 초
+     * @param endSec 종료 초
+     * @return 생성된 전사 엔티티
+     */
+    public static Transcript create(final String speaker,
+                                    final String content,
+                                    final Double startSec,
+                                    final Double endSec) {
+        final Transcript transcript = new Transcript();
+        transcript.speaker = speaker;
+        transcript.content = content;
+        transcript.startSec = startSec;
+        transcript.endSec = endSec;
+        return transcript;
+    }
+
+    /**
+     * 전사의 회의를 설정합니다.
+     *
+     * @param meeting 회의
+     */
+    public void assignMeeting(final Meeting meeting) {
+        this.meeting = meeting;
+    }
 }

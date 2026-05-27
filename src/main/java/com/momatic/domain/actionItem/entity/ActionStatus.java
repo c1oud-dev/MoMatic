@@ -1,4 +1,4 @@
-package com.momatic.domain.action.entity;
+package com.momatic.domain.actionItem.entity;
 
 public enum ActionStatus {
     TODO,

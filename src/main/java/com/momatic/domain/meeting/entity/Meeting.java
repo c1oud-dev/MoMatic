@@ -3,7 +3,7 @@ package com.momatic.domain.meeting.entity;
 import com.momatic.domain.team.entity.Team;
 import com.momatic.domain.transcript.entity.Transcript;
 import com.momatic.domain.user.entity.User;
-import com.momatic.domain.action.entity.ActionItem;
+import com.momatic.domain.actionItem.entity.ActionItem;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;

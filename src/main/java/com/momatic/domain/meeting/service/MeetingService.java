@@ -1,73 +1,105 @@
 package com.momatic.domain.meeting.service;
 
-import com.momatic.domain.action.entity.ActionItem;
+import com.momatic.domain.actionItem.entity.ActionItem;
 import com.momatic.domain.meeting.entity.Meeting;
 import com.momatic.domain.transcript.entity.Transcript;
-import com.momatic.domain.action.repository.ActionItemRepository;
+import com.momatic.domain.actionItem.repository.ActionItemRepository;
 import com.momatic.domain.meeting.repository.MeetingRepository;
 import com.momatic.domain.transcript.repository.TranscriptRepository;
+import com.momatic.global.error.CustomException;
+import com.momatic.global.error.ErrorCode;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * 회의 도메인 서비스입니다.
+ */
 @Service
 public class MeetingService {
     private final MeetingRepository meetingRepository;
     private final ActionItemRepository actionItemRepository;
     private final TranscriptRepository transcriptRepository;
 
-    public MeetingService(MeetingRepository meetingRepository,
-                          ActionItemRepository actionItemRepository,
-                          TranscriptRepository transcriptRepository) {
+    /**
+     * 생성자입니다.
+     */
+    public MeetingService(final MeetingRepository meetingRepository,
+                          final ActionItemRepository actionItemRepository,
+                          final TranscriptRepository transcriptRepository) {
         this.meetingRepository = meetingRepository;
         this.actionItemRepository = actionItemRepository;
         this.transcriptRepository = transcriptRepository;
     }
 
+    /**
+     * 전체 회의를 조회합니다.
+     *
+     * @return 회의 목록
+     */
     @Transactional(readOnly = true)
     public List<Meeting> findAllMeetings() {
         return meetingRepository.findAll();
     }
 
-
+    /**
+     * 회의 단건을 조회합니다.
+     *
+     * @param id 회의 ID
+     * @return 조회된 회의
+     */
     @Transactional(readOnly = true)
-    public Meeting findMeeting(Long id) {
+    public Meeting findMeeting(final Long id) {
         return meetingRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Meeting not found: " + id));
+                .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REQUEST));
     }
 
+    /**
+     * 회의 상세를 조회합니다.
+     *
+     * @param meetingId 회의 ID
+     * @return 회의 상세
+     */
     @Transactional(readOnly = true)
-    public List<ActionItem> findActionItems(Long meetingId) {
-        return actionItemRepository.findByMeetingId(meetingId);
+    public MeetingDetail getMeetingDetail(final Long meetingId) {
+        final Meeting meeting = findMeeting(meetingId);
+        final List<ActionItem> actionItems = actionItemRepository.findByMeetingId(meetingId);
+        final List<Transcript> transcripts = transcriptRepository.findByMeetingId(meetingId);
+        return new MeetingDetail(meeting, actionItems, transcripts);
     }
 
-    @Transactional(readOnly = true)
-    public List<Transcript> findTranscripts(Long meetingId) {
-        return transcriptRepository.findByMeetingId(meetingId);
-    }
-
+    /**
+     * 회의 및 부가 데이터를 저장합니다.
+     */
     @Transactional
-    public Meeting saveWithDetails(Meeting meeting,
-                                   @Nullable String rawTranscript,
-                                   List<ActionItem> actionItems) {
-        Meeting savedMeeting = meetingRepository.save(meeting);
+    public Meeting saveWithDetails(final Meeting meeting,
+                                   @Nullable final String rawTranscript,
+                                   final List<ActionItem> actionItems) {
+        final Meeting savedMeeting = meetingRepository.save(meeting);
 
         for (ActionItem item : actionItems) {
-            item.setMeeting(savedMeeting);
+            item.assignMeeting(savedMeeting);
             actionItemRepository.save(item);
         }
         if (rawTranscript != null && !rawTranscript.isBlank()) {
-            Transcript transcript = new Transcript(
+            final Transcript transcript = Transcript.create(
                     "Auto",
                     rawTranscript,
                     0d,
-                    (double) rawTranscript.length());
-            transcript.setMeeting(savedMeeting);
+                    (double) rawTranscript.length()
+            );
+            transcript.assignMeeting(savedMeeting);
             transcriptRepository.save(transcript);
         }
 
         return savedMeeting;
+    }
+
+    /**
+     * 회의 상세 조회 결과입니다.
+     */
+    public record MeetingDetail(Meeting meeting, List<ActionItem> actionItems, List<Transcript> transcripts) {
     }
 }

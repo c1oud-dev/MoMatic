@@ -1,6 +1,6 @@
-package com.momatic.domain.action.repository;
+package com.momatic.domain.actionItem.repository;
 
-import com.momatic.domain.action.entity.ActionItem;
+import com.momatic.domain.actionItem.entity.ActionItem;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

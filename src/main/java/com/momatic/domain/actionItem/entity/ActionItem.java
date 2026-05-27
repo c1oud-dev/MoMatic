@@ -1,4 +1,4 @@
-package com.momatic.domain.action.entity;
+package com.momatic.domain.actionItem.entity;
 
 import com.momatic.domain.meeting.entity.Meeting;
 import com.momatic.global.entity.BaseEntity;
@@ -33,4 +33,13 @@ public class ActionItem extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "meeting_id", nullable = false)
     private Meeting meeting;
+
+    /**
+     * 액션 아이템의 회의를 설정합니다.
+     *
+     * @param meeting 회의
+     */
+    public void assignMeeting(final Meeting meeting) {
+        this.meeting = meeting;
+    }
 }
