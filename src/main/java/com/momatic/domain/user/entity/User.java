@@ -1,37 +1,62 @@
 package com.momatic.domain.user.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.momatic.domain.team.entity.Team;
+import com.momatic.domain.subscription.entity.Subscription;
+import com.momatic.domain.team.entity.TeamMember;
+import com.momatic.global.entity.BaseEntity;
 import jakarta.persistence.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * 서비스 사용자 정보를 표현하는 엔티티입니다.
+ */
 @Entity
 @Table(name = "users")
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-public class User {
+public class User extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false, unique = true)
     private String email;
 
+    @Column(nullable = false)
     private String name;
 
-    private String roles;
+    @Column(nullable = false)
+    private String role;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "team_id")
-    private Team team;
+    @Column(nullable = false)
+    private String provider;
 
-    public User() {
+    @Column(nullable = false)
+    private String providerId;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<TeamMember> teamMembers = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Subscription> subscriptions = new ArrayList<>();
+
+    protected User() {}
+
+    public static User create(final String email, final String name, final String role,
+                              final String provider, final String providerId) {
+        User user = new User();
+        user.email = email;
+        user.name = name;
+        user.role = role;
+        user.provider = provider;
+        user.providerId = providerId;
+        return user;
     }
 
-    public User(String email, String name, String roles) {
-        this.email = email;
+    public void updateProfile(final String name, final String role) {
         this.name = name;
-        this.roles = roles;
+        this.role = role;
     }
-
     public Long getId() {
         return id;
     }
@@ -40,31 +65,11 @@ public class User {
         return email;
     }
 
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
     public String getName() {
         return name;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getRoles() {
-        return roles;
-    }
-
-    public void setRoles(String roles) {
-        this.roles = roles;
-    }
-
-    public Team getTeam() {
-        return team;
-    }
-
-    public void setTeam(Team team) {
-        this.team = team;
+    public String getRole() {
+        return role;
     }
 }

@@ -38,3 +38,6 @@ out/
 
 # Ignore local SSL keystore
 /src/main/resources/keystore.p12
+.env
+*.env
+src/main/resources/*.p12

@@ -1,83 +1,31 @@
 package com.momatic.domain.action.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.momatic.domain.meeting.entity.Meeting;
+import com.momatic.global.entity.BaseEntity;
 import jakarta.persistence.*;
 
+import java.time.LocalDate;
+
+/** 회의 액션 아이템을 표현하는 엔티티입니다. */
 @Entity
-@Table(name = "action_item")
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-public class ActionItem {
+@Table(name = "action_items")
+public class ActionItem extends BaseEntity {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private String task;
 
-    private String assignee;
+    private LocalDate dueDate;
 
-    private String dueDate;
+    private String assignee;
 
     @Enumerated(EnumType.STRING)
     private ActionStatus status = ActionStatus.TODO;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "meeting_id")
-    @JsonIgnore
+    @JoinColumn(name = "meeting_id", nullable = false)
     private Meeting meeting;
-
-    public ActionItem() {
-    }
-
-    public ActionItem(String task, String assignee, String dueDate, ActionStatus status) {
-        this.task = task;
-        this.assignee = assignee;
-        this.dueDate = dueDate;
-        this.status = status;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public String getTask() {
-        return task;
-    }
-
-    public void setTask(String task) {
-        this.task = task;
-    }
-
-    public String getAssignee() {
-        return assignee;
-    }
-
-    public void setAssignee(String assignee) {
-        this.assignee = assignee;
-    }
-
-    public String getDueDate() {
-        return dueDate;
-    }
-
-    public void setDueDate(String dueDate) {
-        this.dueDate = dueDate;
-    }
-
-    public ActionStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(ActionStatus status) {
-        this.status = status;
-    }
-
-    public Meeting getMeeting() {
-        return meeting;
-    }
-
-    public void setMeeting(Meeting meeting) {
-        this.meeting = meeting;
-    }
 }
