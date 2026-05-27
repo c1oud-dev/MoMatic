@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html
+        xmlns:th="http://www.thymeleaf.org"
+        xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+>
+<head>
+    <meta charset="UTF-8" />
+    <title>Header Fragment</title>
+</head>
+<body>
+<!--
+    Header navigation fragment.
+    - Displays common navigation links.
+    - Branches UI based on authentication state.
+-->
+<header th:fragment="header" class="site-header">
+    <nav class="site-nav" aria-label="Global Navigation">
+        <a th:href="@{/}" class="nav-item">Home</a>
+        <a th:href="@{/meeting}" class="nav-item">Meetings</a>
+        <a th:href="@{/team}" class="nav-item">Teams</a>
+        <a th:href="@{/user/profile}" class="nav-item">Profile</a>
+
+        <span class="nav-auth" style="margin-left: auto;">
+            <th:block sec:authorize="isAuthenticated()">
+                <span class="user-name" th:text="${#authentication.name}">User</span>
+                <a th:href="@{/logout}" class="nav-item">Logout</a>
+            </th:block>
+            <th:block sec:authorize="!isAuthenticated()">
+                <a th:href="@{/oauth2/authorization/google}" class="nav-item">Login</a>
+            </th:block>
+        </span>
+    </nav>
+</header>
+</body>
+</html>

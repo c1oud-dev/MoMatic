@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html
+        xmlns:th="http://www.thymeleaf.org"
+>
+<head>
+    <meta charset="UTF-8" />
+    <title>Footer Fragment</title>
+</head>
+<body>
+<!-- Common footer fragment. -->
+<footer th:fragment="footer" class="site-footer">
+    <p>&copy; <span th:text="${#dates.year(#dates.createNow())}">2026</span> MoMatic. All rights reserved.</p>
+</footer>
+</body>
+</html>

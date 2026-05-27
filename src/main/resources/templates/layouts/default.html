@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html
+        xmlns:th="http://www.thymeleaf.org"
+        xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+>
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title th:text="${pageTitle} ?: 'MoMatic'">MoMatic</title>
+</head>
+<body>
+<div class="layout-root">
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <!--
+        Content slot for pages using this layout.
+        Example usage:
+        <div th:replace="~{layouts/default :: layout(~{::section})}">
+            <section>Page Content</section>
+        </div>
+    -->
+    <main th:fragment="layout(content)" class="layout-content">
+        <th:block th:replace="${content}"></th:block>
+    </main>
+
+    <div th:replace="~{fragments/footer :: footer}"></div>
+</div>
+</body>
+</html>
