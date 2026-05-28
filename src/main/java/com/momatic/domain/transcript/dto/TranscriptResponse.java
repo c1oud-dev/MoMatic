@@ -6,7 +6,7 @@ import com.momatic.domain.transcript.entity.Transcript;
 public record TranscriptResponse(Long id, String speaker, String content, Double startSec, Double endSec) {
 
     /** 엔티티를 DTO로 변환합니다. */
-    public static TranscriptResponse from(final Transcript transcript) {
+    public static TranscriptResponse from(Transcript transcript) {
         return new TranscriptResponse(
                 transcript.getId(),
                 transcript.getSpeaker(),

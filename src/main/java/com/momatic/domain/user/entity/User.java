@@ -46,8 +46,8 @@ public class User extends BaseEntity {
     private List<Subscription> subscriptions = new ArrayList<>();
 
     /** 사용자 엔티티를 생성합니다. */
-    public static User create(final String email, final String name, final String role,
-                              final String provider, final String providerId) {
+    public static User create(String email, String name, String role,
+                              String provider, String providerId) {
         User user = new User();
         user.email = email;
         user.name = name;
@@ -57,7 +57,7 @@ public class User extends BaseEntity {
         return user;
     }
 
-    public void updateProfile(final String name, final String role) {
+    public void updateProfile(String name, String role) {
         this.name = name;
         this.role = role;
     }

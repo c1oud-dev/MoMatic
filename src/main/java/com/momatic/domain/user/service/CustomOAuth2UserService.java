@@ -27,11 +27,11 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
      * @throws OAuth2AuthenticationException OAuth2 인증 처리 중 오류가 발생한 경우
      */
     @Override
-    public OAuth2User loadUser(final OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
-        final OAuth2User oAuth2User = super.loadUser(userRequest);
-        final Map<String, Object> attributes = oAuth2User.getAttributes();
-        final String email = String.valueOf(attributes.get("email"));
-        final String name = String.valueOf(attributes.get("name"));
+    public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
+        OAuth2User oAuth2User = super.loadUser(userRequest);
+        Map<String, Object> attributes = oAuth2User.getAttributes();
+        String email = String.valueOf(attributes.get("email"));
+        String name = String.valueOf(attributes.get("name"));
 
         userRepository.findByEmail(email)
                 .map(found -> {

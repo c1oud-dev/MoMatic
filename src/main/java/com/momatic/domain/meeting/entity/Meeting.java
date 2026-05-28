@@ -27,6 +27,16 @@ public class Meeting {
     @Column(nullable = false)
     private String title;
 
+    @Column(name = "stored_file_name", nullable = false)
+    private String storedFileName;
+
+    @Column(name = "original_file_name", nullable = false)
+    private String originalFileName;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 30)
+    private MeetingStatus status;
+
     private LocalDateTime startedAt;
 
     private LocalDateTime endedAt;
@@ -45,4 +55,38 @@ public class Meeting {
 
     @OneToMany(mappedBy = "meeting", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Transcript> transcripts = new ArrayList<>();
+
+    /**
+     * 업로드 직후 회의 엔티티를 생성합니다.
+     *
+     * @param title 회의 제목
+     * @param storedFileName 저장 파일명
+     * @param originalFileName 원본 파일명
+     * @param team 팀
+     * @param owner 소유자
+     * @return 생성된 회의 엔티티
+     */
+    public static Meeting createPending(String title,
+                                        String storedFileName,
+                                        String originalFileName,
+                                        Team team,
+                                        User owner) {
+        Meeting meeting = new Meeting();
+        meeting.title = title;
+        meeting.storedFileName = storedFileName;
+        meeting.originalFileName = originalFileName;
+        meeting.team = team;
+        meeting.owner = owner;
+        meeting.status = MeetingStatus.PENDING;
+        return meeting;
+    }
+
+    /**
+     * 회의 상태를 변경합니다.
+     *
+     * @param status 변경할 상태
+     */
+    public void updateStatus(MeetingStatus status) {
+        this.status = status;
+    }
 }

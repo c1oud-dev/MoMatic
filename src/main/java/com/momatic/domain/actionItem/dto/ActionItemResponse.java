@@ -11,7 +11,7 @@ public record ActionItemResponse(
 ) {
 
     /** 엔티티를 DTO로 변환합니다. */
-    public static ActionItemResponse from(final ActionItem actionItem) {
+    public static ActionItemResponse from(ActionItem actionItem) {
         return new ActionItemResponse(
                 actionItem.getId(),
                 actionItem.getTask(),

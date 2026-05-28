@@ -40,11 +40,11 @@ public class Transcript extends BaseEntity {
      * @param endSec 종료 초
      * @return 생성된 전사 엔티티
      */
-    public static Transcript create(final String speaker,
-                                    final String content,
-                                    final Double startSec,
-                                    final Double endSec) {
-        final Transcript transcript = new Transcript();
+    public static Transcript create(String speaker,
+                                    String content,
+                                    Double startSec,
+                                    Double endSec) {
+        Transcript transcript = new Transcript();
         transcript.speaker = speaker;
         transcript.content = content;
         transcript.startSec = startSec;
@@ -57,7 +57,7 @@ public class Transcript extends BaseEntity {
      *
      * @param meeting 회의
      */
-    public void assignMeeting(final Meeting meeting) {
+    public void assignMeeting(Meeting meeting) {
         this.meeting = meeting;
     }
 }

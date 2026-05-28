@@ -15,10 +15,10 @@ public class SecurityConfig {
 
     /** 보안 필터 체인 정책을 구성합니다. */
     @Bean
-    public SecurityFilterChain securityFilterChain(final HttpSecurity http,
-                                                   final CustomOAuth2UserService customOAuth2UserService,
-                                                   final OAuth2LoginSuccessHandler successHandler,
-                                                   final CustomLogoutSuccessHandler logoutSuccessHandler) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http,
+                                                   CustomOAuth2UserService customOAuth2UserService,
+                                                   OAuth2LoginSuccessHandler successHandler,
+                                                   CustomLogoutSuccessHandler logoutSuccessHandler) throws Exception {
         http.authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", "/login", "/css/**", "/js/**", "/error/**").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")

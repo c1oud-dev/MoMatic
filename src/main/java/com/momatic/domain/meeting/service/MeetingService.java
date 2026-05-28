@@ -42,7 +42,7 @@ public class MeetingService {
      * @return 조회된 회의
      */
     @Transactional(readOnly = true)
-    public Meeting findMeeting(final Long id) {
+    public Meeting findMeeting(Long id) {
         return meetingRepository.findById(id)
                 .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REQUEST));
     }
@@ -54,10 +54,10 @@ public class MeetingService {
      * @return 회의 상세
      */
     @Transactional(readOnly = true)
-    public MeetingDetail getMeetingDetail(final Long meetingId) {
-        final Meeting meeting = findMeeting(meetingId);
-        final List<ActionItem> actionItems = actionItemRepository.findByMeetingId(meetingId);
-        final List<Transcript> transcripts = transcriptRepository.findByMeetingId(meetingId);
+    public MeetingDetail getMeetingDetail(Long meetingId) {
+        Meeting meeting = findMeeting(meetingId);
+        List<ActionItem> actionItems = actionItemRepository.findByMeetingId(meetingId);
+        List<Transcript> transcripts = transcriptRepository.findByMeetingId(meetingId);
         return new MeetingDetail(meeting, actionItems, transcripts);
     }
 
@@ -70,17 +70,17 @@ public class MeetingService {
      * @return 저장된 회의 엔티티
      */
     @Transactional
-    public Meeting saveWithDetails(final Meeting meeting,
-                                   @Nullable final String rawTranscript,
-                                   final List<ActionItem> actionItems) {
-        final Meeting savedMeeting = meetingRepository.save(meeting);
+    public Meeting saveWithDetails(Meeting meeting,
+                                   @Nullable String rawTranscript,
+                                   List<ActionItem> actionItems) {
+        Meeting savedMeeting = meetingRepository.save(meeting);
 
         for (ActionItem item : actionItems) {
             item.assignMeeting(savedMeeting);
             actionItemRepository.save(item);
         }
         if (rawTranscript != null && !rawTranscript.isBlank()) {
-            final Transcript transcript = Transcript.create(
+            Transcript transcript = Transcript.create(
                     "Auto",
                     rawTranscript,
                     0d,

@@ -25,7 +25,7 @@ public record MeetingDetailResponse(
      * @param detail 서비스 상세 조회 결과
      * @return 상세 응답 DTO
      */
-    public static MeetingDetailResponse from(final MeetingService.MeetingDetail detail) {
+    public static MeetingDetailResponse from(MeetingService.MeetingDetail detail) {
         return new MeetingDetailResponse(
                 MeetingResponse.from(detail.meeting()),
                 detail.actionItems().stream().map(ActionItemResponse::from).toList(),
