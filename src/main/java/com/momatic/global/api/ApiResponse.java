@@ -23,7 +23,7 @@ public record ApiResponse<T>(
      * @param <T> 응답 데이터 타입
      * @return 성공 응답
      */
-    public static <T> ApiResponse<T> ok(final T data) {
+    public static <T> ApiResponse<T> ok(T data) {
         return new ApiResponse<>(true, data, null, "OK");
     }
 
@@ -35,7 +35,7 @@ public record ApiResponse<T>(
      * @param <T> 응답 데이터 타입
      * @return 실패 응답
      */
-    public static <T> ApiResponse<T> fail(final String errorCode, final String message) {
+    public static <T> ApiResponse<T> fail(String errorCode, String message) {
         return new ApiResponse<>(false, null, errorCode, message);
     }
 }

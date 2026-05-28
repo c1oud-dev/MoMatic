@@ -21,8 +21,8 @@ public class GlobalExceptionHandler {
      * @return 페이지 뷰 이름 혹은 JSON 응답
      */
     @ExceptionHandler(CustomException.class)
-    public Object handleCustomException(final CustomException exception,
-                                        final HttpServletRequest request) {
+    public Object handleCustomException(CustomException exception,
+                                        HttpServletRequest request) {
         if (isAjaxRequest(request)) {
             return handleAjax(exception);
         }
@@ -40,8 +40,8 @@ public class GlobalExceptionHandler {
      * @return 페이지 뷰 이름 혹은 JSON 응답
      */
     @ExceptionHandler(Exception.class)
-    public Object handleException(final Exception exception,
-                                  final HttpServletRequest request) {
+    public Object handleException(Exception exception,
+                                  HttpServletRequest request) {
         if (isAjaxRequest(request)) {
             return ResponseEntity.internalServerError()
                     .body(ApiResponse.fail(ErrorCode.INTERNAL_ERROR.name(), ErrorCode.INTERNAL_ERROR.getMessage()));
@@ -53,15 +53,15 @@ public class GlobalExceptionHandler {
     }
 
     @ResponseBody
-    private ResponseEntity<ApiResponse<Void>> handleAjax(final CustomException exception) {
-        final ErrorCode errorCode = exception.getErrorCode();
+    private ResponseEntity<ApiResponse<Void>> handleAjax(CustomException exception) {
+        ErrorCode errorCode = exception.getErrorCode();
         return ResponseEntity.status(errorCode.getStatus())
                 .body(ApiResponse.fail(errorCode.name(), errorCode.getMessage()));
     }
 
-    private boolean isAjaxRequest(final HttpServletRequest request) {
-        final String requestedWith = request.getHeader("X-Requested-With");
-        final String accept = request.getHeader("Accept");
+    private boolean isAjaxRequest(HttpServletRequest request) {
+        String requestedWith = request.getHeader("X-Requested-With");
+        String accept = request.getHeader("Accept");
         return "XMLHttpRequest".equalsIgnoreCase(requestedWith)
                 || (accept != null && accept.contains("application/json"));
     }

@@ -30,9 +30,9 @@ public class UserController {
      * @return 사용자 응답
      */
     @GetMapping("/me")
-    public ApiResponse<UserResponse> getCurrent(@AuthenticationPrincipal final OAuth2User principal) {
-        final String email = principal.getAttribute("email");
-        final User user = userRepository.findByEmail(email)
+    public ApiResponse<UserResponse> getCurrent(@AuthenticationPrincipal OAuth2User principal) {
+        String email = principal.getAttribute("email");
+        User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         return ApiResponse.ok(UserResponse.from(user));
     }

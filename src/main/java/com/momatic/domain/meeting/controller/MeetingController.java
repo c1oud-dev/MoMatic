@@ -33,7 +33,7 @@ public class MeetingController {
      */
     @GetMapping
     public ApiResponse<List<MeetingResponse>> listMeetings() {
-        final List<MeetingResponse> meetings = meetingService.findAllMeetings().stream()
+        List<MeetingResponse> meetings = meetingService.findAllMeetings().stream()
                 .map(MeetingResponse::from)
                 .toList();
         return ApiResponse.ok(meetings);
@@ -46,7 +46,7 @@ public class MeetingController {
      * @return 회의 상세 응답
      */
     @GetMapping("/{id}")
-    public ApiResponse<MeetingDetailResponse> getMeeting(@PathVariable final Long id) {
+    public ApiResponse<MeetingDetailResponse> getMeeting(@PathVariable Long id) {
         return ApiResponse.ok(MeetingDetailResponse.from(meetingService.getMeetingDetail(id)));
     }
 }

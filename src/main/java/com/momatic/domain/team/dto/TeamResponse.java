@@ -6,7 +6,7 @@ import com.momatic.domain.team.entity.Team;
 public record TeamResponse(Long id, String name) {
 
     /** 엔티티를 DTO로 변환합니다. */
-    public static TeamResponse from(final Team team) {
+    public static TeamResponse from(Team team) {
         return new TeamResponse(team.getId(), team.getName());
     }
 }

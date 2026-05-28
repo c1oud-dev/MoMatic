@@ -15,8 +15,8 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
     /** 로그인 성공 후 대시보드로 이동시킵니다. */
     @Override
-    public void onAuthenticationSuccess(final HttpServletRequest request, final HttpServletResponse response,
-                                        final Authentication authentication) throws IOException, ServletException {
+    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
+                                        Authentication authentication) throws IOException, ServletException {
         response.sendRedirect("/");
     }
 }

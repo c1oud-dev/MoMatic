@@ -25,7 +25,7 @@ public record MeetingResponse(
      * @param meeting 회의 엔티티
      * @return 회의 응답 DTO
      */
-    public static MeetingResponse from(final Meeting meeting) {
+    public static MeetingResponse from(Meeting meeting) {
         return new MeetingResponse(
                 meeting.getId(),
                 meeting.getTitle(),

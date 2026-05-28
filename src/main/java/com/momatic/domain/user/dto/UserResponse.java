@@ -11,7 +11,7 @@ public record UserResponse(
 ) {
 
     /** 엔티티를 DTO로 변환합니다. */
-    public static UserResponse from(final User user) {
+    public static UserResponse from(User user) {
         return new UserResponse(user.getId(), user.getEmail(), user.getName(), user.getRole());
     }
 }

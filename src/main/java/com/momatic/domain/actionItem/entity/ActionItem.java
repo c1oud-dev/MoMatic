@@ -39,7 +39,7 @@ public class ActionItem extends BaseEntity {
      *
      * @param meeting 회의
      */
-    public void assignMeeting(final Meeting meeting) {
+    public void assignMeeting(Meeting meeting) {
         this.meeting = meeting;
     }
 }

@@ -28,7 +28,7 @@ public class TeamController {
      */
     @GetMapping
     public ApiResponse<List<TeamResponse>> listTeams() {
-        final List<TeamResponse> teams = teamRepository.findAll().stream()
+        List<TeamResponse> teams = teamRepository.findAll().stream()
                 .map(TeamResponse::from)
                 .toList();
         return ApiResponse.ok(teams);

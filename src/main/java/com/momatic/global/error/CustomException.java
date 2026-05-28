@@ -12,7 +12,7 @@ public class CustomException extends RuntimeException {
      *
      * @param errorCode 에러 코드
      */
-    public CustomException(final ErrorCode errorCode) {
+    public CustomException(ErrorCode errorCode) {
         super(errorCode.getMessage());
         this.errorCode = errorCode;
     }
