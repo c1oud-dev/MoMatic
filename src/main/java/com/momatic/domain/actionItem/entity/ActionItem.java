@@ -35,6 +35,21 @@ public class ActionItem extends BaseEntity {
     private Meeting meeting;
 
     /**
+     * 액션 아이템 엔티티를 생성합니다.
+     *
+     * @param task 액션 아이템 내용
+     * @param assignee 담당자
+     * @return 생성된 액션 아이템
+     */
+    public static ActionItem create(String task, String assignee) {
+        ActionItem actionItem = new ActionItem();
+        actionItem.task = task;
+        actionItem.assignee = assignee;
+        actionItem.status = ActionStatus.TODO;
+        return actionItem;
+    }
+
+    /**
      * 액션 아이템의 회의를 설정합니다.
      *
      * @param meeting 회의
