@@ -1,22 +1,28 @@
 package com.momatic.domain.meeting.dto;
 
 import com.momatic.domain.meeting.entity.Meeting;
+import com.momatic.domain.meeting.entity.MeetingStatus;
 
 import java.time.LocalDateTime;
 
 /**
- * 회의 목록 응답 DTO입니다.
+ * 회의 화면 응답 DTO입니다.
  *
  * @param id 회의 ID
  * @param title 제목
  * @param startedAt 시작 시각
  * @param endedAt 종료 시각
+ * @param summary 요약
+ * @param createdAt 생성 시각
  */
 public record MeetingResponse(
         Long id,
         String title,
+        MeetingStatus status,
         LocalDateTime startedAt,
-        LocalDateTime endedAt
+        LocalDateTime endedAt,
+        String summary,
+        LocalDateTime createdAt
 ) {
 
     /**
@@ -29,8 +35,11 @@ public record MeetingResponse(
         return new MeetingResponse(
                 meeting.getId(),
                 meeting.getTitle(),
+                meeting.getStatus(),
                 meeting.getStartedAt(),
-                meeting.getEndedAt()
+                meeting.getEndedAt(),
+                meeting.getSummary(),
+                meeting.getCreatedAt()
         );
     }
 }
