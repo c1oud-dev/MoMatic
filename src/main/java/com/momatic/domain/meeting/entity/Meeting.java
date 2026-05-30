@@ -4,6 +4,7 @@ import com.momatic.domain.team.entity.Team;
 import com.momatic.domain.transcript.entity.Transcript;
 import com.momatic.domain.user.entity.User;
 import com.momatic.domain.actionItem.entity.ActionItem;
+import com.momatic.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -18,7 +19,7 @@ import java.util.List;
 @Table(name = "meetings")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Meeting {
+public class Meeting extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -88,5 +89,14 @@ public class Meeting {
      */
     public void updateStatus(MeetingStatus status) {
         this.status = status;
+    }
+
+    /**
+     * 회의 요약을 변경합니다.
+     *
+     * @param summary 변경할 회의 요약
+     */
+    public void updateSummary(String summary) {
+        this.summary = summary;
     }
 }

@@ -1,0 +1,1 @@
+CREATE INDEX idx_meetings_status ON meetings(status);

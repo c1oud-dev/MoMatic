@@ -48,6 +48,19 @@ public class MeetingService {
     }
 
     /**
+     * 인증 사용자 소유의 회의를 조회합니다.
+     *
+     * @param meetingId 회의 ID
+     * @param ownerEmail 소유자 이메일
+     * @return 조회된 회의
+     */
+    @Transactional(readOnly = true)
+    public Meeting findOwnedMeeting(Long meetingId, String ownerEmail) {
+        return meetingRepository.findByIdAndOwnerEmail(meetingId, ownerEmail)
+                .orElseThrow(() -> new CustomException(ErrorCode.FORBIDDEN));
+    }
+
+    /**
      * 회의 상세를 조회합니다.
      *
      * @param meetingId 회의 ID
