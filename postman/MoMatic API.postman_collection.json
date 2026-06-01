@@ -1,0 +1,201 @@
+{
+  "info": {
+    "_postman_id": "741e2ef8-92ed-4f86-a793-b496d9bb2ba0",
+    "name": "MoMatic API",
+    "description": "MoMatic dev 환경에서 사용할 수 있는 API 컬렉션입니다. dev 프로파일의 MockAuthenticationFilter가 인증 사용자를 주입하므로 별도 인증 설정이 필요하지 않습니다.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "noauth"
+  },
+  "item": [
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "me"
+              ]
+            },
+            "description": "현재 Mock 인증 사용자를 조회합니다."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Teams",
+      "item": [
+        {
+          "name": "List Teams",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/teams",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "teams"
+              ]
+            },
+            "description": "전체 팀 목록을 조회합니다."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Meetings",
+      "item": [
+        {
+          "name": "Get Meeting Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/meetings/{{meetingId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "meetings",
+                "{{meetingId}}",
+                "status"
+              ]
+            },
+            "description": "현재 Mock 인증 사용자가 소유한 회의의 처리 상태를 조회합니다."
+          },
+          "response": []
+        },
+        {
+          "name": "Upload Meeting File",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "userId",
+                  "value": "{{userId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "teamId",
+                  "value": "{{teamId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "title",
+                  "value": "주간 회의",
+                  "type": "text"
+                },
+                {
+                  "key": "planType",
+                  "value": "FREE",
+                  "type": "text"
+                },
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/meetings/upload",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "meetings",
+                "upload"
+              ]
+            },
+            "description": "회의 음성 파일을 form-data 형식으로 업로드합니다. Postman에서 file 필드에 업로드할 파일을 선택하세요."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Action Items",
+      "item": [
+        {
+          "name": "Update Action Item Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"IN_PROGRESS\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/action-items/{{actionItemId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "action-items",
+                "{{actionItemId}}",
+                "status"
+              ]
+            },
+            "description": "현재 Mock 인증 사용자가 소유한 회의의 액션 아이템 상태를 변경합니다. status에는 TODO, IN_PROGRESS, DONE 중 하나를 입력할 수 있습니다."
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8083",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "teamId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "meetingId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "actionItemId",
+      "value": "1",
+      "type": "string"
+    }
+  ]
+}
