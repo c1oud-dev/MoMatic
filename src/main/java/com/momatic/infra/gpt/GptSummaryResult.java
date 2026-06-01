@@ -1,5 +1,6 @@
 package com.momatic.infra.gpt;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -18,7 +19,8 @@ public record GptSummaryResult(
      *
      * @param content 액션 아이템 내용
      * @param assignee 담당자명
+     * @param dueDate 마감일
      */
-    public record ActionItemResult(String content, String assignee) {
+    public record ActionItemResult(String content, String assignee, LocalDate dueDate) {
     }
 }

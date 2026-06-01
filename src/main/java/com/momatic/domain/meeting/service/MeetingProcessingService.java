@@ -142,7 +142,7 @@ public class MeetingProcessingService {
         List<ActionItem> actionItems = actionItemResults.stream()
                 .filter(item -> item.content() != null && !item.content().isBlank())
                 .map(item -> {
-                    ActionItem actionItem = ActionItem.create(item.content(), item.assignee());
+                    ActionItem actionItem = ActionItem.create(item.content(), item.assignee(), item.dueDate());
                     actionItem.assignMeeting(meeting);
                     return actionItem;
                 })

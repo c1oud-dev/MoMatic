@@ -35,7 +35,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
         userRepository.findByEmail(email)
                 .map(found -> {
-                    found.updateProfile(name, "ROLE_USER");
+                    found.updateProfile(name);
                     return userRepository.save(found);
                 })
                 .orElseGet(() -> userRepository.save(User.create(email, name, "ROLE_USER", "google", email)));

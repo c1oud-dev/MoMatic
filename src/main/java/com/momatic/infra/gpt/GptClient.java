@@ -77,8 +77,10 @@ public class GptClient {
                                 "content", "회의 전사 텍스트를 분석해 JSON만 응답하세요. "
                                         + "형식은 {\"summary\":\"회의 요약 내용\","
                                         + "\"actionItems\":[{\"content\":\"액션아이템 내용\","
-                                        + "\"assignee\":\"담당자명\"}]} 입니다. "
-                                        + "담당자가 불명확하면 assignee는 빈 문자열로 둡니다."
+                                        + "\"assignee\":\"담당자명\", "
+                                        + "\"dueDate\":\"yyyy-MM-dd\"}]} 입니다. "
+                                        + "담당자가 불명확하면 assignee는 빈 문자열로 두고, "
+                                        + "마감일이 불명확하면 dueDate는 null로 둡니다."
                         ),
                         Map.of("role", "user", "content", transcriptText)
                 )

@@ -20,6 +20,8 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class UploadLimitAspect {
 
+    private static final String FREE_PLAN = "FREE";
+    private static final String PRO_PLAN = "PRO";
     private static final String USAGE_TYPE_UPLOAD = "UPLOAD";
 
     private final UsageRecordRepository usageRecordRepository;
@@ -40,22 +42,25 @@ public class UploadLimitAspect {
     public void validateUploadLimit(JoinPoint joinPoint) {
         Object[] args = joinPoint.getArgs();
         Long userId = (Long) args[0];
-        Subscription subscription = subscriptionRepository.findTopByUserIdOrderByCreatedAtDesc(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REQUEST));
+        String planType = subscriptionRepository.findTopByUserIdOrderByCreatedAtDesc(userId)
+                .map(subscription -> subscription.getPlanType().toUpperCase())
+                .orElse(FREE_PLAN);
 
-        long limit = "PRO".equalsIgnoreCase(subscription.getPlanType()) ? proMonthlyLimit : freeMonthlyLimit;
+        long limit = PRO_PLAN.equalsIgnoreCase(planType)
+                ? proMonthlyLimit
+                : freeMonthlyLimit;
         LocalDateTime start = YearMonth.now().atDay(1).atStartOfDay();
-        LocalDateTime end = YearMonth.now().atEndOfMonth().atTime(23, 59, 59);
-        long usageCount = usageRecordRepository.countByUserIdAndUsageTypeAndCreatedAtBetween(
-                userId,
-                USAGE_TYPE_UPLOAD,
-                start,
-                end
-        );
+        LocalDateTime end = YearMonth.now().plusMonths(1).atDay(1).atStartOfDay();
+        long usageCount = usageRecordRepository
+                .countByUserIdAndUsageTypeAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(
+                        userId,
+                        USAGE_TYPE_UPLOAD,
+                        start,
+                        end
+                );
 
         if (usageCount >= limit) {
             throw new CustomException(ErrorCode.UPLOAD_MONTHLY_LIMIT_EXCEEDED);
         }
     }
 }
-

@@ -39,12 +39,14 @@ public class ActionItem extends BaseEntity {
      *
      * @param task 액션 아이템 내용
      * @param assignee 담당자
+     * @param dueDate 마감일
      * @return 생성된 액션 아이템
      */
-    public static ActionItem create(String task, String assignee) {
+    public static ActionItem create(String task, String assignee, LocalDate dueDate) {
         ActionItem actionItem = new ActionItem();
         actionItem.task = task;
         actionItem.assignee = assignee;
+        actionItem.dueDate = dueDate;
         actionItem.status = ActionStatus.TODO;
         return actionItem;
     }

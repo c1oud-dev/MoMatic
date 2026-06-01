@@ -97,7 +97,6 @@ public class MeetingController {
      * @param userId 사용자 ID
      * @param teamId 팀 ID
      * @param title 회의 제목
-     * @param planType 플랜 타입
      * @param file 음성 파일
      * @return 업로드 결과
      */
@@ -106,10 +105,9 @@ public class MeetingController {
     public ApiResponse<MeetingUploadResponse> uploadMeetingFile(@RequestParam Long userId,
                                                                 @RequestParam Long teamId,
                                                                 @RequestParam String title,
-                                                                @RequestParam String planType,
                                                                 @RequestParam MultipartFile file) {
         return ApiResponse.ok(MeetingUploadResponse.from(
-                meetingUploadService.upload(userId, teamId, title, planType, file)
+                meetingUploadService.upload(userId, teamId, title, file)
         ));
     }
 

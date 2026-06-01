@@ -57,8 +57,12 @@ public class User extends BaseEntity {
         return user;
     }
 
-    public void updateProfile(String name, String role) {
+    /**
+     * OAuth2 재로그인 시 변경 가능한 사용자 프로필 정보를 갱신합니다.
+     *
+     * @param name 사용자 이름
+     */
+    public void updateProfile(String name) {
         this.name = name;
-        this.role = role;
     }
 }
