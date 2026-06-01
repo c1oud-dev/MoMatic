@@ -108,3 +108,12 @@ CREATE INDEX idx_meetings_team_id ON meetings(team_id);
 CREATE INDEX idx_meetings_owner_id ON meetings(owner_id);
 CREATE INDEX idx_transcripts_meeting_id ON transcripts(meeting_id);
 CREATE INDEX idx_action_items_meeting_id ON action_items(meeting_id);
+
+INSERT INTO users (email, name, role, provider, provider_id)
+VALUES ('dev@momatic.com', '개발자', 'USER', 'google', 'mock-sub-id');
+
+INSERT INTO teams (name)
+VALUES ('개발팀');
+
+INSERT INTO team_members (team_id, user_id, role)
+VALUES (1, 1, 'OWNER');

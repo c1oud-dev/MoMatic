@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <title>회의록 상세</title>
+  <meta name="_csrf" th:content="${_csrf.token}" />
+  <meta name="_csrf_header" th:content="${_csrf.headerName}" />
   <style>
     .status-badge {
         border-radius: 999px;
@@ -59,11 +61,54 @@
           <span th:text="${actionItem.task}">할 일</span>
           <span th:if="${!#strings.isEmpty(actionItem.assignee)}"
                 th:text="|담당: ${actionItem.assignee}|">담당자</span>
-          <span th:text="${actionItem.status}">TODO</span>
+          <select class="action-item-status"
+                  th:data-action-item-id="${actionItem.id}"
+                  aria-label="액션 아이템 상태">
+            <option th:each="status : ${ {'TODO', 'IN_PROGRESS', 'DONE'} }"
+                    th:value="${status}"
+                    th:text="${status}"
+                    th:selected="${status == actionItem.status}">TODO</option>
+          </select>
         </li>
       </ul>
     </section>
   </section>
 </div>
+<script>
+  const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+  const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+
+  document.querySelectorAll('.action-item-status').forEach((select) => {
+    select.addEventListener('change', async (event) => {
+      const target = event.currentTarget;
+      const previousStatus = target.dataset.previousStatus ?? target.defaultValue;
+      target.disabled = true;
+
+      try {
+        const response = await fetch(`/action-items/${target.dataset.actionItemId}/status`, {
+          method: 'PATCH',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            [csrfHeader]: csrfToken
+          },
+          body: JSON.stringify({status: target.value})
+        });
+
+        if (!response.ok) {
+          throw new Error('액션 아이템 상태 변경에 실패했습니다.');
+        }
+        target.dataset.previousStatus = target.value;
+      } catch (error) {
+        target.value = previousStatus;
+        window.alert(error.message);
+      } finally {
+        target.disabled = false;
+      }
+    });
+    select.dataset.previousStatus = select.value;
+  });
+</script>
 </body>
 </html>

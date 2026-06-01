@@ -2,11 +2,14 @@ package com.momatic.global.config;
 
 import com.momatic.domain.user.service.CustomOAuth2UserService;
 import com.momatic.global.security.CustomLogoutSuccessHandler;
+import com.momatic.global.security.MockAuthenticationFilter;
 import com.momatic.global.security.OAuth2LoginSuccessHandler;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 
 /** Spring Security 전역 설정 클래스입니다. */
@@ -18,7 +21,8 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
                                                    CustomOAuth2UserService customOAuth2UserService,
                                                    OAuth2LoginSuccessHandler successHandler,
-                                                   CustomLogoutSuccessHandler logoutSuccessHandler) throws Exception {
+                                                   CustomLogoutSuccessHandler logoutSuccessHandler,
+                                                   @Autowired(required = false) MockAuthenticationFilter mockAuthenticationFilter) throws Exception {
         http.authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", "/login", "/css/**", "/js/**", "/error/**").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
@@ -28,6 +32,11 @@ public class SecurityConfig {
                 .logout(logout -> logout.logoutUrl("/logout").logoutSuccessHandler(logoutSuccessHandler))
                 .csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                         .ignoringRequestMatchers("/api/public/**"));
+
+        if (mockAuthenticationFilter != null) {
+            http.addFilterBefore(mockAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        }
+
         return http.build();
     }
 }
