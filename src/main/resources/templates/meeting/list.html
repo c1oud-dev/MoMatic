@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <title>회의록 목록</title>
+  <style>
+    .status-badge {
+        border-radius: 999px;
+        display: inline-block;
+        padding: 0.2rem 0.6rem;
+    }
+    .status-pending,
+    .status-processing {
+        background: #fff3cd;
+    }
+    .status-completed {
+        background: #d1e7dd;
+    }
+    .status-failed {
+        background: #f8d7da;
+    }
+  </style>
+</head>
+<body>
+<div th:replace="~{layouts/default :: layout(~{::section})}">
+  <section>
+    <header>
+      <h1>회의록 목록</h1>
+      <a th:href="@{/meetings/upload}">회의록 업로드</a>
+    </header>
+
+    <p th:if="${meetings.empty}">등록된 회의록이 없습니다.</p>
+    <table th:unless="${meetings.empty}">
+      <thead>
+      <tr>
+        <th>제목</th>
+        <th>상태</th>
+        <th>등록일</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr th:each="meeting : ${meetings.content}">
+        <td>
+          <a th:href="@{/meetings/{meetingId}(meetingId=${meeting.id})}"
+             th:text="${meeting.title}">회의 제목</a>
+        </td>
+        <td>
+                    <span th:text="${meeting.status}"
+                          th:class="|status-badge status-${#strings.toLowerCase(meeting.status.name())}|">
+                        PENDING
+                    </span>
+        </td>
+        <td th:text="${#temporals.format(meeting.createdAt, 'yyyy-MM-dd HH:mm')}">2026-05-30 10:00</td>
+      </tr>
+      </tbody>
+    </table>
+
+    <nav th:if="${meetings.totalPages > 1}" aria-label="회의록 페이지 이동">
+      <a th:if="${meetings.hasPrevious()}"
+         th:href="@{/meetings(page=${meetings.number - 1},size=${meetings.size})}">이전</a>
+      <span th:text="|${meetings.number + 1} / ${meetings.totalPages}|">1 / 1</span>
+      <a th:if="${meetings.hasNext()}"
+         th:href="@{/meetings(page=${meetings.number + 1},size=${meetings.size})}">다음</a>
+    </nav>
+  </section>
+</div>
+</body>
+</html>

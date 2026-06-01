@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <title>회의록 업로드</title>
+  <style>
+    #drop-zone {
+        border: 2px dashed #6c757d;
+        display: block;
+        margin: 1rem 0;
+        padding: 2rem;
+    }
+  </style>
+</head>
+<body>
+<div th:replace="~{layouts/default :: layout(~{::section})}">
+  <section>
+    <header>
+      <a th:href="@{/meetings}">목록으로</a>
+      <h1>회의록 업로드</h1>
+    </header>
+
+    <form id="upload-form" th:action="@{/meetings/upload}" method="post" enctype="multipart/form-data">
+      <label>
+        회의 제목
+        <input type="text" name="title" required />
+      </label>
+      <label>
+        사용자 ID
+        <input type="number" name="userId" min="1" required />
+      </label>
+      <label>
+        팀 ID
+        <input type="number" name="teamId" min="1" required />
+      </label>
+      <label>
+        플랜
+        <select name="planType">
+          <option value="FREE">FREE</option>
+          <option value="PRO">PRO</option>
+        </select>
+      </label>
+      <label id="drop-zone">
+        음성 파일을 끌어다 놓거나 선택하세요.
+        <input id="file-input" type="file" name="file" accept=".mp3,.mp4,.wav,.m4a" required />
+      </label>
+      <button type="submit">업로드</button>
+    </form>
+    <p id="upload-status" aria-live="polite"></p>
+
+    <script>
+      const form = document.getElementById('upload-form');
+      const dropZone = document.getElementById('drop-zone');
+      const fileInput = document.getElementById('file-input');
+      const statusMessage = document.getElementById('upload-status');
+
+      function csrfHeader() {
+          const tokenCookie = document.cookie
+              .split('; ')
+              .find((cookie) => cookie.startsWith('XSRF-TOKEN='));
+          return tokenCookie ? decodeURIComponent(tokenCookie.split('=')[1]) : '';
+      }
+
+      function pollStatus(meetingId) {
+          const poller = window.setInterval(async () => {
+              const response = await fetch(`/meetings/${meetingId}/status`);
+              const result = await response.json();
+              const status = result.data.status;
+              statusMessage.textContent = `처리 상태: ${status}`;
+
+              if (status === 'COMPLETED') {
+                  window.clearInterval(poller);
+                  window.location.href = `/meetings/${meetingId}`;
+              } else if (status === 'FAILED') {
+                  window.clearInterval(poller);
+                  statusMessage.textContent = '회의록 처리에 실패했습니다.';
+              }
+          }, 5000);
+      }
+
+      dropZone.addEventListener('dragover', (event) => {
+          event.preventDefault();
+      });
+
+      dropZone.addEventListener('drop', (event) => {
+          event.preventDefault();
+          fileInput.files = event.dataTransfer.files;
+      });
+
+      form.addEventListener('submit', async (event) => {
+          event.preventDefault();
+          statusMessage.textContent = '파일을 업로드하고 있습니다.';
+
+          const response = await fetch(form.action, {
+              method: 'POST',
+              headers: {
+                  'X-XSRF-TOKEN': csrfHeader()
+              },
+              body: new FormData(form)
+          });
+          const result = await response.json();
+
+          if (!response.ok || !result.success) {
+              statusMessage.textContent = '파일 업로드에 실패했습니다.';
+              return;
+          }
+
+          statusMessage.textContent = `처리 상태: ${result.data.status}`;
+          pollStatus(result.data.meetingId);
+      });
+    </script>
+  </section>
+</div>
+</body>
+</html>

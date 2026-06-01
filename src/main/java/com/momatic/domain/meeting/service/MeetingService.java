@@ -11,6 +11,8 @@ import com.momatic.global.error.ErrorCode;
 import java.util.List;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,13 +28,15 @@ public class MeetingService {
     private final TranscriptRepository transcriptRepository;
 
     /**
-     * 전체 회의를 조회합니다.
+     * 인증 사용자가 소유한 회의 목록을 페이징 조회합니다.
      *
-     * @return 회의 목록
+     * @param ownerEmail 소유자 이메일
+     * @param pageable 페이징 정보
+     * @return 소유자 회의 목록
      */
     @Transactional(readOnly = true)
-    public List<Meeting> findAllMeetings() {
-        return meetingRepository.findAll();
+    public Page<Meeting> findOwnedMeetings(String ownerEmail, Pageable pageable) {
+        return meetingRepository.findAllByOwnerEmail(ownerEmail, pageable);
     }
 
     /**
@@ -61,14 +65,15 @@ public class MeetingService {
     }
 
     /**
-     * 회의 상세를 조회합니다.
+     * 인증 사용자 소유의 회의 상세를 조회합니다.
      *
      * @param meetingId 회의 ID
+     * @param ownerEmail 소유자 이메일
      * @return 회의 상세
      */
     @Transactional(readOnly = true)
-    public MeetingDetail getMeetingDetail(Long meetingId) {
-        Meeting meeting = findMeeting(meetingId);
+    public MeetingDetail getOwnedMeetingDetail(Long meetingId, String ownerEmail) {
+        Meeting meeting = findOwnedMeeting(meetingId, ownerEmail);
         List<ActionItem> actionItems = actionItemRepository.findByMeetingId(meetingId);
         List<Transcript> transcripts = transcriptRepository.findByMeetingId(meetingId);
         return new MeetingDetail(meeting, actionItems, transcripts);
