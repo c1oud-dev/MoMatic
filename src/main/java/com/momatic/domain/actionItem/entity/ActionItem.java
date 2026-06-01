@@ -50,6 +50,15 @@ public class ActionItem extends BaseEntity {
     }
 
     /**
+     * 액션 아이템 상태를 변경합니다.
+     *
+     * @param status 변경할 상태
+     */
+    public void updateStatus(ActionStatus status) {
+        this.status = status;
+    }
+
+    /**
      * 액션 아이템의 회의를 설정합니다.
      *
      * @param meeting 회의

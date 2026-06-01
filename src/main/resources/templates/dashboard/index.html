@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>대시보드</title>
+</head>
+<body>
+<div th:replace="~{layouts/default :: layout(~{::section})}">
+    <section>
+        <header>
+            <h1>대시보드</h1>
+            <a th:href="@{/meetings/upload}">회의록 업로드</a>
+        </header>
+
+        <section>
+            <h2>이번 달 사용량</h2>
+            <p>
+                <strong th:text="${dashboard.planType}">FREE</strong>
+                플랜:
+                <span th:text="|${dashboard.monthlyUploadCount} / ${dashboard.monthlyUploadLimit}회|">0 / 20회</span>
+            </p>
+        </section>
+
+        <section>
+            <h2>최근 회의록</h2>
+            <p th:if="${#lists.isEmpty(dashboard.recentMeetings)}">등록된 회의록이 없습니다.</p>
+            <ul th:unless="${#lists.isEmpty(dashboard.recentMeetings)}">
+                <li th:each="meeting : ${dashboard.recentMeetings}">
+                    <a th:href="@{/meetings/{meetingId}(meetingId=${meeting.id})}"
+                       th:text="${meeting.title}">회의 제목</a>
+                    <span th:text="${meeting.status}">COMPLETED</span>
+                    <time th:text="${#temporals.format(meeting.createdAt, 'yyyy-MM-dd HH:mm')}">2026-06-01 10:00</time>
+                </li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>미완료 액션 아이템</h2>
+            <p th:if="${#lists.isEmpty(dashboard.incompleteActionItems)}">미완료 액션 아이템이 없습니다.</p>
+            <ul th:unless="${#lists.isEmpty(dashboard.incompleteActionItems)}">
+                <li th:each="actionItem : ${dashboard.incompleteActionItems}">
+                    <a th:href="@{/meetings/{meetingId}(meetingId=${actionItem.meetingId})}"
+                       th:text="${actionItem.task}">할 일</a>
+                    <span th:text="|(${actionItem.meetingTitle})|">(회의 제목)</span>
+                    <span th:text="${actionItem.status}">TODO</span>
+                </li>
+            </ul>
+        </section>
+    </section>
+</div>
+</body>
+</html>

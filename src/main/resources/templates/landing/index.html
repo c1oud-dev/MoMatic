@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html
+        xmlns:th="http://www.thymeleaf.org"
+        xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+>
+<head>
+  <meta charset="UTF-8" />
+  <title>MoMatic</title>
+</head>
+<body>
+<div th:replace="~{layouts/default :: layout(~{::section})}">
+  <section>
+    <header>
+      <h1>회의가 끝나면, 회의록은 MoMatic이 정리합니다.</h1>
+      <p>음성 파일을 업로드하면 전사, 요약, 액션 아이템을 한곳에서 확인할 수 있습니다.</p>
+      <a sec:authorize="!isAuthenticated()"
+         th:href="@{/oauth2/authorization/google}">Google로 시작하기</a>
+      <a sec:authorize="isAuthenticated()"
+         th:href="@{/dashboard}">대시보드로 이동</a>
+    </header>
+
+    <section>
+      <h2>주요 기능</h2>
+      <ul>
+        <li>회의 음성 파일 업로드 및 자동 전사</li>
+        <li>핵심 내용을 빠르게 파악할 수 있는 회의 요약</li>
+        <li>담당자별 액션 아이템 확인 및 진행 상태 관리</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>플랜 Preview</h2>
+      <table>
+        <thead>
+        <tr>
+          <th>기능</th>
+          <th>FREE</th>
+          <th>PRO</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+          <th>월 업로드</th>
+          <td>20회</td>
+          <td>200회</td>
+        </tr>
+        <tr>
+          <th>파일당 최대 크기</th>
+          <td>50MB</td>
+          <td>200MB</td>
+        </tr>
+        <tr>
+          <th>회의 요약 및 액션 아이템</th>
+          <td>지원</td>
+          <td>지원</td>
+        </tr>
+        </tbody>
+      </table>
+    </section>
+  </section>
+</div>
+</body>
+</html>
