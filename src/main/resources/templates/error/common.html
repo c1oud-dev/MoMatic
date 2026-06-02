@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>오류</title>
+</head>
+<body>
+<div th:replace="~{layouts/default :: layout(~{::section})}">
+    <section>
+        <h1>요청을 처리하지 못했습니다.</h1>
+        <p th:text="${errorMessage}">오류가 발생했습니다.</p>
+        <p>
+            오류 코드:
+            <strong th:text="${errorCode}">INTERNAL_ERROR</strong>
+        </p>
+        <a th:href="@{/}">홈으로 돌아가기</a>
+    </section>
+</div>
+</body>
+</html>

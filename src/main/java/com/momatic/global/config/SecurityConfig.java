@@ -24,7 +24,7 @@ public class SecurityConfig {
                                                    CustomLogoutSuccessHandler logoutSuccessHandler,
                                                    @Autowired(required = false) MockAuthenticationFilter mockAuthenticationFilter) throws Exception {
         http.authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/login", "/css/**", "/js/**", "/error/**").permitAll()
+                        .requestMatchers("/", "/login", "/plans", "/css/**", "/js/**", "/error/**").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
                 .oauth2Login(oauth -> oauth.userInfoEndpoint(user -> user.userService(customOAuth2UserService))

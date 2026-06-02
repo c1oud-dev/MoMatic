@@ -3,7 +3,8 @@ package com.momatic.domain.meeting.service;
 import com.momatic.domain.meeting.aop.UploadLimitCheck;
 import com.momatic.domain.meeting.entity.Meeting;
 import com.momatic.domain.meeting.repository.MeetingRepository;
-import com.momatic.domain.subscription.repository.SubscriptionRepository;
+import com.momatic.domain.plan.entity.PlanPolicy;
+import com.momatic.domain.subscription.service.SubscriptionService;
 import com.momatic.domain.team.entity.Team;
 import com.momatic.domain.team.repository.TeamRepository;
 import com.momatic.domain.usage.entity.UsageRecord;
@@ -32,8 +33,6 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 public class MeetingUploadService {
 
-    private static final String FREE_PLAN = "FREE";
-    private static final String PRO_PLAN = "PRO";
     private static final String USAGE_TYPE_UPLOAD = "UPLOAD";
     private static final Set<String> ALLOWED_EXTENSIONS = Set.of("mp3", "mp4", "wav", "m4a");
     private static final Set<String> ALLOWED_MIME_TYPES = Set.of(
@@ -48,18 +47,12 @@ public class MeetingUploadService {
     private final MeetingRepository meetingRepository;
     private final TeamRepository teamRepository;
     private final UserRepository userRepository;
-    private final SubscriptionRepository subscriptionRepository;
+    private final SubscriptionService subscriptionService;
     private final UsageRecordRepository usageRecordRepository;
     private final MeetingProcessingService meetingProcessingService;
 
     @Value("${app.upload.storage-path}")
     private String storagePath;
-
-    @Value("${app.upload.limit.free.max-file-size-bytes}")
-    private long freeMaxFileSize;
-
-    @Value("${app.upload.limit.pro.max-file-size-bytes}")
-    private long proMaxFileSize;
 
     /**
      * 음성 파일을 업로드합니다.
@@ -73,8 +66,8 @@ public class MeetingUploadService {
     @UploadLimitCheck
     @Transactional
     public Meeting upload(Long userId, Long teamId, String title, MultipartFile file) {
-        String planType = findPlanType(userId);
-        validateFile(file, planType);
+        PlanPolicy planPolicy = subscriptionService.getActivePlan(userId);
+        validateFile(file, planPolicy);
 
         Team team = teamRepository.findById(teamId)
                 .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REQUEST));
@@ -88,18 +81,6 @@ public class MeetingUploadService {
         usageRecordRepository.save(UsageRecord.create(owner, USAGE_TYPE_UPLOAD, 1L, file.getSize()));
         processMeetingAfterCommit(savedMeeting.getId());
         return savedMeeting;
-    }
-
-    /**
-     * 사용자의 최신 구독 플랜을 조회합니다.
-     *
-     * @param userId 사용자 ID
-     * @return 구독 플랜 타입
-     */
-    private String findPlanType(Long userId) {
-        return subscriptionRepository.findTopByUserIdOrderByCreatedAtDesc(userId)
-                .map(subscription -> subscription.getPlanType().toUpperCase())
-                .orElse(FREE_PLAN);
     }
 
     /**
@@ -121,9 +102,9 @@ public class MeetingUploadService {
      * 파일 형식 및 크기를 검증합니다.
      *
      * @param file 업로드 파일
-     * @param planType 플랜 타입
+     * @param planPolicy 플랜 정책
      */
-    private void validateFile(MultipartFile file, String planType) {
+    private void validateFile(MultipartFile file, PlanPolicy planPolicy) {
         if (file == null || file.isEmpty()) {
             throw new CustomException(ErrorCode.INVALID_REQUEST);
         }
@@ -138,9 +119,7 @@ public class MeetingUploadService {
             throw new CustomException(ErrorCode.UPLOAD_INVALID_FILE_TYPE);
         }
 
-        long maxFileSize = PRO_PLAN.equalsIgnoreCase(planType)
-                ? proMaxFileSize
-                : freeMaxFileSize;
+        long maxFileSize = planPolicy.getMaxFileSizeBytes();
         if (file.getSize() > maxFileSize) {
             throw new CustomException(ErrorCode.UPLOAD_FILE_SIZE_EXCEEDED);
         }

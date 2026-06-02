@@ -5,7 +5,8 @@ import com.momatic.domain.actionItem.repository.ActionItemRepository;
 import com.momatic.domain.dashboard.dto.DashboardResponse;
 import com.momatic.domain.meeting.entity.Meeting;
 import com.momatic.domain.meeting.repository.MeetingRepository;
-import com.momatic.domain.subscription.repository.SubscriptionRepository;
+import com.momatic.domain.plan.entity.PlanPolicy;
+import com.momatic.domain.subscription.service.SubscriptionService;
 import com.momatic.domain.usage.repository.UsageRecordRepository;
 import com.momatic.domain.user.entity.User;
 import com.momatic.domain.user.repository.UserRepository;
@@ -15,7 +16,6 @@ import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,26 +25,12 @@ import org.springframework.transaction.annotation.Transactional;
 public class DashboardService {
 
     private static final String USAGE_TYPE_UPLOAD = "UPLOAD";
-    private static final String FREE_PLAN = "FREE";
-    private static final String PRO_PLAN = "PRO";
 
     private final UserRepository userRepository;
-    private final SubscriptionRepository subscriptionRepository;
+    private final SubscriptionService subscriptionService;
     private final UsageRecordRepository usageRecordRepository;
     private final MeetingRepository meetingRepository;
     private final ActionItemRepository actionItemRepository;
-
-    @Value("${app.upload.limit.free.monthly-count}")
-    private long freeMonthlyLimit;
-
-    @Value("${app.upload.limit.pro.monthly-count}")
-    private long proMonthlyLimit;
-
-    @Value("${app.upload.limit.free.max-file-size-bytes}")
-    private long freeMaxFileSize;
-
-    @Value("${app.upload.limit.pro.max-file-size-bytes}")
-    private long proMaxFileSize;
 
     /**
      * 인증 사용자의 대시보드 정보를 조회합니다.
@@ -56,9 +42,7 @@ public class DashboardService {
     public DashboardResponse getDashboard(String ownerEmail) {
         User user = userRepository.findByEmail(ownerEmail)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-        String planType = subscriptionRepository.findTopByUserIdOrderByCreatedAtDesc(user.getId())
-                .map(subscription -> subscription.getPlanType().toUpperCase())
-                .orElse(FREE_PLAN);
+        PlanPolicy planPolicy = subscriptionService.getActivePlan(user.getId());
         YearMonth currentMonth = YearMonth.now();
         LocalDateTime from = currentMonth.atDay(1).atStartOfDay();
         LocalDateTime to = currentMonth.plusMonths(1).atDay(1).atStartOfDay();
@@ -69,7 +53,7 @@ public class DashboardService {
                         from,
                         to
                 );
-        long monthlyUploadLimit = getMonthlyLimit(planType);
+        long monthlyUploadLimit = planPolicy.getMonthlyUploadCount();
         long monthlyFileSizeBytes = usageRecordRepository.sumFileSizeBytes(
                 user.getId(),
                 USAGE_TYPE_UPLOAD,
@@ -83,8 +67,8 @@ public class DashboardService {
                 monthlyUploadLimit,
                 Math.max(monthlyUploadLimit - monthlyUploadCount, 0),
                 monthlyFileSizeBytes,
-                getMaxFileSize(planType),
-                planType,
+                planPolicy.getMaxFileSizeBytes(),
+                planPolicy.name(),
                 DashboardResponse.toMeetingResponses(recentMeetings),
                 actionItemRepository.findTop5ByMeetingOwnerEmailAndStatusInOrderByCreatedAtDesc(
                                 ownerEmail,
@@ -94,29 +78,4 @@ public class DashboardService {
                         .toList()
         );
     }
-
-    /**
-     * 플랜 타입에 맞는 월 업로드 한도를 조회합니다.
-     *
-     * @param planType 플랜 타입
-     * @return 월 업로드 한도
-     */
-    private long getMonthlyLimit(String planType) {
-        return PRO_PLAN.equalsIgnoreCase(planType)
-                ? proMonthlyLimit
-                : freeMonthlyLimit;
-    }
-
-    /**
-     * 플랜 타입에 맞는 파일당 최대 업로드 용량을 조회합니다.
-     *
-     * @param planType 플랜 타입
-     * @return 파일당 최대 업로드 바이트 수
-     */
-    private long getMaxFileSize(String planType) {
-        return PRO_PLAN.equalsIgnoreCase(planType)
-                ? proMaxFileSize
-                : freeMaxFileSize;
-    }
 }
-
