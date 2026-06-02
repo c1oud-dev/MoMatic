@@ -10,6 +10,8 @@ public enum ErrorCode {
     FORBIDDEN(HttpStatus.FORBIDDEN, "권한이 없습니다."),
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."),
     INVALID_REQUEST(HttpStatus.BAD_REQUEST, "잘못된 요청입니다."),
+    INVALID_PLAN_TYPE(HttpStatus.BAD_REQUEST, "지원하지 않는 플랜입니다."),
+    SUBSCRIPTION_NOT_FOUND(HttpStatus.NOT_FOUND, "구독 정보를 찾을 수 없습니다."),
     INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다."),
     UPLOAD_INVALID_FILE_TYPE(HttpStatus.BAD_REQUEST, "허용되지 않은 파일 형식입니다."),
     UPLOAD_FILE_SIZE_EXCEEDED(HttpStatus.BAD_REQUEST, "플랜 허용 파일 크기를 초과했습니다."),
@@ -24,7 +26,21 @@ public enum ErrorCode {
         this.message = message;
     }
 
-    public HttpStatus getStatus() { return status; }
+    /**
+     * HTTP 상태를 조회합니다.
+     *
+     * @return HTTP 상태
+     */
+    public HttpStatus getStatus() {
+        return status;
+    }
 
-    public String getMessage() { return message; }
+    /**
+     * 사용자용 에러 메시지를 조회합니다.
+     *
+     * @return 사용자용 에러 메시지
+     */
+    public String getMessage() {
+        return message;
+    }
 }

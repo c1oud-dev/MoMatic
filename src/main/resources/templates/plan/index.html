@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <title>요금제</title>
+</head>
+<body>
+<div th:replace="~{layouts/default :: layout(~{::section})}">
+  <section>
+    <header>
+      <h1>요금제</h1>
+      <p>사용 목적에 맞는 플랜별 업로드 한도를 비교해 보세요.</p>
+    </header>
+
+    <table>
+      <thead>
+      <tr>
+        <th scope="col">플랜</th>
+        <th scope="col">월 업로드 횟수</th>
+        <th scope="col">파일당 최대 크기</th>
+        <th scope="col">선택</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr th:each="plan : ${plans}">
+        <th scope="row" th:text="${plan.planType}">FREE</th>
+        <td th:text="|${plan.monthlyUploadCount}회|">3회</td>
+        <td th:text="|${plan.maxFileSizeBytes} bytes|">26214400 bytes</td>
+        <td>
+          <strong th:if="${authenticated and currentPlan == plan.planType}">현재 플랜</strong>
+          <form th:if="${authenticated and currentPlan != plan.planType}"
+                th:action="@{/plans/upgrade}"
+                method="post">
+            <input type="hidden" name="planType" th:value="${plan.planType}" />
+            <button type="submit" th:text="|${plan.planType} 플랜으로 변경|">플랜 변경</button>
+          </form>
+          <a th:unless="${authenticated}"
+             th:href="@{/oauth2/authorization/google}">Google로 로그인하고 시작하기</a>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </section>
+</div>
+</body>
+</html>
