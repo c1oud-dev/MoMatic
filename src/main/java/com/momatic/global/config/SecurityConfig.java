@@ -24,14 +24,14 @@ public class SecurityConfig {
                                                    CustomLogoutSuccessHandler logoutSuccessHandler,
                                                    @Autowired(required = false) MockAuthenticationFilter mockAuthenticationFilter) throws Exception {
         http.authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/login", "/plans", "/css/**", "/js/**", "/error/**").permitAll()
+                        .requestMatchers("/", "/login", "/plans", "/payments/webhook", "/css/**", "/js/**", "/error/**").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
                 .oauth2Login(oauth -> oauth.userInfoEndpoint(user -> user.userService(customOAuth2UserService))
                         .successHandler(successHandler))
                 .logout(logout -> logout.logoutUrl("/logout").logoutSuccessHandler(logoutSuccessHandler))
                 .csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                        .ignoringRequestMatchers("/api/public/**"));
+                        .ignoringRequestMatchers("/api/public/**", "/payments/webhook"));
 
         if (mockAuthenticationFilter != null) {
             http.addFilterBefore(mockAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
