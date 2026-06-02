@@ -1,0 +1,1 @@
+ALTER TABLE usage_records ADD COLUMN file_size_bytes BIGINT NOT NULL DEFAULT 0;

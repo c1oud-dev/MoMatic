@@ -3,6 +3,7 @@ package com.momatic.domain.meeting.service;
 import com.momatic.domain.meeting.aop.UploadLimitCheck;
 import com.momatic.domain.meeting.entity.Meeting;
 import com.momatic.domain.meeting.repository.MeetingRepository;
+import com.momatic.domain.subscription.repository.SubscriptionRepository;
 import com.momatic.domain.team.entity.Team;
 import com.momatic.domain.team.repository.TeamRepository;
 import com.momatic.domain.usage.entity.UsageRecord;
@@ -22,6 +23,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 /** 회의 파일 업로드 서비스입니다. */
@@ -29,12 +32,23 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 public class MeetingUploadService {
 
+    private static final String FREE_PLAN = "FREE";
+    private static final String PRO_PLAN = "PRO";
+    private static final String USAGE_TYPE_UPLOAD = "UPLOAD";
     private static final Set<String> ALLOWED_EXTENSIONS = Set.of("mp3", "mp4", "wav", "m4a");
-    private static final Set<String> ALLOWED_MIME_TYPES = Set.of("audio/mpeg", "audio/mp4", "audio/wav", "audio/x-wav", "audio/m4a", "video/mp4");
+    private static final Set<String> ALLOWED_MIME_TYPES = Set.of(
+            "audio/mpeg",
+            "audio/mp4",
+            "audio/wav",
+            "audio/x-wav",
+            "audio/m4a",
+            "video/mp4"
+    );
 
     private final MeetingRepository meetingRepository;
     private final TeamRepository teamRepository;
     private final UserRepository userRepository;
+    private final SubscriptionRepository subscriptionRepository;
     private final UsageRecordRepository usageRecordRepository;
     private final MeetingProcessingService meetingProcessingService;
 
@@ -53,13 +67,13 @@ public class MeetingUploadService {
      * @param userId 사용자 ID
      * @param teamId 팀 ID
      * @param title 회의 제목
-     * @param planType 플랜 타입
      * @param file 업로드 파일
      * @return 저장된 회의
      */
     @UploadLimitCheck
     @Transactional
-    public Meeting upload(Long userId, Long teamId, String title, String planType, MultipartFile file) {
+    public Meeting upload(Long userId, Long teamId, String title, MultipartFile file) {
+        String planType = findPlanType(userId);
         validateFile(file, planType);
 
         Team team = teamRepository.findById(teamId)
@@ -71,9 +85,36 @@ public class MeetingUploadService {
         Meeting meeting = Meeting.createPending(title, storedFileName, file.getOriginalFilename(), team, owner);
         Meeting savedMeeting = meetingRepository.save(meeting);
 
-        usageRecordRepository.save(UsageRecord.create(owner, "UPLOAD", 1L));
-        meetingProcessingService.processMeeting(savedMeeting.getId());
+        usageRecordRepository.save(UsageRecord.create(owner, USAGE_TYPE_UPLOAD, 1L, file.getSize()));
+        processMeetingAfterCommit(savedMeeting.getId());
         return savedMeeting;
+    }
+
+    /**
+     * 사용자의 최신 구독 플랜을 조회합니다.
+     *
+     * @param userId 사용자 ID
+     * @return 구독 플랜 타입
+     */
+    private String findPlanType(Long userId) {
+        return subscriptionRepository.findTopByUserIdOrderByCreatedAtDesc(userId)
+                .map(subscription -> subscription.getPlanType().toUpperCase())
+                .orElse(FREE_PLAN);
+    }
+
+    /**
+     * 업로드 트랜잭션 커밋 이후 회의 비동기 처리를 시작합니다.
+     *
+     * @param meetingId 회의 ID
+     */
+    private void processMeetingAfterCommit(Long meetingId) {
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            /** 업로드 트랜잭션 커밋 이후 회의 처리를 요청합니다. */
+            @Override
+            public void afterCommit() {
+                meetingProcessingService.processMeeting(meetingId);
+            }
+        });
     }
 
     /**
@@ -91,11 +132,15 @@ public class MeetingUploadService {
         String extension = extractExtension(originalFilename);
         String mimeType = file.getContentType();
 
-        if (!ALLOWED_EXTENSIONS.contains(extension) || mimeType == null || !ALLOWED_MIME_TYPES.contains(mimeType)) {
+        if (!ALLOWED_EXTENSIONS.contains(extension)
+                || mimeType == null
+                || !ALLOWED_MIME_TYPES.contains(mimeType)) {
             throw new CustomException(ErrorCode.UPLOAD_INVALID_FILE_TYPE);
         }
 
-        long maxFileSize = "PRO".equalsIgnoreCase(planType) ? proMaxFileSize : freeMaxFileSize;
+        long maxFileSize = PRO_PLAN.equalsIgnoreCase(planType)
+                ? proMaxFileSize
+                : freeMaxFileSize;
         if (file.getSize() > maxFileSize) {
             throw new CustomException(ErrorCode.UPLOAD_FILE_SIZE_EXCEEDED);
         }

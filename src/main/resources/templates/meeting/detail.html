@@ -61,6 +61,9 @@
           <span th:text="${actionItem.task}">할 일</span>
           <span th:if="${!#strings.isEmpty(actionItem.assignee)}"
                 th:text="|담당: ${actionItem.assignee}|">담당자</span>
+          <time th:if="${actionItem.dueDate != null}"
+                th:datetime="${actionItem.dueDate}"
+                th:text="|마감일: ${actionItem.dueDate}|">마감일: 2026-06-01</time>
           <select class="action-item-status"
                   th:data-action-item-id="${actionItem.id}"
                   aria-label="액션 아이템 상태">

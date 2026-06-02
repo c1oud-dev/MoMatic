@@ -40,6 +40,12 @@ public class DashboardService {
     @Value("${app.upload.limit.pro.monthly-count}")
     private long proMonthlyLimit;
 
+    @Value("${app.upload.limit.free.max-file-size-bytes}")
+    private long freeMaxFileSize;
+
+    @Value("${app.upload.limit.pro.max-file-size-bytes}")
+    private long proMaxFileSize;
+
     /**
      * 인증 사용자의 대시보드 정보를 조회합니다.
      *
@@ -56,7 +62,15 @@ public class DashboardService {
         YearMonth currentMonth = YearMonth.now();
         LocalDateTime from = currentMonth.atDay(1).atStartOfDay();
         LocalDateTime to = currentMonth.plusMonths(1).atDay(1).atStartOfDay();
-        long monthlyUploadCount = usageRecordRepository.countByUserIdAndUsageTypeAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(
+        long monthlyUploadCount = usageRecordRepository
+                .countByUserIdAndUsageTypeAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(
+                        user.getId(),
+                        USAGE_TYPE_UPLOAD,
+                        from,
+                        to
+                );
+        long monthlyUploadLimit = getMonthlyLimit(planType);
+        long monthlyFileSizeBytes = usageRecordRepository.sumFileSizeBytes(
                 user.getId(),
                 USAGE_TYPE_UPLOAD,
                 from,
@@ -66,7 +80,10 @@ public class DashboardService {
 
         return new DashboardResponse(
                 monthlyUploadCount,
-                getMonthlyLimit(planType),
+                monthlyUploadLimit,
+                Math.max(monthlyUploadLimit - monthlyUploadCount, 0),
+                monthlyFileSizeBytes,
+                getMaxFileSize(planType),
                 planType,
                 DashboardResponse.toMeetingResponses(recentMeetings),
                 actionItemRepository.findTop5ByMeetingOwnerEmailAndStatusInOrderByCreatedAtDesc(
@@ -88,6 +105,18 @@ public class DashboardService {
         return PRO_PLAN.equalsIgnoreCase(planType)
                 ? proMonthlyLimit
                 : freeMonthlyLimit;
+    }
+
+    /**
+     * 플랜 타입에 맞는 파일당 최대 업로드 용량을 조회합니다.
+     *
+     * @param planType 플랜 타입
+     * @return 파일당 최대 업로드 바이트 수
+     */
+    private long getMaxFileSize(String planType) {
+        return PRO_PLAN.equalsIgnoreCase(planType)
+                ? proMaxFileSize
+                : freeMaxFileSize;
     }
 }
 

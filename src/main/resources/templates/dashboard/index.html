@@ -17,7 +17,14 @@
             <p>
                 <strong th:text="${dashboard.planType}">FREE</strong>
                 플랜:
-                <span th:text="|${dashboard.monthlyUploadCount} / ${dashboard.monthlyUploadLimit}회|">0 / 20회</span>
+                <span th:text="|${dashboard.monthlyUploadCount} / ${dashboard.monthlyUploadLimit}회|">0 / 3회</span>
+            </p>
+            <p th:text="|남은 업로드 횟수: ${dashboard.remainingUploadCount}회|">남은 업로드 횟수: 3회</p>
+            <p>
+                이번 달 업로드 파일 용량:
+                <span th:text="|${dashboard.monthlyFileSizeBytes} bytes|">0 bytes</span>
+                / 파일당 한도:
+                <span th:text="|${dashboard.maxFileSizeBytes} bytes|">26214400 bytes</span>
             </p>
         </section>
 

@@ -9,6 +9,9 @@ import java.util.List;
  * 대시보드 화면에 필요한 정보를 표현하는 DTO입니다.
  *
  * @param monthlyUploadCount 이번 달 업로드 횟수
+ * @param remainingUploadCount 이번 달 남은 업로드 횟수
+ * @param monthlyFileSizeBytes 이번 달 업로드 파일 용량
+ * @param maxFileSizeBytes 플랜별 파일당 최대 용량
  * @param monthlyUploadLimit 플랜별 월 업로드 한도
  * @param planType 현재 플랜 타입
  * @param recentMeetings 최근 회의록 목록
@@ -17,6 +20,9 @@ import java.util.List;
 public record DashboardResponse(
         long monthlyUploadCount,
         long monthlyUploadLimit,
+        long remainingUploadCount,
+        long monthlyFileSizeBytes,
+        long maxFileSizeBytes,
         String planType,
         List<MeetingResponse> recentMeetings,
         List<ActionItemSummary> incompleteActionItems

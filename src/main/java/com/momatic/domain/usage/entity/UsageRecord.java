@@ -28,19 +28,27 @@ public class UsageRecord extends BaseEntity {
     @Column(nullable = false)
     private Long usedAmount;
 
+    @Column(nullable = false)
+    private Long fileSizeBytes;
+
     /**
      * 사용량 레코드를 생성합니다.
      *
      * @param user 사용자
      * @param usageType 사용 타입
      * @param usedAmount 사용량
+     * @param fileSizeBytes 업로드 파일 바이트 수
      * @return 생성된 사용량 레코드
      */
-    public static UsageRecord create(User user, String usageType, Long usedAmount) {
+    public static UsageRecord create(User user,
+                                     String usageType,
+                                     Long usedAmount,
+                                     Long fileSizeBytes) {
         UsageRecord usageRecord = new UsageRecord();
         usageRecord.user = user;
         usageRecord.usageType = usageType;
         usageRecord.usedAmount = usedAmount;
+        usageRecord.fileSizeBytes = fileSizeBytes;
         return usageRecord;
     }
 }

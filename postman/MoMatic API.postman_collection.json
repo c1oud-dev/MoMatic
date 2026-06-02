@@ -103,11 +103,6 @@
                   "type": "text"
                 },
                 {
-                  "key": "planType",
-                  "value": "FREE",
-                  "type": "text"
-                },
-                {
                   "key": "file",
                   "type": "file",
                   "src": []
