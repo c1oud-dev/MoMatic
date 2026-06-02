@@ -10,10 +10,12 @@ import com.momatic.global.api.ApiResponse;
 import com.momatic.infra.toss.TossPaymentClient;
 import jakarta.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Controller;
@@ -35,7 +37,7 @@ public class PaymentController {
     private final TossPaymentClient tossPaymentClient;
     private final ObjectMapper objectMapper;
 
-    @Value("${toss.payments.client-key}")
+    @Value("${app.external.toss.payments.client-key}")
     private String clientKey;
 
     /**
@@ -118,18 +120,20 @@ public class PaymentController {
      * 인증 사용자의 결제 내역 화면을 표시합니다.
      *
      * @param principal 인증 사용자 정보
+     * @param pageable 페이징 정보
      * @param model 화면 모델
      * @return 결제 내역 템플릿
      */
     @GetMapping("/payments")
     public String payments(@AuthenticationPrincipal OAuth2User principal,
+                           @PageableDefault(size = 10) Pageable pageable,
                            Model model) {
-        List<PaymentResponse> payments = paymentService.getPayments(principal.getAttribute("email"))
-                .stream()
-                .map(PaymentResponse::from)
-                .toList();
+        Page<PaymentResponse> payments = paymentService.getPayments(
+                principal.getAttribute("email"),
+                pageable
+        ).map(PaymentResponse::from);
         model.addAttribute("payments", payments);
-        return "payment/list";
+        return "payment/history";
     }
 
     /**

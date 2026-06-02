@@ -10,6 +10,63 @@
   },
   "item": [
     {
+      "name": "Pages",
+      "item": [
+        {
+          "name": "Get Landing Page",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": []
+            },
+            "description": "서비스 랜딩 페이지를 조회합니다."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Dashboard Page",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/dashboard",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "dashboard"
+              ]
+            },
+            "description": "현재 Mock 인증 사용자의 대시보드 페이지를 조회합니다."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Plans Page",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/plans",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "plans"
+              ]
+            },
+            "description": "요금제 비교 페이지를 조회합니다."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
       "name": "Users",
       "item": [
         {
@@ -59,6 +116,72 @@
     {
       "name": "Meetings",
       "item": [
+        {
+          "name": "List Meetings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/meetings?page=0&size=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "meetings"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "현재 Mock 인증 사용자가 소유한 회의 목록 페이지를 조회합니다."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Meeting Detail",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/meetings/{{meetingId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "meetings",
+                "{{meetingId}}"
+              ]
+            },
+            "description": "현재 Mock 인증 사용자가 소유한 회의 상세 페이지를 조회합니다."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Meeting Upload Page",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/meetings/upload",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "meetings",
+                "upload"
+              ]
+            },
+            "description": "회의 음성 파일 업로드 페이지를 조회합니다."
+          },
+          "response": []
+        },
         {
           "name": "Get Meeting Status",
           "request": {
@@ -164,6 +287,203 @@
           "response": []
         }
       ]
+    },
+    {
+      "name": "Payments",
+      "item": [
+        {
+          "name": "Get Payment History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/payments?page=0&size=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payments"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "현재 Mock 인증 사용자의 결제 내역 페이지를 조회합니다."
+          },
+          "response": []
+        },
+        {
+          "name": "Checkout Payment",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/payments/checkout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payments",
+                "checkout"
+              ]
+            },
+            "description": "선택한 요금제의 결제창 호출 페이지를 생성합니다.",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "planType",
+                  "value": "PRO",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Confirm Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/payments/confirm",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payments",
+                "confirm"
+              ]
+            },
+            "description": "결제 승인 요청을 처리합니다.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"{{orderId}}\",\n  \"paymentKey\": \"{{paymentKey}}\",\n  \"amount\": 19900\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Complete Payment Redirect",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/payments/success?paymentKey={{paymentKey}}&orderId={{orderId}}&amount=19900",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payments",
+                "success"
+              ],
+              "query": [
+                {
+                  "key": "paymentKey",
+                  "value": "{{paymentKey}}"
+                },
+                {
+                  "key": "orderId",
+                  "value": "{{orderId}}"
+                },
+                {
+                  "key": "amount",
+                  "value": "19900"
+                }
+              ]
+            },
+            "description": "토스페이먼츠 결제 성공 리다이렉트를 처리합니다."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Payment Failure Page",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/payments/fail?code=PAYMENT_FAILED&message=결제에 실패했습니다.",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payments",
+                "fail"
+              ],
+              "query": [
+                {
+                  "key": "code",
+                  "value": "PAYMENT_FAILED"
+                },
+                {
+                  "key": "message",
+                  "value": "결제에 실패했습니다."
+                }
+              ]
+            },
+            "description": "토스페이먼츠 결제 실패 페이지를 조회합니다."
+          },
+          "response": []
+        },
+        {
+          "name": "Handle Payment Webhook",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Basic {{tossWebhookAuthorization}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/payments/webhook",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payments",
+                "webhook"
+              ]
+            },
+            "description": "토스페이먼츠 Webhook 이벤트를 처리합니다. Authorization 값은 실행 환경에 맞게 입력하세요.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventType\": \"PAYMENT_DONE\",\n  \"data\": {\n    \"orderId\": \"{{orderId}}\",\n    \"paymentKey\": \"{{paymentKey}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
     }
   ],
   "variable": [
@@ -190,6 +510,21 @@
     {
       "key": "actionItemId",
       "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "orderId",
+      "value": "replace-with-order-id",
+      "type": "string"
+    },
+    {
+      "key": "paymentKey",
+      "value": "replace-with-payment-key",
+      "type": "string"
+    },
+    {
+      "key": "tossWebhookAuthorization",
+      "value": "replace-with-authorization",
       "type": "string"
     }
   ]

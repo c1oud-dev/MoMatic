@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <title>결제 내역</title>
+</head>
+<body>
+<div th:replace="~{layouts/default :: layout(~{::section})}">
+  <section>
+    <h1>결제 내역</h1>
+    <p th:if="${payments.empty}">결제 내역이 없습니다.</p>
+    <table th:unless="${payments.empty}">
+      <thead>
+      <tr>
+        <th scope="col">결제 날짜</th>
+        <th scope="col">금액</th>
+        <th scope="col">플랜</th>
+        <th scope="col">상태</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr th:each="payment : ${payments.content}">
+        <td th:text="${#temporals.format(payment.createdAt, 'yyyy-MM-dd HH:mm')}">2026-06-02 00:00</td>
+        <td th:text="|${payment.amount}원|">19900원</td>
+        <td th:text="${payment.planType}">PRO</td>
+        <td th:text="${payment.status}">DONE</td>
+      </tr>
+      </tbody>
+    </table>
+
+    <nav th:if="${payments.totalPages > 1}" aria-label="결제 내역 페이지 이동">
+      <a th:if="${payments.hasPrevious()}"
+         th:href="@{/payments(page=${payments.number - 1},size=${payments.size})}">이전</a>
+      <span th:text="|${payments.number + 1} / ${payments.totalPages}|">1 / 1</span>
+      <a th:if="${payments.hasNext()}"
+         th:href="@{/payments(page=${payments.number + 1},size=${payments.size})}">다음</a>
+    </nav>
+  </section>
+</div>
+</body>
+</html>

@@ -32,7 +32,7 @@ public class TossPaymentClient {
 
     private final OkHttpClient okHttpClient = new OkHttpClient();
 
-    @Value("${toss.payments.secret-key}")
+    @Value("${app.external.toss.payments.secret-key}")
     private String secretKey;
 
     /**
