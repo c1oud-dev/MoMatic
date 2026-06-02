@@ -2,27 +2,33 @@ package com.momatic.domain.plan.entity;
 
 import com.momatic.global.error.CustomException;
 import com.momatic.global.error.ErrorCode;
+
+import java.math.BigDecimal;
 import java.util.Arrays;
 
 /** 구독 플랜별 업로드 제한 정책을 정의하는 열거형입니다. */
 public enum PlanPolicy {
-    FREE(3L, 26_214_400L),
-    PRO(200L, 524_288_000L),
-    TEAM(1_000L, 1_073_741_824L);
+    FREE(3L, 26_214_400L, 0L),
+    PRO(200L, 524_288_000L, 19_900L),
+    TEAM(1_000L, 1_073_741_824L, 49_900L);
 
     private final long monthlyUploadCount;
     private final long maxFileSizeBytes;
+    private final BigDecimal price;
 
     /**
      * 플랜 정책을 생성합니다.
      *
      * @param monthlyUploadCount 월 업로드 가능 횟수
      * @param maxFileSizeBytes 파일당 최대 업로드 바이트 수
+     * @param price 월 결제 금액
      */
     PlanPolicy(long monthlyUploadCount,
-               long maxFileSizeBytes) {
+               long maxFileSizeBytes,
+               long price) {
         this.monthlyUploadCount = monthlyUploadCount;
         this.maxFileSizeBytes = maxFileSizeBytes;
+        this.price = BigDecimal.valueOf(price);
     }
 
     /**
@@ -58,6 +64,15 @@ public enum PlanPolicy {
      */
     public long getMaxFileSizeBytes() {
         return maxFileSizeBytes;
+    }
+
+    /**
+     * 월 결제 금액을 조회합니다.
+     *
+     * @return 월 결제 금액
+     */
+    public BigDecimal getPrice() {
+        return price;
     }
 }
 

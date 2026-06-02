@@ -62,7 +62,9 @@ public class Subscription extends BaseEntity {
         this.planType = planType;
         this.status = SubscriptionStatus.ACTIVE;
         this.startedAt = LocalDateTime.now();
-        this.expiredAt = null;
+        this.expiredAt = planType == PlanPolicy.FREE
+                ? null
+                : this.startedAt.plusMonths(1);
     }
 
     /** 구독을 만료 처리하고 무료 플랜으로 전환합니다. */

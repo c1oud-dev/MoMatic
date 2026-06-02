@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <title>결제 실패</title>
+</head>
+<body>
+<div th:replace="~{layouts/default :: layout(~{::section})}">
+  <section>
+    <h1>결제를 완료하지 못했습니다.</h1>
+    <p th:text="${message} ?: '결제 정보를 확인한 뒤 다시 시도해 주세요.'">결제 실패 메시지</p>
+    <p th:if="${code}" th:text="|오류 코드: ${code}|">오류 코드</p>
+    <a th:href="@{/plans}">요금제로 돌아가기</a>
+  </section>
+</div>
+</body>
+</html>

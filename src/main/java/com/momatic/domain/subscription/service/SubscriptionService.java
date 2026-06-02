@@ -8,6 +8,9 @@ import com.momatic.domain.user.entity.User;
 import com.momatic.domain.user.repository.UserRepository;
 import com.momatic.global.error.CustomException;
 import com.momatic.global.error.ErrorCode;
+
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -47,7 +50,7 @@ public class SubscriptionService {
     }
 
     /**
-     * 사용자의 구독 플랜을 업그레이드합니다.
+     * 이메일 기준으로 사용자의 구독 플랜을 업그레이드합니다.
      *
      * @param email 사용자 이메일
      * @param planType 변경할 플랜 문자열
@@ -56,26 +59,59 @@ public class SubscriptionService {
     @Transactional
     public Subscription upgrade(String email,
                                 String planType) {
-        User user = findUser(email);
-        PlanPolicy planPolicy = PlanPolicy.from(planType);
-        Subscription subscription = findActiveSubscription(user.getId())
-                .orElseGet(() -> Subscription.createActive(user, planPolicy));
-        subscription.upgrade(planPolicy);
+        return upgrade(findUser(email).getId(), PlanPolicy.from(planType));
+    }
+
+    /**
+     * 사용자 ID 기준으로 구독 플랜을 업그레이드합니다.
+     *
+     * @param userId 사용자 ID
+     * @param planType 변경할 플랜
+     * @return 변경된 구독
+     */
+    @Transactional
+    public Subscription upgrade(Long userId,
+                                PlanPolicy planType) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        Subscription subscription = findActiveSubscription(userId)
+                .orElseGet(() -> Subscription.createActive(user, planType));
+        subscription.upgrade(planType);
         return subscriptionRepository.save(subscription);
     }
 
     /**
-     * 구독을 만료 처리합니다.
+     * ID에 해당하는 구독을 만료 처리합니다.
      *
      * @param subscriptionId 구독 ID
      * @return 만료된 구독
      */
     @Transactional
-    public Subscription expire(Long subscriptionId) {
+    public Subscription expireSubscription(Long subscriptionId) {
         Subscription subscription = subscriptionRepository.findById(subscriptionId)
                 .orElseThrow(() -> new CustomException(ErrorCode.SUBSCRIPTION_NOT_FOUND));
         subscription.expire();
         return subscription;
+    }
+
+    /**
+     * 사용자의 활성 구독을 만료 처리합니다.
+     *
+     * @param userId 사용자 ID
+     */
+    @Transactional
+    public void expireActiveSubscription(Long userId) {
+        findActiveSubscription(userId).ifPresent(Subscription::expire);
+    }
+
+    /** 자정 스케줄러에서 만료 시각이 지난 활성 구독을 일괄 만료 처리합니다. */
+    @Transactional
+    public void expireSubscriptions() {
+        List<Subscription> subscriptions = subscriptionRepository.findAllByStatusAndExpiredAtBefore(
+                SubscriptionStatus.ACTIVE,
+                LocalDateTime.now()
+        );
+        subscriptions.forEach(Subscription::expire);
     }
 
     /**

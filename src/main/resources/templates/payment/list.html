@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <title>결제 내역</title>
+</head>
+<body>
+<div th:replace="~{layouts/default :: layout(~{::section})}">
+  <section>
+    <h1>결제 내역</h1>
+    <table>
+      <thead>
+      <tr>
+        <th scope="col">주문 ID</th>
+        <th scope="col">플랜</th>
+        <th scope="col">금액</th>
+        <th scope="col">상태</th>
+        <th scope="col">생성 시각</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr th:each="payment : ${payments}">
+        <td th:text="${payment.orderId}">order-id</td>
+        <td th:text="${payment.planType}">PRO</td>
+        <td th:text="|${payment.amount}원|">19900원</td>
+        <td th:text="${payment.status}">DONE</td>
+        <td th:text="${payment.createdAt}">2026-06-02T00:00:00</td>
+      </tr>
+      </tbody>
+    </table>
+    <p th:if="${#lists.isEmpty(payments)}">결제 내역이 없습니다.</p>
+  </section>
+</div>
+</body>
+</html>

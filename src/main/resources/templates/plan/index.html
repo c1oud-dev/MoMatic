@@ -18,6 +18,7 @@
         <th scope="col">플랜</th>
         <th scope="col">월 업로드 횟수</th>
         <th scope="col">파일당 최대 크기</th>
+        <th scope="col">월 결제 금액</th>
         <th scope="col">선택</th>
       </tr>
       </thead>
@@ -26,13 +27,14 @@
         <th scope="row" th:text="${plan.planType}">FREE</th>
         <td th:text="|${plan.monthlyUploadCount}회|">3회</td>
         <td th:text="|${plan.maxFileSizeBytes} bytes|">26214400 bytes</td>
+        <td th:text="|${plan.price}원|">0원</td>
         <td>
           <strong th:if="${authenticated and currentPlan == plan.planType}">현재 플랜</strong>
-          <form th:if="${authenticated and currentPlan != plan.planType}"
-                th:action="@{/plans/upgrade}"
+          <form th:if="${authenticated and currentPlan != plan.planType and plan.planType != 'FREE'}"
+                th:action="@{/payments/checkout}"
                 method="post">
             <input type="hidden" name="planType" th:value="${plan.planType}" />
-            <button type="submit" th:text="|${plan.planType} 플랜으로 변경|">플랜 변경</button>
+            <button type="submit" th:text="|${plan.planType} 플랜 결제하기|">플랜 결제</button>
           </form>
           <a th:unless="${authenticated}"
              th:href="@{/oauth2/authorization/google}">Google로 로그인하고 시작하기</a>

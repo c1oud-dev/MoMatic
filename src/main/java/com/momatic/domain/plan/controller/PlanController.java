@@ -12,8 +12,6 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 
 /** 요금제 화면 요청과 플랜 변경을 처리하는 컨트롤러입니다. */
 @Controller
@@ -49,20 +47,4 @@ public class PlanController {
 
         return "plan/index";
     }
-
-    /**
-     * 인증 사용자의 플랜을 변경합니다.
-     *
-     * @param principal 인증 사용자 정보
-     * @param planType 변경할 플랜 타입
-     * @return 요금제 화면 리다이렉트 경로
-     */
-    @PostMapping("/plans/upgrade")
-    public String upgrade(@AuthenticationPrincipal OAuth2User principal,
-                          @RequestParam String planType) {
-        String email = principal.getAttribute("email");
-        subscriptionService.upgrade(email, planType);
-        return "redirect:/plans";
-    }
 }
-
