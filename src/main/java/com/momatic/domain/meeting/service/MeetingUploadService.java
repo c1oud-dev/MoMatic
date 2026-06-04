@@ -18,6 +18,8 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Set;
 import java.util.UUID;
+
+import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -55,20 +57,19 @@ public class MeetingUploadService {
      * 음성 파일을 업로드합니다.
      *
      * @param userId 사용자 ID
-     * @param teamId 팀 ID
+     * @param teamId 팀 ID, 개인 회의록이면 null
      * @param title 회의 제목
      * @param file 업로드 파일
      * @return 저장된 회의
      */
     @UploadLimitCheck
     @Transactional
-    public Meeting upload(Long userId, Long teamId, String title, MultipartFile file) {
+    public Meeting upload(Long userId, @Nullable Long teamId, String title, MultipartFile file) {
         validateFile(file);
 
-        Team team = teamRepository.findById(teamId)
-                .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REQUEST));
         User owner = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        Team team = findUploadTeam(teamId, owner);
 
         String storedFileName = storeFile(file);
         Meeting meeting = Meeting.createPending(title, storedFileName, file.getOriginalFilename(), team, owner);
@@ -77,6 +78,28 @@ public class MeetingUploadService {
         usageRecordRepository.save(UsageRecord.create(owner, USAGE_TYPE_UPLOAD, 1L, file.getSize()));
         processMeetingAfterCommit(savedMeeting.getId());
         return savedMeeting;
+    }
+
+    /**
+     * 업로드 대상 팀을 조회하고 업로드 사용자의 팀 소속 여부를 검증합니다.
+     *
+     * @param teamId 팀 ID, 개인 회의록이면 null
+     * @param owner 업로드 사용자
+     * @return 업로드 대상 팀 또는 null
+     */
+    private Team findUploadTeam(@Nullable Long teamId,
+                                User owner) {
+        if (teamId == null) {
+            return null;
+        }
+
+        Team team = teamRepository.findById(teamId)
+                .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REQUEST));
+        if (team.getMembers().stream()
+                .noneMatch(member -> member.getUser().getId().equals(owner.getId()))) {
+            throw new CustomException(ErrorCode.FORBIDDEN);
+        }
+        return team;
     }
 
     /**

@@ -22,7 +22,7 @@ public class ActionItemController {
     private final ActionItemService actionItemService;
 
     /**
-     * 인증 사용자가 소유한 회의의 액션 아이템 상태를 변경합니다.
+     * 인증 사용자가 편집 가능한 회의의 액션 아이템 상태를 변경합니다.
      *
      * @param actionItemId 액션 아이템 ID
      * @param request 상태 변경 요청
@@ -34,7 +34,7 @@ public class ActionItemController {
                                                               @RequestBody ActionItemStatusRequest request,
                                                               @AuthenticationPrincipal OAuth2User principal) {
         return ApiResponse.ok(ActionItemStatusResponse.from(
-                actionItemService.updateOwnedActionItemStatus(
+                actionItemService.updateEditableActionItemStatus(
                         actionItemId,
                         principal.getAttribute("email"),
                         request.status()

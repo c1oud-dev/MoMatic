@@ -7,7 +7,10 @@ import com.momatic.domain.meeting.dto.MeetingUploadResponse;
 import com.momatic.domain.meeting.service.MeetingUploadService;
 import com.momatic.domain.meeting.service.MeetingService;
 
+import com.momatic.domain.team.dto.TeamResponse;
+import com.momatic.domain.team.service.TeamService;
 import com.momatic.global.api.ApiResponse;
+import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -27,6 +30,7 @@ public class MeetingController {
 
     private final MeetingService meetingService;
     private final MeetingUploadService meetingUploadService;
+    private final TeamService teamService;
 
     /**
      * 인증 사용자가 소유한 회의 목록 페이지를 표시합니다.
@@ -59,7 +63,7 @@ public class MeetingController {
                              @AuthenticationPrincipal OAuth2User principal,
                              Model model) {
         MeetingDetailResponse meeting = MeetingDetailResponse.from(
-                meetingService.getOwnedMeetingDetail(meetingId, getEmail(principal))
+                meetingService.getAccessibleMeetingDetail(meetingId, getEmail(principal))
         );
         model.addAttribute("detail", meeting);
         return "meeting/detail";
@@ -68,10 +72,16 @@ public class MeetingController {
     /**
      * 회의 파일 업로드 페이지를 표시합니다.
      *
+     * @param principal 인증 사용자 정보
+     * @param model 화면 모델
      * @return 업로드 템플릿 경로
      */
     @GetMapping("/upload")
-    public String uploadPage() {
+    public String uploadPage(@AuthenticationPrincipal OAuth2User principal,
+                             Model model) {
+        model.addAttribute("teams", teamService.findTeamsByMemberEmail(getEmail(principal)).stream()
+                .map(TeamResponse::from)
+                .toList());
         return "meeting/upload";
     }
 
@@ -87,7 +97,7 @@ public class MeetingController {
     public ApiResponse<MeetingStatusResponse> getMeetingStatus(@PathVariable Long meetingId,
                                                                @AuthenticationPrincipal OAuth2User principal) {
         return ApiResponse.ok(MeetingStatusResponse.from(
-                meetingService.findOwnedMeeting(meetingId, getEmail(principal))
+                meetingService.findAccessibleMeeting(meetingId, getEmail(principal))
         ));
     }
 
@@ -95,7 +105,7 @@ public class MeetingController {
      * 음성 파일 업로드를 수행합니다.
      *
      * @param userId 사용자 ID
-     * @param teamId 팀 ID
+     * @param teamId 팀 ID, 개인 회의록이면 null
      * @param title 회의 제목
      * @param file 음성 파일
      * @return 업로드 결과
@@ -103,7 +113,7 @@ public class MeetingController {
     @PostMapping("/upload")
     @ResponseBody
     public ApiResponse<MeetingUploadResponse> uploadMeetingFile(@RequestParam Long userId,
-                                                                @RequestParam Long teamId,
+                                                                @RequestParam(required = false) @Nullable Long teamId,
                                                                 @RequestParam String title,
                                                                 @RequestParam MultipartFile file) {
         return ApiResponse.ok(MeetingUploadResponse.from(

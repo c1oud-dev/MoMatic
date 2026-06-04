@@ -44,6 +44,63 @@ public class TeamService {
     }
 
     /**
+     * 인증 사용자가 소속된 팀 목록을 조회합니다.
+     *
+     * @param memberEmail 인증 사용자 이메일
+     * @return 소속 팀 목록
+     */
+    @Transactional(readOnly = true)
+    public List<Team> findTeamsByMemberEmail(String memberEmail) {
+        return teamMemberRepository.findAllByUserEmailOrderByCreatedAtAsc(memberEmail).stream()
+                .map(TeamMember::getTeam)
+                .toList();
+    }
+
+    /**
+     * 팀 구성원 목록을 조회합니다.
+     *
+     * @param teamId 팀 ID
+     * @param requesterEmail 요청자 이메일
+     * @return 팀 구성원 목록
+     */
+    @Transactional(readOnly = true)
+    public List<TeamMember> findMembers(Long teamId,
+                                        String requesterEmail) {
+        User requester = findUser(requesterEmail);
+        validateMembership(teamId, requester.getId());
+        return teamMemberRepository.findAllByTeamIdOrderByCreatedAtAsc(teamId);
+    }
+
+    /**
+     * 팀에 대한 요청자의 구성원 정보를 조회합니다.
+     *
+     * @param teamId 팀 ID
+     * @param requesterEmail 요청자 이메일
+     * @return 요청자 팀 구성원 정보
+     */
+    @Transactional(readOnly = true)
+    public TeamMember findRequesterMember(Long teamId,
+                                          String requesterEmail) {
+        User requester = findUser(requesterEmail);
+        return validateMembership(teamId, requester.getId());
+    }
+
+    /**
+     * 팀 상세 정보를 조회합니다.
+     *
+     * @param teamId 팀 ID
+     * @param requesterEmail 요청자 이메일
+     * @return 팀 정보
+     */
+    @Transactional(readOnly = true)
+    public Team findTeamForMember(Long teamId,
+                                  String requesterEmail) {
+        User requester = findUser(requesterEmail);
+        validateMembership(teamId, requester.getId());
+        return findTeam(teamId);
+    }
+
+    /**
      * 팀을 생성하고 요청 사용자를 OWNER로 지정합니다.
      *
      * @param ownerEmail 팀 생성자 이메일
@@ -161,6 +218,19 @@ public class TeamService {
     }
 
     /**
+     * 팀 소속 여부를 확인합니다.
+     *
+     * @param teamId 팀 ID
+     * @param userId 사용자 ID
+     * @return 요청자의 팀 구성원 정보
+     */
+    private TeamMember validateMembership(Long teamId,
+                                          Long userId) {
+        return teamMemberRepository.findByTeamIdAndUserId(teamId, userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.FORBIDDEN));
+    }
+
+    /**
      * 팀 관리 권한을 확인합니다.
      *
      * @param teamId 팀 ID
@@ -169,8 +239,7 @@ public class TeamService {
      */
     private TeamMember validateManagePermission(Long teamId,
                                                 Long userId) {
-        TeamMember member = teamMemberRepository.findByTeamIdAndUserId(teamId, userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.FORBIDDEN));
+        TeamMember member = validateMembership(teamId, userId);
         if (!member.canManageTeam()) {
             throw new CustomException(ErrorCode.FORBIDDEN);
         }

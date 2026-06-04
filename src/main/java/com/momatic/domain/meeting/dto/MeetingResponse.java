@@ -10,9 +10,12 @@ import java.time.LocalDateTime;
  *
  * @param id 회의 ID
  * @param title 제목
+ * @param status 처리 상태
  * @param startedAt 시작 시각
  * @param endedAt 종료 시각
  * @param summary 요약
+ * @param teamId 팀 ID
+ * @param teamName 팀 이름
  * @param createdAt 생성 시각
  */
 public record MeetingResponse(
@@ -22,6 +25,8 @@ public record MeetingResponse(
         LocalDateTime startedAt,
         LocalDateTime endedAt,
         String summary,
+        Long teamId,
+        String teamName,
         LocalDateTime createdAt
 ) {
 
@@ -39,6 +44,8 @@ public record MeetingResponse(
                 meeting.getStartedAt(),
                 meeting.getEndedAt(),
                 meeting.getSummary(),
+                meeting.hasTeam() ? meeting.getTeam().getId() : null,
+                meeting.hasTeam() ? meeting.getTeam().getName() : null,
                 meeting.getCreatedAt()
         );
     }
