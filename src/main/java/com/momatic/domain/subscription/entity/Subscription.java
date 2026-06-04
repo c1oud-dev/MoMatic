@@ -73,4 +73,11 @@ public class Subscription extends BaseEntity {
         this.status = SubscriptionStatus.EXPIRED;
         this.expiredAt = LocalDateTime.now();
     }
+
+    /** 구독을 취소 처리하고 무료 플랜으로 전환합니다. */
+    public void cancel() {
+        this.planType = PlanPolicy.FREE;
+        this.status = SubscriptionStatus.CANCELLED;
+        this.expiredAt = LocalDateTime.now();
+    }
 }

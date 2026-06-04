@@ -104,6 +104,16 @@ public class SubscriptionService {
         findActiveSubscription(userId).ifPresent(Subscription::expire);
     }
 
+    /**
+     * 사용자의 활성 구독을 취소 처리합니다.
+     *
+     * @param userId 사용자 ID
+     */
+    @Transactional
+    public void cancelActiveSubscription(Long userId) {
+        findActiveSubscription(userId).ifPresent(Subscription::cancel);
+    }
+
     /** 자정 스케줄러에서 만료 시각이 지난 활성 구독을 일괄 만료 처리합니다. */
     @Transactional
     public void expireSubscriptions() {

@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Controller;
@@ -124,7 +125,7 @@ public class PaymentController {
      * @param model 화면 모델
      * @return 결제 내역 템플릿
      */
-    @GetMapping("/payments")
+    @GetMapping(value = "/payments", produces = MediaType.TEXT_HTML_VALUE)
     public String payments(@AuthenticationPrincipal OAuth2User principal,
                            @PageableDefault(size = 10) Pageable pageable,
                            Model model) {
@@ -134,6 +135,23 @@ public class PaymentController {
         ).map(PaymentResponse::from);
         model.addAttribute("payments", payments);
         return "payment/history";
+    }
+
+    /**
+     * 인증 사용자의 결제 내역을 JSON API 응답으로 조회합니다.
+     *
+     * @param principal 인증 사용자 정보
+     * @param pageable 페이징 정보
+     * @return 결제 내역 API 응답
+     */
+    @ResponseBody
+    @GetMapping(value = "/payments", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ApiResponse<Page<PaymentResponse>> paymentApi(@AuthenticationPrincipal OAuth2User principal,
+                                                         @PageableDefault(size = 10) Pageable pageable) {
+        return ApiResponse.ok(paymentService.getPayments(
+                principal.getAttribute("email"),
+                pageable
+        ).map(PaymentResponse::from));
     }
 
     /**

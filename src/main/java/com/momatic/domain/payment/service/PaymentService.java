@@ -67,9 +67,17 @@ public class PaymentService {
         if (request == null) {
             throw new CustomException(ErrorCode.INVALID_REQUEST);
         }
-        Payment payment = getPendingPayment(request.orderId());
+        Payment payment = getPayment(request.orderId());
         validateOwner(payment, email);
         validatePaymentRequest(payment, request);
+        if (payment.getStatus() == PaymentStatus.DONE) {
+            validateCompletedPayment(payment, request);
+            return payment;
+        }
+        if (payment.getStatus() != PaymentStatus.PENDING) {
+            throw new CustomException(ErrorCode.INVALID_PAYMENT_STATUS);
+        }
+
         TossPaymentResponse tossResponse = tossPaymentClient.confirm(request);
         validateTossResponse(payment, request, tossResponse);
         payment.complete(tossResponse.paymentKey());
@@ -133,6 +141,9 @@ public class PaymentService {
         if (payment.getStatus() == PaymentStatus.DONE) {
             return;
         }
+        if (payment.getStatus() != PaymentStatus.PENDING) {
+            return;
+        }
         if (paymentKey == null || paymentKey.isBlank()) {
             throw new CustomException(ErrorCode.INVALID_PAYMENT_WEBHOOK);
         }
@@ -146,6 +157,9 @@ public class PaymentService {
      * @param payment 결제 엔티티
      */
     private void failFromWebhook(Payment payment) {
+        if (payment.getStatus() == PaymentStatus.FAILED) {
+            return;
+        }
         if (payment.getStatus() == PaymentStatus.PENDING) {
             payment.fail();
         }
@@ -160,8 +174,13 @@ public class PaymentService {
         if (payment.getStatus() == PaymentStatus.CANCELLED) {
             return;
         }
+        if (payment.getStatus() != PaymentStatus.PENDING
+                && payment.getStatus() != PaymentStatus.DONE) {
+            return;
+        }
+
         payment.cancel();
-        subscriptionService.expireActiveSubscription(payment.getUser().getId());
+        subscriptionService.cancelActiveSubscription(payment.getUser().getId());
     }
 
     /**
@@ -183,21 +202,17 @@ public class PaymentService {
     }
 
     /**
-     * 주문 ID에 해당하는 승인 대기 결제를 조회합니다.
+     * 주문 ID에 해당하는 결제를 조회합니다.
      *
      * @param orderId 주문 ID
-     * @return 승인 대기 결제
+     * @return 결제 엔티티
      */
-    private Payment getPendingPayment(String orderId) {
+    private Payment getPayment(String orderId) {
         if (orderId == null || orderId.isBlank()) {
             throw new CustomException(ErrorCode.INVALID_REQUEST);
         }
-        Payment payment = paymentRepository.findByOrderId(orderId)
+        return paymentRepository.findByOrderId(orderId)
                 .orElseThrow(() -> new CustomException(ErrorCode.PAYMENT_NOT_FOUND));
-        if (payment.getStatus() != PaymentStatus.PENDING) {
-            throw new CustomException(ErrorCode.INVALID_PAYMENT_STATUS);
-        }
-        return payment;
     }
 
     /**
@@ -226,6 +241,19 @@ public class PaymentService {
                 || request.amount() == null
                 || payment.getAmount().compareTo(request.amount()) != 0) {
             throw new CustomException(ErrorCode.INVALID_PAYMENT_AMOUNT);
+        }
+    }
+
+    /**
+     * 이미 승인 완료된 결제가 동일 승인 요청인지 검증합니다.
+     *
+     * @param payment 결제 엔티티
+     * @param request 결제 승인 요청
+     */
+    private void validateCompletedPayment(Payment payment,
+                                          PaymentConfirmRequest request) {
+        if (!request.paymentKey().equals(payment.getPaymentKey())) {
+            throw new CustomException(ErrorCode.INVALID_PAYMENT_STATUS);
         }
     }
 

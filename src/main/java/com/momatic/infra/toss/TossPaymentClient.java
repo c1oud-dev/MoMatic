@@ -35,6 +35,10 @@ public class TossPaymentClient {
     @Value("${app.external.toss.payments.secret-key}")
     private String secretKey;
 
+    @Value("${app.external.toss.payments.webhook-secret:${app.external.toss.payments.secret-key}}")
+    private String webhookSecret;
+
+
     /**
      * 결제 승인 API를 호출합니다.
      *
@@ -71,7 +75,7 @@ public class TossPaymentClient {
             return false;
         }
         return MessageDigest.isEqual(
-                createAuthorizationHeader().getBytes(StandardCharsets.UTF_8),
+                createBasicAuthorizationHeader(webhookSecret).getBytes(StandardCharsets.UTF_8),
                 authorizationHeader.getBytes(StandardCharsets.UTF_8)
         );
     }
@@ -82,7 +86,17 @@ public class TossPaymentClient {
      * @return Basic 인증 헤더
      */
     private String createAuthorizationHeader() {
-        String credentials = secretKey + ":";
+        return createBasicAuthorizationHeader(secretKey);
+    }
+
+    /**
+     * 지정한 시크릿 기반 Basic 인증 헤더를 생성합니다.
+     *
+     * @param key Basic 인증에 사용할 시크릿
+     * @return Basic 인증 헤더
+     */
+    private String createBasicAuthorizationHeader(String key) {
+        String credentials = key + ":";
         String encoded = Base64.getEncoder()
                 .encodeToString(credentials.getBytes(StandardCharsets.UTF_8));
         return "Basic " + encoded;
