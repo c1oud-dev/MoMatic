@@ -26,6 +26,7 @@
       <tr th:each="plan : ${plans}">
         <th scope="row" th:text="${plan.planType}">FREE</th>
         <td th:text="|${plan.monthlyUploadCount}회|">3회</td>
+        <td th:text="|${plan.maxFileSizeLabel}|">26214400 bytes</td>
         <td th:text="|${plan.maxFileSizeBytes} bytes|">26214400 bytes</td>
         <td th:text="|${plan.price}원|">0원</td>
         <td>
@@ -34,7 +35,7 @@
                 th:action="@{/payments/checkout}"
                 method="post">
             <input type="hidden" name="planType" th:value="${plan.planType}" />
-            <button type="submit" th:text="|${plan.planType} 플랜 결제하기|">플랜 결제</button>
+            <button type="submit" th:text="|${plan.planType} 플랜으로 업그레이드|">플랜 업그레이드</button>
           </form>
           <a th:unless="${authenticated}"
              th:href="@{/oauth2/authorization/google}">Google로 로그인하고 시작하기</a>

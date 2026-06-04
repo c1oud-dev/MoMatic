@@ -26,7 +26,7 @@ public class GlobalExceptionHandler {
         if (isAjaxRequest(request)) {
             return handleAjax(exception);
         }
-        if (exception.getErrorCode() == ErrorCode.UPLOAD_MONTHLY_LIMIT_EXCEEDED) {
+        if (isPlanUpgradeRequired(exception.getErrorCode())) {
             return "redirect:/plans";
         }
 
@@ -66,6 +66,17 @@ public class GlobalExceptionHandler {
         ErrorCode errorCode = exception.getErrorCode();
         return ResponseEntity.status(errorCode.getStatus())
                 .body(ApiResponse.fail(errorCode.name(), errorCode.getMessage()));
+    }
+
+    /**
+     * 업로드 차단 예외가 요금제 업그레이드 안내 대상인지 확인합니다.
+     *
+     * @param errorCode 에러 코드
+     * @return 요금제 업그레이드 안내 대상 여부
+     */
+    private boolean isPlanUpgradeRequired(ErrorCode errorCode) {
+        return errorCode == ErrorCode.UPLOAD_MONTHLY_LIMIT_EXCEEDED
+                || errorCode == ErrorCode.UPLOAD_FILE_SIZE_EXCEEDED;
     }
 
     /**

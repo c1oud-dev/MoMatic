@@ -19,7 +19,7 @@ public enum ErrorCode {
     INVALID_PAYMENT_WEBHOOK(HttpStatus.BAD_REQUEST, "올바르지 않은 결제 Webhook입니다."),
     INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다."),
     UPLOAD_INVALID_FILE_TYPE(HttpStatus.BAD_REQUEST, "허용되지 않은 파일 형식입니다."),
-    UPLOAD_FILE_SIZE_EXCEEDED(HttpStatus.BAD_REQUEST, "플랜 허용 파일 크기를 초과했습니다."),
+    UPLOAD_FILE_SIZE_EXCEEDED(HttpStatus.BAD_REQUEST, "플랜 허용 파일 크기를 초과했습니다. 요금제를 업그레이드해 주세요."),
     UPLOAD_MONTHLY_LIMIT_EXCEEDED(HttpStatus.TOO_MANY_REQUESTS, "월 업로드 가능 횟수를 초과했습니다. 요금제를 업그레이드해 주세요.");
 
     private final HttpStatus status;
