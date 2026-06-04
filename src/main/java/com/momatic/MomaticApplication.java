@@ -11,5 +11,4 @@ public class MomaticApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(MomaticApplication.class, args);
 	}
-
 }
