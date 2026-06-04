@@ -1,5 +1,6 @@
 package com.momatic.domain.team.entity;
 
+import com.momatic.domain.user.entity.User;
 import com.momatic.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -25,4 +26,33 @@ public class Team extends BaseEntity {
 
     @OneToMany(mappedBy = "team", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TeamMember> members = new ArrayList<>();
+
+    /**
+     * 팀을 생성하고 생성자를 소유자로 지정합니다.
+     *
+     * @param name 팀 이름
+     * @param owner 팀 소유자
+     * @return 생성된 팀
+     */
+    public static Team create(String name,
+                              User owner) {
+        Team team = new Team();
+        team.name = name;
+        team.addMember(owner, TeamRole.OWNER);
+        return team;
+    }
+
+    /**
+     * 팀 구성원을 추가합니다.
+     *
+     * @param user 추가할 사용자
+     * @param role 부여할 팀 권한
+     * @return 추가된 팀 구성원
+     */
+    public TeamMember addMember(User user,
+                                TeamRole role) {
+        TeamMember member = TeamMember.create(this, user, role);
+        members.add(member);
+        return member;
+    }
 }
