@@ -3,14 +3,14 @@ package com.momatic.global.error;
 import com.momatic.global.api.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 /**
  * 페이지 요청과 AJAX 요청을 분기 처리하는 전역 예외 핸들러입니다.
  */
-@Controller
+@ControllerAdvice
 public class GlobalExceptionHandler {
 
     /**
@@ -25,6 +25,9 @@ public class GlobalExceptionHandler {
                                         HttpServletRequest request) {
         if (isAjaxRequest(request)) {
             return handleAjax(exception);
+        }
+        if (exception.getErrorCode() == ErrorCode.UPLOAD_MONTHLY_LIMIT_EXCEEDED) {
+            return "redirect:/plans";
         }
 
         request.setAttribute("errorCode", exception.getErrorCode().name());
@@ -52,6 +55,12 @@ public class GlobalExceptionHandler {
         return "error/common";
     }
 
+    /**
+     * 커스텀 예외를 AJAX JSON 응답으로 변환합니다.
+     *
+     * @param exception 커스텀 예외
+     * @return JSON 예외 응답
+     */
     @ResponseBody
     private ResponseEntity<ApiResponse<Void>> handleAjax(CustomException exception) {
         ErrorCode errorCode = exception.getErrorCode();
@@ -59,6 +68,12 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.fail(errorCode.name(), errorCode.getMessage()));
     }
 
+    /**
+     * AJAX 또는 JSON 응답 요청 여부를 확인합니다.
+     *
+     * @param request HTTP 요청
+     * @return AJAX 또는 JSON 응답 요청 여부
+     */
     private boolean isAjaxRequest(HttpServletRequest request) {
         String requestedWith = request.getHeader("X-Requested-With");
         String accept = request.getHeader("Accept");

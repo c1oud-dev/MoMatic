@@ -14,9 +14,10 @@ import com.momatic.global.error.ErrorCode;
 import com.momatic.infra.toss.TossPaymentClient;
 import com.momatic.infra.toss.TossPaymentResponse;
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -99,11 +100,16 @@ public class PaymentService {
      * 사용자의 결제 내역을 최신순으로 조회합니다.
      *
      * @param email 사용자 이메일
-     * @return 결제 내역
+     * @param pageable 페이징 정보
+     * @return 결제 내역 페이지
      */
     @Transactional(readOnly = true)
-    public List<Payment> getPayments(String email) {
-        return paymentRepository.findAllByUserIdOrderByCreatedAtDesc(findUser(email).getId());
+    public Page<Payment> getPayments(String email,
+                                     Pageable pageable) {
+        return paymentRepository.findAllByUserIdOrderByCreatedAtDesc(
+                findUser(email).getId(),
+                pageable
+        );
     }
 
     /**

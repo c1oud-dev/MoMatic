@@ -15,7 +15,6 @@ public interface UsageRecordRepository extends JpaRepository<UsageRecord, Long> 
      * @param userId 사용자 ID
      * @param usageType 사용 타입
      * @param from 시작 시각
-     * @param from 시작 시각 이상
      * @param to 종료 시각 미만
      */
     long countByUserIdAndUsageTypeAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(Long userId,
@@ -44,4 +43,11 @@ public interface UsageRecordRepository extends JpaRepository<UsageRecord, Long> 
                           @Param("usageType") String usageType,
                           @Param("from") LocalDateTime from,
                           @Param("to") LocalDateTime to);
+
+    /**
+     * 지정 시각 이전의 사용량 기록을 삭제합니다.
+     *
+     * @param before 삭제 기준 시각 미만
+     */
+    void deleteByCreatedAtBefore(LocalDateTime before);
 }
