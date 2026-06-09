@@ -102,6 +102,15 @@ public class Meeting extends BaseEntity {
     }
 
     /**
+     * 회의 제목을 변경합니다.
+     *
+     * @param title 변경할 회의 제목
+     */
+    public void updateTitle(String title) {
+        this.title = title;
+    }
+
+    /**
      * 회의 요약을 변경합니다.
      *
      * @param summary 변경할 회의 요약

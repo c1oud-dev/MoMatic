@@ -12,9 +12,15 @@ import com.momatic.domain.user.entity.User;
 import com.momatic.domain.user.repository.UserRepository;
 import com.momatic.global.error.CustomException;
 import com.momatic.global.error.ErrorCode;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.lang.Nullable;
@@ -32,6 +38,9 @@ public class MeetingService {
     private final TranscriptRepository transcriptRepository;
     private final TeamMemberRepository teamMemberRepository;
     private final UserRepository userRepository;
+
+    @Value("${app.upload.storage-path}")
+    private String storagePath;
 
     /**
      * 인증 사용자가 소유한 회의 목록을 페이징 조회합니다.
@@ -167,6 +176,40 @@ public class MeetingService {
     }
 
     /**
+     * 인증 사용자가 편집 가능한 회의의 제목을 변경합니다.
+     *
+     * @param meetingId 회의 ID
+     * @param requesterEmail 요청자 이메일
+     * @param newTitle 변경할 제목
+     */
+    @Transactional
+    public void updateTitle(Long meetingId,
+                            String requesterEmail,
+                            String newTitle) {
+        Meeting meeting = findMeeting(meetingId);
+        validateMeetingEditable(meeting, requesterEmail);
+        meeting.updateTitle(newTitle);
+    }
+
+    /**
+     * 인증 사용자가 소유한 회의를 삭제하고 로컬 업로드 파일을 삭제합니다.
+     *
+     * @param meetingId 회의 ID
+     * @param requesterEmail 요청자 이메일
+     */
+    @Transactional
+    public void deleteMeeting(Long meetingId,
+                              String requesterEmail) {
+        Meeting meeting = findMeeting(meetingId);
+        if (!meeting.getOwner().getEmail().equals(requesterEmail)) {
+            throw new CustomException(ErrorCode.FORBIDDEN);
+        }
+        String storedFileName = meeting.getStoredFileName();
+        meetingRepository.delete(meeting);
+        deleteStoredFile(storedFileName);
+    }
+
+    /**
      * 회의 조회 가능 여부를 검증합니다.
      *
      * @param meeting 회의
@@ -229,6 +272,20 @@ public class MeetingService {
     private User findUser(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+    }
+
+    /**
+     * 저장소에 남아 있는 회의 업로드 파일을 삭제합니다.
+     *
+     * @param storedFileName 저장 파일명
+     */
+    private void deleteStoredFile(String storedFileName) {
+        try {
+            Path filePath = Paths.get(storagePath).resolve(storedFileName);
+            Files.deleteIfExists(filePath);
+        } catch (IOException ex) {
+            throw new CustomException(ErrorCode.INTERNAL_ERROR);
+        }
     }
 
     /**
