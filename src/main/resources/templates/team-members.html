@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <title>팀 멤버 관리</title>
+</head>
+<body>
+<div th:replace="~{layouts/default :: layout(~{::section})}">
+  <section>
+    <header>
+      <a th:href="@{/teams/{teamId}/dashboard(teamId=${team.id})}">팀 대시보드</a>
+      <a th:href="@{/teams/{teamId}/meetings(teamId=${team.id})}">팀 회의록</a>
+      <h1 th:text="|${team.name} 멤버 관리|">팀 멤버 관리</h1>
+      <p th:text="|내 권한: ${requesterRole}|">내 권한: MEMBER</p>
+    </header>
+
+    <section th:if="${canManage}">
+      <h2>초대 링크 복사</h2>
+      <form id="invite-form">
+        <label>
+          초대 이메일
+          <input id="invite-email" type="email" required />
+        </label>
+        <button type="submit">초대 링크 생성 및 복사</button>
+      </form>
+      <p id="invite-result" aria-live="polite"></p>
+    </section>
+
+    <section>
+      <h2>멤버 목록</h2>
+      <table>
+        <thead>
+        <tr>
+          <th>이름</th>
+          <th>이메일</th>
+          <th>권한</th>
+          <th th:if="${canManage}">관리</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="member : ${members}" th:data-member-id="${member.id}">
+          <td th:text="${member.name}">이름</td>
+          <td th:text="${member.email}">member@example.com</td>
+          <td>
+            <span th:unless="${canManage}" th:text="${member.role}">MEMBER</span>
+            <select th:if="${canManage}"
+                    class="role-select"
+                    th:disabled="${member.role == 'OWNER'}">
+              <option value="OWNER" th:selected="${member.role == 'OWNER'}">OWNER</option>
+              <option value="ADMIN" th:selected="${member.role == 'ADMIN'}">ADMIN</option>
+              <option value="MEMBER" th:selected="${member.role == 'MEMBER'}">MEMBER</option>
+            </select>
+          </td>
+          <td th:if="${canManage}">
+            <button type="button"
+                    class="role-update-button"
+                    th:disabled="${member.role == 'OWNER'}">권한 변경</button>
+            <button type="button"
+                    class="remove-button"
+                    th:disabled="${member.role == 'OWNER'}">추방</button>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+      <p id="member-result" aria-live="polite"></p>
+    </section>
+
+    <script th:if="${canManage}" th:inline="javascript">
+      const teamId = /*[[${team.id}]]*/ 0;
+      const inviteForm = document.getElementById('invite-form');
+      const inviteEmail = document.getElementById('invite-email');
+      const inviteResult = document.getElementById('invite-result');
+      const memberResult = document.getElementById('member-result');
+
+      function csrfHeader() {
+          const tokenCookie = document.cookie
+              .split('; ')
+              .find((cookie) => cookie.startsWith('XSRF-TOKEN='));
+          return tokenCookie ? decodeURIComponent(tokenCookie.split('=')[1]) : '';
+      }
+
+      async function copyInviteLink(code) {
+          const inviteLink = `${window.location.origin}/teams/join?code=${code}`;
+          await navigator.clipboard.writeText(inviteLink);
+          inviteResult.textContent = `초대 링크를 복사했습니다: ${inviteLink}`;
+      }
+
+      inviteForm.addEventListener('submit', async (event) => {
+          event.preventDefault();
+          const response = await fetch(`/teams/${teamId}/invites`, {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+                  'X-XSRF-TOKEN': csrfHeader()
+              },
+              body: JSON.stringify({email: inviteEmail.value})
+          });
+          const result = await response.json();
+          if (!response.ok || !result.success) {
+              inviteResult.textContent = '초대 링크 생성에 실패했습니다.';
+              return;
+          }
+          await copyInviteLink(result.data.code);
+      });
+
+      document.querySelectorAll('.role-update-button').forEach((button) => {
+          button.addEventListener('click', async () => {
+              const row = button.closest('tr');
+              const memberId = row.dataset.memberId;
+              const role = row.querySelector('.role-select').value;
+              const response = await fetch(`/teams/${teamId}/members/${memberId}/role`, {
+                  method: 'PATCH',
+                  headers: {
+                      'Content-Type': 'application/json',
+                      'X-XSRF-TOKEN': csrfHeader()
+                  },
+                  body: JSON.stringify({role})
+              });
+              memberResult.textContent = response.ok ? '권한을 변경했습니다.' : '권한 변경에 실패했습니다.';
+          });
+      });
+
+      document.querySelectorAll('.remove-button').forEach((button) => {
+          button.addEventListener('click', async () => {
+              const row = button.closest('tr');
+              const memberId = row.dataset.memberId;
+              const response = await fetch(`/teams/${teamId}/members/${memberId}`, {
+                  method: 'DELETE',
+                  headers: {
+                      'X-XSRF-TOKEN': csrfHeader()
+                  }
+              });
+              if (response.ok) {
+                  row.remove();
+                  memberResult.textContent = '멤버를 추방했습니다.';
+              } else {
+                  memberResult.textContent = '멤버 추방에 실패했습니다.';
+              }
+          });
+      });
+    </script>
+  </section>
+</div>
+</body>
+</html>

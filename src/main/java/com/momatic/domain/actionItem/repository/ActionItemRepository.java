@@ -2,13 +2,25 @@ package com.momatic.domain.actionItem.repository;
 
 import com.momatic.domain.actionItem.entity.ActionItem;
 import com.momatic.domain.actionItem.entity.ActionStatus;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
 /** 액션 아이템 엔티티 저장소입니다. */
 public interface ActionItemRepository extends JpaRepository<ActionItem, Long> {
+
+    /**
+     * 액션 아이템 ID로 회의 정보를 함께 조회합니다.
+     *
+     * @param id 액션 아이템 ID
+     * @return 조회된 액션 아이템
+     */
+    @Override
+    @EntityGraph(attributePaths = {"meeting", "meeting.team", "meeting.owner"})
+    Optional<ActionItem> findById(Long id);
 
     /**
      * 회의 ID에 해당하는 액션 아이템 목록을 조회합니다.
@@ -36,4 +48,22 @@ public interface ActionItemRepository extends JpaRepository<ActionItem, Long> {
      */
     List<ActionItem> findTop5ByMeetingOwnerEmailAndStatusInOrderByCreatedAtDesc(String ownerEmail,
                                                                                 List<ActionStatus> statuses);
+
+    /**
+     * 팀의 지정 상태 액션 아이템 수를 조회합니다.
+     *
+     * @param teamId 팀 ID
+     * @param statuses 조회할 액션 아이템 상태 목록
+     * @return 액션 아이템 수
+     */
+    long countByMeetingTeamIdAndStatusIn(Long teamId,
+                                         Collection<ActionStatus> statuses);
+
+    /**
+     * 팀의 전체 액션 아이템 수를 조회합니다.
+     *
+     * @param teamId 팀 ID
+     * @return 액션 아이템 수
+     */
+    long countByMeetingTeamId(Long teamId);
 }

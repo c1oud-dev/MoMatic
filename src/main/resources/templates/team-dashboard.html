@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <title>팀 대시보드</title>
+</head>
+<body>
+<div th:replace="~{layouts/default :: layout(~{::section})}">
+  <section>
+    <header>
+      <a th:href="@{/teams/{teamId}/meetings(teamId=${dashboard.team.id})}">팀 회의록</a>
+      <a th:href="@{/teams/{teamId}/members(teamId=${dashboard.team.id})}">팀 멤버 관리</a>
+      <h1 th:text="|${dashboard.team.name} 대시보드|">팀 대시보드</h1>
+    </header>
+
+    <section>
+      <h2>팀 회의 통계</h2>
+      <p th:text="|전체 회의록: ${dashboard.totalMeetingCount}건|">전체 회의록: 0건</p>
+    </section>
+
+    <section>
+      <h2>액션 아이템 현황</h2>
+      <dl>
+        <dt>전체</dt>
+        <dd th:text="|${dashboard.totalActionItemCount}건|">0건</dd>
+        <dt>미완료</dt>
+        <dd th:text="|${dashboard.incompleteActionItemCount}건|">0건</dd>
+        <dt>완료</dt>
+        <dd th:text="|${dashboard.completedActionItemCount}건|">0건</dd>
+      </dl>
+    </section>
+
+    <section>
+      <h2>멤버별 참여 현황</h2>
+      <table>
+        <thead>
+        <tr>
+          <th>이름</th>
+          <th>이메일</th>
+          <th>권한</th>
+          <th>업로드 회의록</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="member : ${dashboard.memberParticipations}">
+          <td th:text="${member.name}">이름</td>
+          <td th:text="${member.email}">member@example.com</td>
+          <td th:text="${member.role}">MEMBER</td>
+          <td th:text="|${member.uploadedMeetingCount}건|">0건</td>
+        </tr>
+        </tbody>
+      </table>
+    </section>
+  </section>
+</div>
+</body>
+</html>

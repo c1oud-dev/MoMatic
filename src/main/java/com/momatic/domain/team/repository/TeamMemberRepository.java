@@ -4,6 +4,7 @@ import com.momatic.domain.team.entity.TeamMember;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 /** 팀 구성원 엔티티 저장소입니다. */
@@ -57,5 +58,23 @@ public interface TeamMemberRepository extends JpaRepository<TeamMember, Long> {
      */
     boolean existsByTeamIdAndUserId(Long teamId,
                                     Long userId);
+
+    /**
+     * 팀 구성원 목록을 사용자 정보와 함께 조회합니다.
+     *
+     * @param teamId 팀 ID
+     * @return 팀 구성원 목록
+     */
+    @EntityGraph(attributePaths = {"user"})
+    List<TeamMember> findAllByTeamIdOrderByCreatedAtAsc(Long teamId);
+
+    /**
+     * 사용자가 소속된 팀 구성원 목록을 팀 정보와 함께 조회합니다.
+     *
+     * @param email 사용자 이메일
+     * @return 사용자의 팀 구성원 목록
+     */
+    @EntityGraph(attributePaths = {"team"})
+    List<TeamMember> findAllByUserEmailOrderByCreatedAtAsc(String email);
 }
 

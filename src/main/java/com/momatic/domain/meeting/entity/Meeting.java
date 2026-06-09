@@ -45,7 +45,8 @@ public class Meeting extends BaseEntity {
     @Lob
     private String summary;
 
-    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "team_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "team_id")
     private Team team;
 
     @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "owner_id", nullable = false)
@@ -63,7 +64,7 @@ public class Meeting extends BaseEntity {
      * @param title 회의 제목
      * @param storedFileName 저장 파일명
      * @param originalFileName 원본 파일명
-     * @param team 팀
+     * @param team 팀, 개인 회의록이면 null
      * @param owner 소유자
      * @return 생성된 회의 엔티티
      */
@@ -80,6 +81,15 @@ public class Meeting extends BaseEntity {
         meeting.owner = owner;
         meeting.status = MeetingStatus.PENDING;
         return meeting;
+    }
+
+    /**
+     * 팀 귀속 회의록 여부를 확인합니다.
+     *
+     * @return 팀 귀속 여부
+     */
+    public boolean hasTeam() {
+        return team != null;
     }
 
     /**
