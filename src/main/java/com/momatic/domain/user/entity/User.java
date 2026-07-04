@@ -8,6 +8,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,6 +40,14 @@ public class User extends BaseEntity {
     @Column(nullable = false)
     private String providerId;
 
+    @Column(length = 512)
+    private String googleAccessToken;
+
+    @Column(length = 512)
+    private String googleRefreshToken;
+
+    private LocalDateTime googleTokenExpiresAt;
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TeamMember> teamMembers = new ArrayList<>();
 
@@ -64,5 +73,22 @@ public class User extends BaseEntity {
      */
     public void updateProfile(String name) {
         this.name = name;
+    }
+
+    /**
+     * Google Calendar API 호출에 사용할 OAuth2 토큰 정보를 갱신합니다.
+     *
+     * @param accessToken 액세스 토큰
+     * @param refreshToken 리프레시 토큰
+     * @param expiresAt 액세스 토큰 만료 시각
+     */
+    public void updateGoogleToken(String accessToken,
+                                  String refreshToken,
+                                  LocalDateTime expiresAt) {
+        this.googleAccessToken = accessToken;
+        if (refreshToken != null && !refreshToken.isBlank()) {
+            this.googleRefreshToken = refreshToken;
+        }
+        this.googleTokenExpiresAt = expiresAt;
     }
 }

@@ -61,6 +61,21 @@ public class ActionItem extends BaseEntity {
     }
 
     /**
+     * 액션 아이템의 주요 내용을 변경합니다.
+     *
+     * @param task 액션 아이템 내용
+     * @param assignee 담당자
+     * @param dueDate 마감일
+     */
+    public void update(String task,
+                       String assignee,
+                       LocalDate dueDate) {
+        this.task = task;
+        this.assignee = assignee;
+        this.dueDate = dueDate;
+    }
+
+    /**
      * 액션 아이템의 회의를 설정합니다.
      *
      * @param meeting 회의

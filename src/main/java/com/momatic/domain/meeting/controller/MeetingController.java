@@ -1,9 +1,6 @@
 package com.momatic.domain.meeting.controller;
 
-import com.momatic.domain.meeting.dto.MeetingDetailResponse;
-import com.momatic.domain.meeting.dto.MeetingResponse;
-import com.momatic.domain.meeting.dto.MeetingStatusResponse;
-import com.momatic.domain.meeting.dto.MeetingUploadResponse;
+import com.momatic.domain.meeting.dto.*;
 import com.momatic.domain.meeting.service.MeetingUploadService;
 import com.momatic.domain.meeting.service.MeetingService;
 
@@ -11,6 +8,7 @@ import com.momatic.domain.team.dto.TeamResponse;
 import com.momatic.domain.team.service.TeamService;
 import com.momatic.global.api.ApiResponse;
 import jakarta.annotation.Nullable;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -119,6 +117,38 @@ public class MeetingController {
         return ApiResponse.ok(MeetingUploadResponse.from(
                 meetingUploadService.upload(userId, teamId, title, file)
         ));
+    }
+
+    /**
+     * 인증 사용자가 편집 가능한 회의의 제목을 변경합니다.
+     *
+     * @param meetingId 회의 ID
+     * @param request 제목 변경 요청
+     * @param principal 인증 사용자 정보
+     * @return 성공 응답
+     */
+    @PatchMapping("/{meetingId}/title")
+    @ResponseBody
+    public ApiResponse<Void> updateMeetingTitle(@PathVariable Long meetingId,
+                                                @Valid @RequestBody MeetingTitleRequest request,
+                                                @AuthenticationPrincipal OAuth2User principal) {
+        meetingService.updateTitle(meetingId, getEmail(principal), request.title());
+        return ApiResponse.ok(null);
+    }
+
+    /**
+     * 인증 사용자가 소유한 회의를 삭제합니다.
+     *
+     * @param meetingId 회의 ID
+     * @param principal 인증 사용자 정보
+     * @return 성공 응답
+     */
+    @DeleteMapping("/{meetingId}")
+    @ResponseBody
+    public ApiResponse<Void> deleteMeeting(@PathVariable Long meetingId,
+                                           @AuthenticationPrincipal OAuth2User principal) {
+        meetingService.deleteMeeting(meetingId, getEmail(principal));
+        return ApiResponse.ok(null);
     }
 
     /**

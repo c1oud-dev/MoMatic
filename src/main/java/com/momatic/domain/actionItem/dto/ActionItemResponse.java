@@ -1,6 +1,7 @@
 package com.momatic.domain.actionItem.dto;
 
 import com.momatic.domain.actionItem.entity.ActionItem;
+import com.momatic.domain.actionItem.entity.ActionStatus;
 
 import java.time.LocalDate;
 
@@ -18,7 +19,7 @@ public record ActionItemResponse(
         String task,
         String assignee,
         LocalDate dueDate,
-        String status
+        ActionStatus status
 ) {
 
     /**
@@ -33,7 +34,7 @@ public record ActionItemResponse(
                 actionItem.getTask(),
                 actionItem.getAssignee(),
                 actionItem.getDueDate(),
-                actionItem.getStatus().name()
+                actionItem.getStatus()
         );
     }
 }
