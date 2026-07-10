@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>액션아이템 목록</title>
+    <style>
+        .filter-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin: 1rem 0;
+        }
+        .filter-tab {
+            border: 1px solid #dee2e6;
+            border-radius: 999px;
+            color: inherit;
+            display: inline-block;
+            padding: 0.35rem 0.8rem;
+            text-decoration: none;
+        }
+        .filter-tab.active {
+            background: #0d6efd;
+            border-color: #0d6efd;
+            color: #fff;
+        }
+        .status-badge {
+            border-radius: 999px;
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+        }
+        .status-todo {
+            background: #fff3cd;
+        }
+        .status-in_progress {
+            background: #cff4fc;
+        }
+        .status-done {
+            background: #d1e7dd;
+        }
+    </style>
+</head>
+<body>
+<div th:replace="~{layouts/default :: layout(~{::section})}">
+    <section>
+        <header>
+            <h1>액션아이템 목록</h1>
+            <a th:href="@{/meetings}">회의록 목록</a>
+        </header>
+
+        <nav class="filter-tabs" aria-label="액션아이템 상태 필터">
+            <a th:href="@{/action-items(sort='dueDate',page=0,size=${actionItems.size})}"
+               th:classappend="${selectedStatus == null} ? ' active'"
+               class="filter-tab">전체</a>
+            <a th:each="status : ${statuses}"
+               th:href="@{/action-items(status=${status},sort='dueDate',page=0,size=${actionItems.size})}"
+               th:classappend="${selectedStatus == status} ? ' active'"
+               th:text="${status}"
+               class="filter-tab">TODO</a>
+        </nav>
+
+        <p>
+            <a th:href="@{/action-items(status=${selectedStatus},sort='dueDate',page=0,size=${actionItems.size})}">마감일 기준 정렬</a>
+        </p>
+
+        <p th:if="${actionItems.empty}">조회된 액션아이템이 없습니다.</p>
+        <table th:unless="${actionItems.empty}">
+            <thead>
+            <tr>
+                <th>회의 제목</th>
+                <th>내용</th>
+                <th>담당자</th>
+                <th>
+                    <a th:href="@{/action-items(status=${selectedStatus},sort='dueDate',page=0,size=${actionItems.size})}">마감일</a>
+                </th>
+                <th>상태</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="actionItem : ${actionItems.content}">
+                <td th:text="${actionItem.meetingTitle}">회의 제목</td>
+                <td th:text="${actionItem.task}">액션아이템 내용</td>
+                <td th:text="${actionItem.assignee}">담당자</td>
+                <td th:text="${actionItem.dueDate != null} ? ${#temporals.format(actionItem.dueDate, 'yyyy-MM-dd')} : '-'">2026-07-10</td>
+                <td>
+          <span th:text="${actionItem.status}"
+                th:class="|status-badge status-${#strings.toLowerCase(actionItem.status.name())}|">
+            TODO
+          </span>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <nav th:if="${actionItems.totalPages > 1}" aria-label="액션아이템 페이지 이동">
+            <a th:if="${actionItems.hasPrevious()}"
+               th:href="@{/action-items(status=${selectedStatus},sort='dueDate',page=${actionItems.number - 1},size=${actionItems.size})}">이전</a>
+            <span th:text="|${actionItems.number + 1} / ${actionItems.totalPages}|">1 / 1</span>
+            <a th:if="${actionItems.hasNext()}"
+               th:href="@{/action-items(status=${selectedStatus},sort='dueDate',page=${actionItems.number + 1},size=${actionItems.size})}">다음</a>
+        </nav>
+    </section>
+</div>
+</body>
+</html>

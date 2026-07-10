@@ -2,6 +2,8 @@ package com.momatic.domain.actionItem.repository;
 
 import com.momatic.domain.actionItem.entity.ActionItem;
 import com.momatic.domain.actionItem.entity.ActionStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -48,6 +50,27 @@ public interface ActionItemRepository extends JpaRepository<ActionItem, Long> {
      */
     List<ActionItem> findTop5ByMeetingOwnerEmailAndStatusInOrderByCreatedAtDesc(String ownerEmail,
                                                                                 List<ActionStatus> statuses);
+
+    /**
+     * 소유자 이메일로 전체 액션아이템을 페이징 조회합니다.
+     *
+     * @param ownerEmail 회의 소유자 이메일
+     * @param pageable 페이징 정보
+     * @return 액션 아이템 페이지
+     */
+    @EntityGraph(attributePaths = {"meeting"})
+    Page<ActionItem> findByMeetingOwnerEmail(String ownerEmail, Pageable pageable);
+
+    /**
+     * 소유자 이메일과 상태로 액션아이템을 페이징 조회합니다.
+     *
+     * @param ownerEmail 회의 소유자 이메일
+     * @param status 액션 아이템 상태
+     * @param pageable 페이징 정보
+     * @return 액션 아이템 페이지
+     */
+    @EntityGraph(attributePaths = {"meeting"})
+    Page<ActionItem> findByMeetingOwnerEmailAndStatus(String ownerEmail, ActionStatus status, Pageable pageable);
 
     /**
      * 팀의 지정 상태 액션 아이템 수를 조회합니다.
