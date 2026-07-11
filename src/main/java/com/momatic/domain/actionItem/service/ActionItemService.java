@@ -8,6 +8,8 @@ import com.momatic.domain.meeting.service.MeetingService;
 import com.momatic.global.error.CustomException;
 import com.momatic.global.error.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -94,6 +96,24 @@ public class ActionItemService {
         ActionItem actionItem = findEditableActionItem(actionItemId, requesterEmail);
         actionItem.updateStatus(status);
         return actionItem;
+    }
+
+    /**
+     * 소유자 이메일과 상태 조건으로 액션 아이템을 페이징 조회합니다.
+     *
+     * @param ownerEmail 회의 소유자 이메일
+     * @param status 조회할 액션 아이템 상태, 전체 조회이면 null
+     * @param pageable 페이징 정보
+     * @return 액션 아이템 페이지
+     */
+    @Transactional(readOnly = true)
+    public Page<ActionItem> findAllByOwner(String ownerEmail,
+                                           ActionStatus status,
+                                           Pageable pageable) {
+        if (status == null) {
+            return actionItemRepository.findByMeetingOwnerEmail(ownerEmail, pageable);
+        }
+        return actionItemRepository.findByMeetingOwnerEmailAndStatus(ownerEmail, status, pageable);
     }
 
     /**

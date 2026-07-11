@@ -9,6 +9,7 @@ import java.time.LocalDate;
  * 액션 아이템 응답 DTO입니다.
  *
  * @param id 액션 아이템 ID
+ * @param meetingTitle 회의 제목
  * @param task 액션 아이템 내용
  * @param assignee 담당자
  * @param dueDate 마감일
@@ -16,6 +17,7 @@ import java.time.LocalDate;
  */
 public record ActionItemResponse(
         Long id,
+        String meetingTitle,
         String task,
         String assignee,
         LocalDate dueDate,
@@ -31,6 +33,7 @@ public record ActionItemResponse(
     public static ActionItemResponse from(ActionItem actionItem) {
         return new ActionItemResponse(
                 actionItem.getId(),
+                actionItem.getMeeting().getTitle(),
                 actionItem.getTask(),
                 actionItem.getAssignee(),
                 actionItem.getDueDate(),
