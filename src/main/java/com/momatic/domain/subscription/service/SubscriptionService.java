@@ -1,6 +1,7 @@
 package com.momatic.domain.subscription.service;
 
 import com.momatic.domain.plan.entity.PlanPolicy;
+import com.momatic.domain.subscription.dto.SubscriptionSummary;
 import com.momatic.domain.subscription.entity.Subscription;
 import com.momatic.domain.subscription.entity.SubscriptionStatus;
 import com.momatic.domain.subscription.repository.SubscriptionRepository;
@@ -34,6 +35,19 @@ public class SubscriptionService {
     public Optional<Subscription> getActiveSubscription(String email) {
         User user = findUser(email);
         return findActiveSubscription(user.getId());
+    }
+
+    /**
+     * 이메일에 해당하는 사용자의 구독 현황 요약을 조회합니다.
+     *
+     * @param email 사용자 이메일
+     * @return 구독 현황 요약 DTO
+     */
+    @Transactional(readOnly = true)
+    public SubscriptionSummary getSubscriptionSummary(String email) {
+        return getActiveSubscription(email)
+                .map(SubscriptionSummary::from)
+                .orElseGet(SubscriptionSummary::free);
     }
 
     /**

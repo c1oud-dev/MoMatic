@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>구독 현황</title>
+</head>
+<body>
+<div th:replace="~{layouts/default :: layout(~{::section})}">
+    <section>
+        <header>
+            <h1>구독 현황</h1>
+            <a th:href="@{/plans}">업그레이드</a>
+        </header>
+
+        <section aria-labelledby="subscription-summary-title">
+            <h2 id="subscription-summary-title">현재 구독</h2>
+            <dl>
+                <dt>현재 플랜</dt>
+                <dd th:text="${subscription.planType}">FREE</dd>
+                <dt>만료일</dt>
+                <dd th:text="${subscription.expiredAt == null} ? '-' : ${#temporals.format(subscription.expiredAt, 'yyyy-MM-dd HH:mm')}">-</dd>
+                <dt>이번 달 업로드 사용량</dt>
+                <dd th:text="|${monthlyUploadCount}건|">0건</dd>
+            </dl>
+        </section>
+
+        <section aria-labelledby="payment-history-title">
+            <h2 id="payment-history-title">결제 내역</h2>
+            <p th:if="${payments.empty}">결제 내역이 없습니다.</p>
+            <table th:unless="${payments.empty}">
+                <thead>
+                <tr>
+                    <th scope="col">주문 ID</th>
+                    <th scope="col">플랜</th>
+                    <th scope="col">금액</th>
+                    <th scope="col">상태</th>
+                    <th scope="col">결제일</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="payment : ${payments.content}">
+                    <td th:text="${payment.orderId}">order-id</td>
+                    <td th:text="${payment.planType}">PRO</td>
+                    <td th:text="|${payment.amount}원|">19900원</td>
+                    <td th:text="${payment.status}">DONE</td>
+                    <td th:text="${#temporals.format(payment.createdAt, 'yyyy-MM-dd HH:mm')}">2026-06-02 00:00</td>
+                </tr>
+                </tbody>
+            </table>
+
+            <nav th:if="${payments.totalPages > 1}" aria-label="결제 내역 페이지 이동">
+                <a th:if="${payments.hasPrevious()}"
+                   th:href="@{/subscription(page=${payments.number - 1})}">이전</a>
+                <span th:text="|${payments.number + 1} / ${payments.totalPages}|">1 / 1</span>
+                <a th:if="${payments.hasNext()}"
+                   th:href="@{/subscription(page=${payments.number + 1})}">다음</a>
+            </nav>
+        </section>
+    </section>
+</div>
+</body>
+</html>

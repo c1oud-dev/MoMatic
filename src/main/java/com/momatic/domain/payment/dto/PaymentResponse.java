@@ -8,18 +8,16 @@ import java.time.LocalDateTime;
  * 결제 처리 결과 DTO입니다.
  *
  * @param orderId 주문 ID
- * @param paymentKey 토스페이먼츠 결제 키
  * @param amount 결제 금액
- * @param status 결제 상태
  * @param planType 플랜 타입
+ * @param status 결제 상태
  * @param createdAt 결제 생성 시각
  */
 public record PaymentResponse(
         String orderId,
-        String paymentKey,
         BigDecimal amount,
-        String status,
         String planType,
+        String status,
         LocalDateTime createdAt
 ) {
 
@@ -32,10 +30,9 @@ public record PaymentResponse(
     public static PaymentResponse from(Payment payment) {
         return new PaymentResponse(
                 payment.getOrderId(),
-                payment.getPaymentKey(),
                 payment.getAmount(),
-                payment.getStatus().name(),
                 payment.getPlanType().name(),
+                payment.getStatus().name(),
                 payment.getCreatedAt()
         );
     }
