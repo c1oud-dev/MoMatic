@@ -1,6 +1,8 @@
 package com.momatic.domain.meeting.controller;
 
+import com.momatic.domain.meeting.aop.MeetingPdfPlanCheck;
 import com.momatic.domain.meeting.dto.*;
+import com.momatic.domain.meeting.service.MeetingPdfService;
 import com.momatic.domain.meeting.service.MeetingUploadService;
 import com.momatic.domain.meeting.service.MeetingService;
 
@@ -13,6 +15,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Controller;
@@ -27,6 +32,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class MeetingController {
 
     private final MeetingService meetingService;
+    private final MeetingPdfService meetingPdfService;
     private final MeetingUploadService meetingUploadService;
     private final TeamService teamService;
 
@@ -65,6 +71,28 @@ public class MeetingController {
         );
         model.addAttribute("detail", meeting);
         return "meeting/detail";
+    }
+
+    /**
+     * 접근 가능한 회의록 상세 데이터를 PDF 파일로 다운로드합니다.
+     *
+     * @param meetingId 회의 ID
+     * @param principal 인증 사용자 정보
+     * @return PDF 다운로드 응답
+     */
+    @GetMapping("/{meetingId}/pdf")
+    @ResponseBody
+    @MeetingPdfPlanCheck
+    public ResponseEntity<byte[]> downloadMeetingPdf(@PathVariable Long meetingId,
+                                                     @AuthenticationPrincipal OAuth2User principal) {
+        byte[] pdf = meetingPdfService.generatePdf(meetingId, getEmail(principal));
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"meeting-" + meetingId + ".pdf\""
+                )
+                .body(pdf);
     }
 
     /**
