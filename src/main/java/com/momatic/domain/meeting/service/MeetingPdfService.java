@@ -75,19 +75,19 @@ public class MeetingPdfService {
         Meeting meeting = detail.meeting();
         String summary = hasText(meeting.getSummary()) ? meeting.getSummary() : "요약 없음";
         return """
-                <!DOCTYPE html>
-                <html>
-                <head>
-                  <meta charset=\"UTF-8\" />
-                  <style>
-                    body { font-family: 'NanumGothic', sans-serif; }
-                    table { width: 100%; border-collapse: collapse; }
-                    th, td { border: 1px solid #dddddd; padding: 8px; text-align: left; }
-                    th { background: #f5f5f5; }
-                  </style>
-                </head>
-                <body>
-                """
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="UTF-8" />
+              <style>
+                body { font-family: 'NanumGothic', sans-serif; }
+                table { width: 100%; border-collapse: collapse; }
+                th, td { border: 1px solid #dddddd; padding: 8px; text-align: left; }
+                th { background: #f5f5f5; }
+              </style>
+            </head>
+            <body>
+            """
                 + "<h1>" + escapeHtml(meeting.getTitle()) + "</h1>"
                 + "<h2>요약</h2>"
                 + "<p>" + escapeHtml(summary) + "</p>"
