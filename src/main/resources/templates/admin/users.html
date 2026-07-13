@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>관리자 사용자 목록</title>
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+</head>
+<body>
+<div th:replace="~{layouts/default :: layout(~{::section})}">
+    <section>
+        <header>
+            <h1>사용자 목록</h1>
+            <a th:href="@{/admin/subscriptions}">구독 현황</a>
+        </header>
+
+        <p th:if="${users.empty}">등록된 사용자가 없습니다.</p>
+        <table th:unless="${users.empty}">
+            <thead>
+            <tr>
+                <th scope="col">이메일</th>
+                <th scope="col">이름</th>
+                <th scope="col">역할</th>
+                <th scope="col">현재 플랜</th>
+                <th scope="col">가입일</th>
+                <th scope="col">플랜 변경</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="user : ${users.content}">
+                <td th:text="${user.email}">user@example.com</td>
+                <td th:text="${user.name}">사용자</td>
+                <td th:text="${user.role}">ROLE_USER</td>
+                <td th:text="${user.planType}">FREE</td>
+                <td th:text="${#temporals.format(user.createdAt, 'yyyy-MM-dd HH:mm')}">2026-06-01 00:00</td>
+                <td>
+                    <select class="plan-select"
+                            th:data-user-id="${user.id}"
+                            aria-label="변경할 플랜">
+                        <option th:each="plan : ${ {'FREE', 'PRO', 'TEAM'} }"
+                                th:value="${plan}"
+                                th:text="${plan}"
+                                th:selected="${plan == user.planType}">FREE</option>
+                    </select>
+                    <button type="button"
+                            class="plan-change-button"
+                            th:data-user-id="${user.id}">변경</button>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <nav th:if="${users.totalPages > 1}" aria-label="사용자 목록 페이지 이동">
+            <a th:if="${users.hasPrevious()}"
+               th:href="@{/admin/users(page=${users.number - 1})}">이전</a>
+            <span th:text="|${users.number + 1} / ${users.totalPages}|">1 / 1</span>
+            <a th:if="${users.hasNext()}"
+               th:href="@{/admin/users(page=${users.number + 1})}">다음</a>
+        </nav>
+    </section>
+</div>
+<script>
+    const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+
+    document.querySelectorAll('.plan-change-button').forEach((button) => {
+      button.addEventListener('click', async (event) => {
+        const target = event.currentTarget;
+        const userId = target.dataset.userId;
+        const select = document.querySelector(`.plan-select[data-user-id="${userId}"]`);
+        target.disabled = true;
+
+        try {
+          const response = await fetch(`/admin/users/${userId}/plan`, {
+            method: 'POST',
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json',
+              'X-Requested-With': 'XMLHttpRequest',
+              [csrfHeader]: csrfToken
+            },
+            body: JSON.stringify({planType: select.value})
+          });
+
+          if (!response.ok) {
+            throw new Error('플랜 변경에 실패했습니다.');
+          }
+
+          window.location.reload();
+        } catch (error) {
+          window.alert(error.message);
+        } finally {
+          target.disabled = false;
+        }
+      });
+    });
+</script>
+</body>
+</html>
