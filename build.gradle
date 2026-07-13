@@ -32,6 +32,8 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
 	implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+	implementation 'com.itextpdf:itext7-core:8.0.4'
+	implementation 'com.itextpdf:html2pdf:5.0.4'
 
 	implementation 'org.flywaydb:flyway-core'
 	implementation 'org.flywaydb:flyway-mysql'
