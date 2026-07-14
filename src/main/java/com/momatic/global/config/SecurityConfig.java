@@ -31,7 +31,7 @@ public class SecurityConfig {
                         .successHandler(successHandler))
                 .logout(logout -> logout.logoutUrl("/logout").logoutSuccessHandler(logoutSuccessHandler))
                 .csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                        .ignoringRequestMatchers("/api/public/**", "/payments/webhook"));
+                        .ignoringRequestMatchers("/api/public/**", "/payments/webhook", "/users/me"));
 
         if (mockAuthenticationFilter != null) {
             http.addFilterBefore(mockAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
