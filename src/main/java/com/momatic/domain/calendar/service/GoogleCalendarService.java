@@ -78,7 +78,47 @@ public class GoogleCalendarService {
 
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(createEventPayload(actionItem), headers);
         try {
-            restTemplate.exchange(EVENT_URL, HttpMethod.POST, request, Void.class);
+            ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+                    EVENT_URL,
+                    HttpMethod.POST,
+                    request,
+                    new ParameterizedTypeReference<>() {
+                    }
+            );
+            Map<String, Object> responseBody = response.getBody();
+            if (responseBody == null || responseBody.get("id") == null) {
+                throw new CustomException(ErrorCode.INTERNAL_ERROR);
+            }
+            actionItem.assignCalendarEventId(String.valueOf(responseBody.get("id")));
+        } catch (RestClientException ex) {
+            throw new CustomException(ErrorCode.INTERNAL_ERROR);
+        }
+    }
+
+    /**
+     * Google Calendar 일정을 삭제합니다.
+     *
+     * @param user 캘린더를 보유한 사용자
+     * @param eventId Google Calendar 일정 ID
+     */
+    public void deleteEvent(User user,
+                            String eventId) {
+        if (eventId == null || eventId.isBlank()) {
+            return;
+        }
+
+        String accessToken = resolveAccessToken(user);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(accessToken);
+
+        HttpEntity<Void> request = new HttpEntity<>(headers);
+        try {
+            restTemplate.exchange(
+                    EVENT_URL + "/" + eventId,
+                    HttpMethod.DELETE,
+                    request,
+                    Void.class
+            );
         } catch (RestClientException ex) {
             throw new CustomException(ErrorCode.INTERNAL_ERROR);
         }

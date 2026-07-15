@@ -119,6 +119,22 @@ public class SubscriptionService {
     }
 
     /**
+     * 이메일에 해당하는 사용자의 유료 구독을 취소 요청 상태로 변경합니다.
+     *
+     * @param email 사용자 이메일
+     */
+    @Transactional
+    public void cancelSubscription(String email) {
+        User user = findUser(email);
+        Subscription subscription = findActiveSubscription(user.getId())
+                .orElseThrow(() -> new CustomException(ErrorCode.SUBSCRIPTION_NOT_FOUND));
+        if (subscription.getPlanType() == PlanPolicy.FREE) {
+            throw new CustomException(ErrorCode.INVALID_REQUEST);
+        }
+        cancelActiveSubscription(user.getId());
+    }
+
+    /**
      * 사용자의 활성 구독을 취소 처리합니다.
      *
      * @param userId 사용자 ID

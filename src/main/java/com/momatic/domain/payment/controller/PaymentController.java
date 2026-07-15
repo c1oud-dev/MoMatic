@@ -6,6 +6,7 @@ import com.momatic.domain.payment.dto.PaymentResponse;
 import com.momatic.domain.payment.dto.PaymentWebhookRequest;
 import com.momatic.domain.payment.entity.Payment;
 import com.momatic.domain.payment.service.PaymentService;
+import com.momatic.domain.subscription.service.SubscriptionService;
 import com.momatic.global.api.ApiResponse;
 import com.momatic.infra.toss.TossPaymentClient;
 import jakarta.servlet.http.HttpServletRequest;
@@ -37,6 +38,7 @@ public class PaymentController {
     private final PaymentService paymentService;
     private final TossPaymentClient tossPaymentClient;
     private final ObjectMapper objectMapper;
+    private final SubscriptionService subscriptionService;
 
     @Value("${app.external.toss.payments.client-key}")
     private String clientKey;
@@ -152,6 +154,19 @@ public class PaymentController {
                 principal.getAttribute("email"),
                 pageable
         ).map(PaymentResponse::from));
+    }
+
+    /**
+     * 인증 사용자의 활성 유료 구독을 취소 요청 처리합니다.
+     *
+     * @param principal 인증 사용자 정보
+     * @return 구독 취소 처리 결과
+     */
+    @ResponseBody
+    @PostMapping("/subscription/cancel")
+    public ApiResponse<Void> cancelSubscription(@AuthenticationPrincipal OAuth2User principal) {
+        subscriptionService.cancelSubscription(principal.getAttribute("email"));
+        return ApiResponse.ok(null);
     }
 
     /**

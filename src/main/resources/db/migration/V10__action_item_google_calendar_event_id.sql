@@ -1,0 +1,1 @@
+ALTER TABLE action_items ADD COLUMN google_calendar_event_id VARCHAR(255);

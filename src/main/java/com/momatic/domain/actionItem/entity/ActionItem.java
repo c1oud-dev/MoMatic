@@ -27,6 +27,8 @@ public class ActionItem extends BaseEntity {
 
     private String assignee;
 
+    private String googleCalendarEventId;
+
     @Enumerated(EnumType.STRING)
     private ActionStatus status = ActionStatus.TODO;
 
@@ -74,6 +76,16 @@ public class ActionItem extends BaseEntity {
         this.assignee = assignee;
         this.dueDate = dueDate;
     }
+
+    /**
+     * 액션 아이템의 Google Calendar 일정 ID를 설정합니다.
+     *
+     * @param eventId Google Calendar 일정 ID
+     */
+    public void assignCalendarEventId(String eventId) {
+        this.googleCalendarEventId = eventId;
+    }
+
 
     /**
      * 액션 아이템의 회의를 설정합니다.
