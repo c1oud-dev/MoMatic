@@ -50,4 +50,11 @@ public interface UsageRecordRepository extends JpaRepository<UsageRecord, Long> 
      * @param before 삭제 기준 시각 미만
      */
     void deleteByCreatedAtBefore(LocalDateTime before);
+
+    /**
+     * 사용자 ID에 해당하는 사용량 기록을 삭제합니다.
+     *
+     * @param userId 사용자 ID
+     */
+    void deleteByUserId(Long userId);
 }

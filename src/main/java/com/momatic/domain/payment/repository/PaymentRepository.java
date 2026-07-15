@@ -35,4 +35,11 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
      */
     Page<Payment> findAllByUserIdOrderByCreatedAtDesc(Long userId,
                                                       Pageable pageable);
+
+    /**
+     * 사용자 ID에 해당하는 결제 이력을 삭제합니다.
+     *
+     * @param userId 사용자 ID
+     */
+    void deleteByUserId(Long userId);
 }

@@ -78,4 +78,19 @@ public interface MeetingRepository extends JpaRepository<Meeting, Long> {
      */
     long countByTeamIdAndOwnerId(Long teamId,
                                  Long ownerId);
+
+    /**
+     * 소유자 ID에 해당하는 회의 목록을 조회합니다.
+     *
+     * @param ownerId 소유자 ID
+     * @return 소유자 회의 목록
+     */
+    List<Meeting> findAllByOwnerId(Long ownerId);
+
+    /**
+     * 소유자 ID에 해당하는 회의 목록을 삭제합니다.
+     *
+     * @param ownerId 소유자 ID
+     */
+    void deleteByOwnerId(Long ownerId);
 }
