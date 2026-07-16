@@ -4,6 +4,7 @@ import com.momatic.domain.team.dto.*;
 import com.momatic.domain.team.entity.Team;
 import com.momatic.domain.team.service.TeamService;
 import com.momatic.global.api.ApiResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -79,6 +80,22 @@ public class TeamController {
     }
 
     /**
+     * 팀 이름을 변경합니다.
+     *
+     * @param teamId 팀 ID
+     * @param request 팀 이름 변경 요청
+     * @param principal 인증 사용자 정보
+     * @return 변경 완료 응답
+     */
+    @PatchMapping("/{teamId}/name")
+    public ApiResponse<Void> updateTeamName(@PathVariable Long teamId,
+                                            @Valid @RequestBody TeamNameUpdateRequest request,
+                                            @AuthenticationPrincipal OAuth2User principal) {
+        teamService.updateTeamName(teamId, getEmail(principal), request.name());
+        return ApiResponse.ok(null);
+    }
+
+    /**
      * 팀 구성원 권한을 변경합니다.
      *
      * @param teamId 팀 ID
@@ -110,6 +127,20 @@ public class TeamController {
                                           @PathVariable Long memberId,
                                           @AuthenticationPrincipal OAuth2User principal) {
         teamService.removeMember(teamId, memberId, getEmail(principal));
+        return ApiResponse.ok(null);
+    }
+
+    /**
+     * 팀에서 탈퇴합니다.
+     *
+     * @param teamId 팀 ID
+     * @param principal 인증 사용자 정보
+     * @return 탈퇴 완료 응답
+     */
+    @DeleteMapping("/{teamId}/leave")
+    public ApiResponse<Void> leaveTeam(@PathVariable Long teamId,
+                                       @AuthenticationPrincipal OAuth2User principal) {
+        teamService.leaveTeam(teamId, getEmail(principal));
         return ApiResponse.ok(null);
     }
 
