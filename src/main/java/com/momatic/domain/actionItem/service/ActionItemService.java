@@ -3,8 +3,11 @@ package com.momatic.domain.actionItem.service;
 import com.momatic.domain.actionItem.entity.ActionItem;
 import com.momatic.domain.actionItem.entity.ActionStatus;
 import com.momatic.domain.actionItem.repository.ActionItemRepository;
+import com.momatic.domain.calendar.service.GoogleCalendarService;
 import com.momatic.domain.meeting.entity.Meeting;
 import com.momatic.domain.meeting.service.MeetingService;
+import com.momatic.domain.user.entity.User;
+import com.momatic.domain.user.repository.UserRepository;
 import com.momatic.global.error.CustomException;
 import com.momatic.global.error.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +25,8 @@ public class ActionItemService {
 
     private final ActionItemRepository actionItemRepository;
     private final MeetingService meetingService;
+    private final GoogleCalendarService googleCalendarService;
+    private final UserRepository userRepository;
 
     /**
      * 인증 사용자가 편집 가능한 회의에 액션 아이템을 수동 추가합니다.
@@ -75,6 +80,12 @@ public class ActionItemService {
     public void deleteActionItem(Long actionItemId,
                                  String requesterEmail) {
         ActionItem actionItem = findEditableActionItem(actionItemId, requesterEmail);
+        String googleCalendarEventId = actionItem.getGoogleCalendarEventId();
+        if (googleCalendarEventId != null && !googleCalendarEventId.isBlank()) {
+            User user = userRepository.findByEmail(requesterEmail)
+                    .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+            googleCalendarService.deleteEvent(user, googleCalendarEventId);
+        }
         actionItemRepository.delete(actionItem);
     }
 
