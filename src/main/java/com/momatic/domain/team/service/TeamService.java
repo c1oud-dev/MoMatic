@@ -166,6 +166,24 @@ public class TeamService {
     }
 
     /**
+     * 팀 이름을 변경합니다.
+     *
+     * @param teamId 팀 ID
+     * @param requesterEmail 요청자 이메일
+     * @param name 변경할 팀 이름
+     */
+    @Transactional
+    public void updateTeamName(Long teamId,
+                               String requesterEmail,
+                               String name) {
+        Team team = findTeam(teamId);
+        User requester = findUser(requesterEmail);
+        validateManagePermission(teamId, requester.getId());
+        validateRequiredText(name);
+        team.updateName(name);
+    }
+
+    /**
      * 팀 구성원 권한을 변경합니다.
      *
      * @param teamId 팀 ID
@@ -204,6 +222,23 @@ public class TeamService {
             throw new CustomException(ErrorCode.TEAM_OWNER_SELF_REMOVE_DENIED);
         }
         teamMemberRepository.delete(target);
+    }
+
+    /**
+     * 팀에서 탈퇴합니다.
+     *
+     * @param teamId 팀 ID
+     * @param requesterEmail 요청자 이메일
+     */
+    @Transactional
+    public void leaveTeam(Long teamId,
+                          String requesterEmail) {
+        User requester = findUser(requesterEmail);
+        TeamMember member = validateMembership(teamId, requester.getId());
+        if (member.isOwner()) {
+            throw new CustomException(ErrorCode.TEAM_OWNER_SELF_REMOVE_DENIED);
+        }
+        teamMemberRepository.delete(member);
     }
 
     /**

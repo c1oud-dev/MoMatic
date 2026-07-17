@@ -43,6 +43,15 @@ public class Team extends BaseEntity {
     }
 
     /**
+     * 팀 이름을 변경합니다.
+     *
+     * @param name 변경할 팀 이름
+     */
+    public void updateName(String name) {
+        this.name = name;
+    }
+
+    /**
      * 팀 구성원을 추가합니다.
      *
      * @param user 추가할 사용자
