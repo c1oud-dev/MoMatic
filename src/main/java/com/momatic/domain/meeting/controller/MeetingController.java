@@ -40,17 +40,21 @@ public class MeetingController {
      * 인증 사용자가 소유한 회의 목록 페이지를 표시합니다.
      *
      * @param principal 인증 사용자 정보
+     * @param keyword 검색 키워드
      * @param pageable 페이징 정보
      * @param model 화면 모델
      * @return 회의 목록 템플릿 경로
      */
     @GetMapping
     public String listMeetings(@AuthenticationPrincipal OAuth2User principal,
+                               @RequestParam(required = false) String keyword,
                                @PageableDefault(size = 10) Pageable pageable,
                                Model model) {
-        Page<MeetingResponse> meetings = meetingService.findOwnedMeetings(getEmail(principal), pageable)
+        String searchKeyword = keyword == null || keyword.isBlank() ? null : keyword;
+        Page<MeetingResponse> meetings = meetingService.searchOwnedMeetings(getEmail(principal), searchKeyword, pageable)
                 .map(MeetingResponse::from);
         model.addAttribute("meetings", meetings);
+        model.addAttribute("keyword", searchKeyword);
         return "meeting/list";
     }
 

@@ -5,6 +5,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -31,6 +33,21 @@ public interface MeetingRepository extends JpaRepository<Meeting, Long> {
      */
     @EntityGraph(attributePaths = {"team"})
     Page<Meeting> findAllByOwnerEmailAndTeamIsNull(String ownerEmail, Pageable pageable);
+
+    /**
+     * 소유자 이메일과 키워드로 제목 또는 요약을 검색합니다.
+     *
+     * @param ownerEmail 소유자 이메일
+     * @param keyword 검색 키워드
+     * @param pageable 페이징 정보
+     * @return 검색된 소유자 개인 회의 목록
+     */
+    @Query("select m from Meeting m where m.owner.email = :ownerEmail and m.team is null "
+            + "and (m.title like %:keyword% or m.summary like %:keyword%)")
+    @EntityGraph(attributePaths = {"team"})
+    Page<Meeting> searchByOwnerEmailAndKeyword(@Param("ownerEmail") String ownerEmail,
+                                               @Param("keyword") String keyword,
+                                               Pageable pageable);
 
     /**
      * 소유자 이메일과 회의 ID로 회의를 조회합니다.

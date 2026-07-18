@@ -31,9 +31,14 @@
         <a th:href="@{/teams/{teamId}/members(teamId=${team.id})}">팀 멤버 관리</a>
       </nav>
       <a th:href="@{/meetings/upload}">회의록 업로드</a>
+      <form method="get" action="/meetings" th:if="${team == null}">
+        <input type="text" name="keyword" th:value="${keyword}" placeholder="제목 또는 내용 검색" />
+        <button type="submit">검색</button>
+      </form>
     </header>
 
-    <p th:if="${meetings.empty}">등록된 회의록이 없습니다.</p>
+    <p th:if="${meetings.empty and keyword != null and !#strings.isEmpty(keyword)}">검색 결과가 없습니다.</p>
+    <p th:if="${meetings.empty and (keyword == null or #strings.isEmpty(keyword))}">등록된 회의록이 없습니다.</p>
     <table th:unless="${meetings.empty}">
       <thead>
       <tr>
@@ -61,12 +66,12 @@
 
     <nav th:if="${meetings.totalPages > 1}" aria-label="회의록 페이지 이동">
       <a th:if="${meetings.hasPrevious() and team == null}"
-         th:href="@{/meetings(page=${meetings.number - 1},size=${meetings.size})}">이전</a>
+         th:href="@{/meetings(page=${meetings.number - 1},size=${meetings.size},keyword=${keyword})}">이전</a>
       <a th:if="${meetings.hasPrevious() and team != null}"
          th:href="@{/teams/{teamId}/meetings(teamId=${team.id},page=${meetings.number - 1},size=${meetings.size})}">이전</a>
       <span th:text="|${meetings.number + 1} / ${meetings.totalPages}|">1 / 1</span>
       <a th:if="${meetings.hasNext() and team == null}"
-         th:href="@{/meetings(page=${meetings.number + 1},size=${meetings.size})}">다음</a>
+         th:href="@{/meetings(page=${meetings.number + 1},size=${meetings.size},keyword=${keyword})}">다음</a>
       <a th:if="${meetings.hasNext() and team != null}"
          th:href="@{/teams/{teamId}/meetings(teamId=${team.id},page=${meetings.number + 1},size=${meetings.size})}">다음</a>
     </nav>

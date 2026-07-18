@@ -54,6 +54,23 @@ public class MeetingService {
         return meetingRepository.findAllByOwnerEmailAndTeamIsNull(ownerEmail, pageable);
     }
 
+    /**
+     * 인증 사용자가 소유한 회의 목록을 키워드로 페이징 검색합니다.
+     *
+     * @param ownerEmail 소유자 이메일
+     * @param keyword 검색 키워드
+     * @param pageable 페이징 정보
+     * @return 검색된 소유자 회의 목록
+     */
+    @Transactional(readOnly = true)
+    public Page<Meeting> searchOwnedMeetings(String ownerEmail,
+                                             String keyword,
+                                             Pageable pageable) {
+        if (keyword == null || keyword.isBlank()) {
+            return findOwnedMeetings(ownerEmail, pageable);
+        }
+        return meetingRepository.searchByOwnerEmailAndKeyword(ownerEmail, keyword, pageable);
+    }
 
     /**
      * 팀 회의 목록을 페이징 조회합니다.
