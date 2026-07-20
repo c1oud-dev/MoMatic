@@ -27,7 +27,8 @@ public class SecurityConfig {
                         .requestMatchers("/", "/login", "/plans", "/payments/webhook", "/css/**", "/js/**", "/error/**").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
-                .oauth2Login(oauth -> oauth.userInfoEndpoint(user -> user.userService(customOAuth2UserService))
+                .oauth2Login(oauth -> oauth
+                        .userInfoEndpoint(user -> user.oidcUserService(customOAuth2UserService))
                         .successHandler(successHandler))
                 .logout(logout -> logout.logoutUrl("/logout").logoutSuccessHandler(logoutSuccessHandler))
                 .csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())

@@ -11,6 +11,7 @@ import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -62,6 +63,13 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
             return;
         }
 
+        OAuth2User oAuth2User =
+                (org.springframework.security.oauth2.core.user.OAuth2User) authentication.getPrincipal();
+        String email = oAuth2User.getAttribute("email");
+        if (email == null) {
+            return;
+        }
+
         OAuth2AccessToken accessToken = authorizedClient.getAccessToken();
         OAuth2RefreshToken refreshToken = authorizedClient.getRefreshToken();
         String refreshTokenValue = refreshToken == null ? null : refreshToken.getTokenValue();
@@ -69,7 +77,7 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
                 ? null
                 : LocalDateTime.ofInstant(accessToken.getExpiresAt(), ZoneId.systemDefault());
 
-        userRepository.findByEmail(authentication.getName())
+        userRepository.findByEmail(email)
                 .ifPresent(user -> updateGoogleToken(user, accessToken.getTokenValue(), refreshTokenValue, expiresAt));
     }
 
