@@ -95,6 +95,7 @@ public class PaymentController {
                           @RequestParam String paymentKey,
                           @RequestParam String orderId,
                           @RequestParam BigDecimal amount) {
+        log.info("결제 성공 콜백: orderId={}, paymentKey={}, amount={}", orderId, paymentKey, amount);
         paymentService.confirm(
                 principal.getAttribute("email"),
                 new PaymentConfirmRequest(orderId, paymentKey, amount)
