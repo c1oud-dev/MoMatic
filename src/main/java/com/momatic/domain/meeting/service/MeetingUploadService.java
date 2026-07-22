@@ -6,6 +6,7 @@ import com.momatic.domain.meeting.repository.MeetingRepository;
 import com.momatic.domain.team.entity.Team;
 import com.momatic.domain.team.repository.TeamRepository;
 import com.momatic.domain.usage.entity.UsageRecord;
+import com.momatic.domain.usage.entity.UsageType;
 import com.momatic.domain.usage.repository.UsageRecordRepository;
 import com.momatic.domain.user.entity.User;
 import com.momatic.domain.user.repository.UserRepository;
@@ -33,7 +34,6 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 public class MeetingUploadService {
 
-    private static final String USAGE_TYPE_UPLOAD = "UPLOAD";
     private static final Set<String> ALLOWED_EXTENSIONS = Set.of("mp3", "mp4", "wav", "m4a");
     private static final Set<String> ALLOWED_MIME_TYPES = Set.of(
             "audio/mpeg",
@@ -75,7 +75,12 @@ public class MeetingUploadService {
         Meeting meeting = Meeting.createPending(title, storedFileName, file.getOriginalFilename(), team, owner);
         Meeting savedMeeting = meetingRepository.save(meeting);
 
-        usageRecordRepository.save(UsageRecord.create(owner, USAGE_TYPE_UPLOAD, 1L, file.getSize()));
+        usageRecordRepository.save(UsageRecord.create(
+                owner,
+                UsageType.UPLOAD.name(),
+                1L,
+                file.getSize()
+        ));
         processMeetingAfterCommit(savedMeeting.getId());
         return savedMeeting;
     }

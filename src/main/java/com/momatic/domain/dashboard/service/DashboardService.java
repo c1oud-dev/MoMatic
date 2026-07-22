@@ -7,13 +7,13 @@ import com.momatic.domain.meeting.entity.Meeting;
 import com.momatic.domain.meeting.repository.MeetingRepository;
 import com.momatic.domain.plan.entity.PlanPolicy;
 import com.momatic.domain.subscription.service.SubscriptionService;
+import com.momatic.domain.usage.entity.UsageType;
 import com.momatic.domain.usage.repository.UsageRecordRepository;
+import com.momatic.domain.usage.util.UsagePeriod;
 import com.momatic.domain.user.entity.User;
 import com.momatic.domain.user.repository.UserRepository;
 import com.momatic.global.error.CustomException;
 import com.momatic.global.error.ErrorCode;
-import java.time.LocalDateTime;
-import java.time.YearMonth;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -23,8 +23,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class DashboardService {
-
-    private static final String USAGE_TYPE_UPLOAD = "UPLOAD";
 
     private final UserRepository userRepository;
     private final SubscriptionService subscriptionService;
@@ -43,22 +41,20 @@ public class DashboardService {
         User user = userRepository.findByEmail(ownerEmail)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         PlanPolicy planPolicy = subscriptionService.getActivePlan(user.getId());
-        YearMonth currentMonth = YearMonth.now();
-        LocalDateTime from = currentMonth.atDay(1).atStartOfDay();
-        LocalDateTime to = currentMonth.plusMonths(1).atDay(1).atStartOfDay();
+        UsagePeriod period = UsagePeriod.currentMonth();
         long monthlyUploadCount = usageRecordRepository
                 .countByUserIdAndUsageTypeAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(
                         user.getId(),
-                        USAGE_TYPE_UPLOAD,
-                        from,
-                        to
+                        UsageType.UPLOAD.name(),
+                        period.start(),
+                        period.end()
                 );
         long monthlyUploadLimit = planPolicy.getMonthlyUploadCount();
         long monthlyFileSizeBytes = usageRecordRepository.sumFileSizeBytes(
                 user.getId(),
-                USAGE_TYPE_UPLOAD,
-                from,
-                to
+                UsageType.UPLOAD.name(),
+                period.start(),
+                period.end()
         );
         List<Meeting> recentMeetings = meetingRepository.findTop5ByOwnerEmailOrderByCreatedAtDesc(ownerEmail);
 
