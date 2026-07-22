@@ -11,6 +11,7 @@ import java.security.MessageDigest;
 import java.util.Base64;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -21,6 +22,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 /** 토스페이먼츠 승인 API 호출과 Webhook 인증을 담당하는 클라이언트입니다. */
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class TossPaymentClient {
@@ -56,6 +58,7 @@ public class TossPaymentClient {
             ResponseBody responseBody = response.body();
             String body = responseBody == null ? "" : responseBody.string();
             if (!response.isSuccessful()) {
+                log.error("토스페이먼츠 승인 실패: status={}, body={}", response.code(), body);
                 throw new CustomException(ErrorCode.PAYMENT_CONFIRM_FAILED);
             }
             return objectMapper.readValue(body, TossPaymentResponse.class);
