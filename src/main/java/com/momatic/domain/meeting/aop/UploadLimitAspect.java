@@ -2,11 +2,11 @@ package com.momatic.domain.meeting.aop;
 
 import com.momatic.domain.plan.entity.PlanPolicy;
 import com.momatic.domain.subscription.service.SubscriptionService;
+import com.momatic.domain.usage.entity.UsageType;
 import com.momatic.domain.usage.repository.UsageRecordRepository;
+import com.momatic.domain.usage.util.UsagePeriod;
 import com.momatic.global.error.CustomException;
 import com.momatic.global.error.ErrorCode;
-import java.time.LocalDateTime;
-import java.time.YearMonth;
 import lombok.RequiredArgsConstructor;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
@@ -19,8 +19,6 @@ import org.springframework.web.multipart.MultipartFile;
 @Component
 @RequiredArgsConstructor
 public class UploadLimitAspect {
-
-    private static final String USAGE_TYPE_UPLOAD = "UPLOAD";
 
     private final UsageRecordRepository usageRecordRepository;
     private final SubscriptionService subscriptionService;
@@ -38,14 +36,13 @@ public class UploadLimitAspect {
         MultipartFile file = findMultipartFile(args);
         validateFileSize(file, planPolicy);
         long limit = planPolicy.getMonthlyUploadCount();
-        LocalDateTime start = YearMonth.now().atDay(1).atStartOfDay();
-        LocalDateTime end = YearMonth.now().plusMonths(1).atDay(1).atStartOfDay();
+        UsagePeriod period = UsagePeriod.currentMonth();
         long usageCount = usageRecordRepository
                 .countByUserIdAndUsageTypeAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(
                         userId,
-                        USAGE_TYPE_UPLOAD,
-                        start,
-                        end
+                        UsageType.UPLOAD.name(),
+                        period.start(),
+                        period.end()
                 );
 
         if (usageCount >= limit) {

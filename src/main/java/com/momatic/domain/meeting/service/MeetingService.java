@@ -139,9 +139,7 @@ public class MeetingService {
     @Transactional(readOnly = true)
     public MeetingDetail getOwnedMeetingDetail(Long meetingId, String ownerEmail) {
         Meeting meeting = findOwnedMeeting(meetingId, ownerEmail);
-        List<ActionItem> actionItems = actionItemRepository.findByMeetingId(meetingId);
-        List<Transcript> transcripts = transcriptRepository.findByMeetingId(meetingId);
-        return new MeetingDetail(meeting, actionItems, transcripts);
+        return buildMeetingDetail(meeting);
     }
 
     /**
@@ -155,6 +153,17 @@ public class MeetingService {
     public MeetingDetail getAccessibleMeetingDetail(Long meetingId,
                                                     String requesterEmail) {
         Meeting meeting = findAccessibleMeeting(meetingId, requesterEmail);
+        return buildMeetingDetail(meeting);
+    }
+
+    /**
+     * 회의 상세 조회 결과를 생성합니다.
+     *
+     * @param meeting 회의 엔티티
+     * @return 회의 상세
+     */
+    private MeetingDetail buildMeetingDetail(Meeting meeting) {
+        Long meetingId = meeting.getId();
         List<ActionItem> actionItems = actionItemRepository.findByMeetingId(meetingId);
         List<Transcript> transcripts = transcriptRepository.findByMeetingId(meetingId);
         return new MeetingDetail(meeting, actionItems, transcripts);
