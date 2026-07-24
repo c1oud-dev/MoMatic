@@ -1,5 +1,8 @@
 package com.momatic.domain.payment.dto;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import java.math.BigDecimal;
 
 /**
@@ -10,8 +13,8 @@ import java.math.BigDecimal;
  * @param amount 결제 금액
  */
 public record PaymentConfirmRequest(
-        String orderId,
-        String paymentKey,
-        BigDecimal amount
+        @NotBlank String orderId,
+        @NotBlank String paymentKey,
+        @NotNull @Positive BigDecimal amount
 ) {
 }
