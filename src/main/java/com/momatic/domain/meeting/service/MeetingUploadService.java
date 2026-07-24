@@ -12,17 +12,10 @@ import com.momatic.domain.user.entity.User;
 import com.momatic.domain.user.repository.UserRepository;
 import com.momatic.global.error.CustomException;
 import com.momatic.global.error.ErrorCode;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.Set;
-import java.util.UUID;
 
 import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
