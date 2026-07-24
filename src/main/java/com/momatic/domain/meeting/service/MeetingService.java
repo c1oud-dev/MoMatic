@@ -14,18 +14,16 @@ import com.momatic.global.error.CustomException;
 import com.momatic.global.error.ErrorCode;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /**
  * 회의 도메인 서비스입니다.
@@ -39,8 +37,8 @@ public class MeetingService {
     private final TeamMemberRepository teamMemberRepository;
     private final UserRepository userRepository;
 
-    @Value("${app.upload.storage-path}")
-    private String storagePath;
+    private final MeetingFileStorageService meetingFileStorageService;
+    private final MeetingFileDeletionRetryService meetingFileDeletionRetryService;
 
     /**
      * 인증 사용자가 소유한 회의 목록을 페이징 조회합니다.
@@ -232,7 +230,7 @@ public class MeetingService {
         }
         String storedFileName = meeting.getStoredFileName();
         meetingRepository.delete(meeting);
-        deleteStoredFile(storedFileName);
+        deleteStoredFileAfterCommit(storedFileName);
     }
 
     /**
@@ -301,17 +299,22 @@ public class MeetingService {
     }
 
     /**
-     * 저장소에 남아 있는 회의 업로드 파일을 삭제합니다.
+     * 삭제 트랜잭션 커밋 이후 저장소에 남아 있는 회의 업로드 파일 삭제를 시도합니다.
      *
      * @param storedFileName 저장 파일명
      */
-    private void deleteStoredFile(String storedFileName) {
-        try {
-            Path filePath = Paths.get(storagePath).resolve(storedFileName);
-            Files.deleteIfExists(filePath);
-        } catch (IOException ex) {
-            throw new CustomException(ErrorCode.INTERNAL_ERROR);
-        }
+    private void deleteStoredFileAfterCommit(String storedFileName) {
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            /** 삭제 트랜잭션 커밋 이후 저장 파일을 삭제하고 실패 시 재시도 큐에 기록합니다. */
+            @Override
+            public void afterCommit() {
+                try {
+                    meetingFileStorageService.deleteFile(storedFileName);
+                } catch (IOException exception) {
+                    meetingFileDeletionRetryService.recordFailure(storedFileName);
+                }
+            }
+        });
     }
 
     /**

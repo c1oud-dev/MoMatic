@@ -50,8 +50,7 @@ public class MeetingUploadService {
     private final UsageRecordRepository usageRecordRepository;
     private final MeetingProcessingService meetingProcessingService;
 
-    @Value("${app.upload.storage-path}")
-    private String storagePath;
+    private final MeetingFileStorageService meetingFileStorageService;
 
     /**
      * 음성 파일을 업로드합니다.
@@ -71,7 +70,7 @@ public class MeetingUploadService {
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         Team team = findUploadTeam(teamId, owner);
 
-        String storedFileName = storeFile(file);
+        String storedFileName = meetingFileStorageService.storeFile(file);
         Meeting meeting = Meeting.createPending(title, storedFileName, file.getOriginalFilename(), team, owner);
         Meeting savedMeeting = meetingRepository.save(meeting);
 
@@ -156,24 +155,4 @@ public class MeetingUploadService {
 
         return originalFilename.substring(originalFilename.lastIndexOf('.') + 1).toLowerCase();
     }
-
-    /**
-     * 파일을 로컬 스토리지에 저장합니다.
-     *
-     * @param file 업로드 파일
-     * @return 저장 파일명
-     */
-    private String storeFile(MultipartFile file) {
-        try {
-            Path directoryPath = Paths.get(storagePath);
-            Files.createDirectories(directoryPath);
-            String storedFileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
-            Path filePath = directoryPath.resolve(storedFileName);
-            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-            return storedFileName;
-        } catch (IOException exception) {
-            throw new CustomException(ErrorCode.INTERNAL_ERROR);
-        }
-    }
 }
-
