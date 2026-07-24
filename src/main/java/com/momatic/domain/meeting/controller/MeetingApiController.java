@@ -6,76 +6,28 @@ import com.momatic.domain.meeting.service.MeetingPdfService;
 import com.momatic.domain.meeting.service.MeetingUploadService;
 import com.momatic.domain.meeting.service.MeetingService;
 
-import com.momatic.domain.team.dto.TeamResponse;
-import com.momatic.domain.team.service.TeamService;
 import com.momatic.global.api.ApiResponse;
+import com.momatic.global.security.AuthenticatedUserResolver;
 import jakarta.annotation.Nullable;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-/** 회의 화면 및 API 컨트롤러입니다. */
-@Controller
+/** 회의 API 요청을 처리하는 컨트롤러입니다. */
+@RestController
 @RequestMapping("/meetings")
 @RequiredArgsConstructor
-public class MeetingController {
+public class MeetingApiController {
 
     private final MeetingService meetingService;
     private final MeetingPdfService meetingPdfService;
     private final MeetingUploadService meetingUploadService;
-    private final TeamService teamService;
-
-    /**
-     * 인증 사용자가 소유한 회의 목록 페이지를 표시합니다.
-     *
-     * @param principal 인증 사용자 정보
-     * @param keyword 검색 키워드
-     * @param pageable 페이징 정보
-     * @param model 화면 모델
-     * @return 회의 목록 템플릿 경로
-     */
-    @GetMapping
-    public String listMeetings(@AuthenticationPrincipal OAuth2User principal,
-                               @RequestParam(required = false) String keyword,
-                               @PageableDefault(size = 10) Pageable pageable,
-                               Model model) {
-        String searchKeyword = keyword == null || keyword.isBlank() ? null : keyword;
-        Page<MeetingResponse> meetings = meetingService.searchOwnedMeetings(getEmail(principal), searchKeyword, pageable)
-                .map(MeetingResponse::from);
-        model.addAttribute("meetings", meetings);
-        model.addAttribute("keyword", searchKeyword);
-        return "meeting/list";
-    }
-
-    /**
-     * 인증 사용자가 소유한 회의 상세 페이지를 표시합니다.
-     *
-     * @param meetingId 회의 ID
-     * @param principal 인증 사용자 정보
-     * @param model 화면 모델
-     * @return 회의 상세 템플릿 경로
-     */
-    @GetMapping("/{meetingId}")
-    public String getMeeting(@PathVariable Long meetingId,
-                             @AuthenticationPrincipal OAuth2User principal,
-                             Model model) {
-        MeetingDetailResponse meeting = MeetingDetailResponse.from(
-                meetingService.getAccessibleMeetingDetail(meetingId, getEmail(principal))
-        );
-        model.addAttribute("detail", meeting);
-        return "meeting/detail";
-    }
 
     /**
      * 접근 가능한 회의록 상세 데이터를 PDF 파일로 다운로드합니다.
@@ -85,11 +37,10 @@ public class MeetingController {
      * @return PDF 다운로드 응답
      */
     @GetMapping("/{meetingId}/pdf")
-    @ResponseBody
     @MeetingPdfPlanCheck
     public ResponseEntity<byte[]> downloadMeetingPdf(@PathVariable Long meetingId,
                                                      @AuthenticationPrincipal OAuth2User principal) {
-        byte[] pdf = meetingPdfService.generatePdf(meetingId, getEmail(principal));
+        byte[] pdf = meetingPdfService.generatePdf(meetingId, AuthenticatedUserResolver.getEmail(principal));
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_PDF)
                 .header(
@@ -100,22 +51,6 @@ public class MeetingController {
     }
 
     /**
-     * 회의 파일 업로드 페이지를 표시합니다.
-     *
-     * @param principal 인증 사용자 정보
-     * @param model 화면 모델
-     * @return 업로드 템플릿 경로
-     */
-    @GetMapping("/upload")
-    public String uploadPage(@AuthenticationPrincipal OAuth2User principal,
-                             Model model) {
-        model.addAttribute("teams", teamService.findTeamsByMemberEmail(getEmail(principal)).stream()
-                .map(TeamResponse::from)
-                .toList());
-        return "meeting/upload";
-    }
-
-    /**
      * 인증 사용자가 소유한 회의의 처리 상태를 조회합니다.
      *
      * @param meetingId 회의 ID
@@ -123,11 +58,10 @@ public class MeetingController {
      * @return 회의 처리 상태 응답
      */
     @GetMapping("/{meetingId}/status")
-    @ResponseBody
     public ApiResponse<MeetingStatusResponse> getMeetingStatus(@PathVariable Long meetingId,
                                                                @AuthenticationPrincipal OAuth2User principal) {
         return ApiResponse.ok(MeetingStatusResponse.from(
-                meetingService.findAccessibleMeeting(meetingId, getEmail(principal))
+                meetingService.findAccessibleMeeting(meetingId, AuthenticatedUserResolver.getEmail(principal))
         ));
     }
 
@@ -141,7 +75,6 @@ public class MeetingController {
      * @return 업로드 결과
      */
     @PostMapping("/upload")
-    @ResponseBody
     public ApiResponse<MeetingUploadResponse> uploadMeetingFile(@RequestParam Long userId,
                                                                 @RequestParam(required = false) @Nullable Long teamId,
                                                                 @RequestParam String title,
@@ -160,11 +93,10 @@ public class MeetingController {
      * @return 성공 응답
      */
     @PatchMapping("/{meetingId}/title")
-    @ResponseBody
     public ApiResponse<Void> updateMeetingTitle(@PathVariable Long meetingId,
                                                 @Valid @RequestBody MeetingTitleRequest request,
                                                 @AuthenticationPrincipal OAuth2User principal) {
-        meetingService.updateTitle(meetingId, getEmail(principal), request.title());
+        meetingService.updateTitle(meetingId, AuthenticatedUserResolver.getEmail(principal), request.title());
         return ApiResponse.ok(null);
     }
 
@@ -176,20 +108,9 @@ public class MeetingController {
      * @return 성공 응답
      */
     @DeleteMapping("/{meetingId}")
-    @ResponseBody
     public ApiResponse<Void> deleteMeeting(@PathVariable Long meetingId,
                                            @AuthenticationPrincipal OAuth2User principal) {
-        meetingService.deleteMeeting(meetingId, getEmail(principal));
+        meetingService.deleteMeeting(meetingId, AuthenticatedUserResolver.getEmail(principal));
         return ApiResponse.ok(null);
-    }
-
-    /**
-     * 인증 사용자 정보에서 이메일을 조회합니다.
-     *
-     * @param principal 인증 사용자 정보
-     * @return 인증 사용자 이메일
-     */
-    private String getEmail(OAuth2User principal) {
-        return principal.getAttribute("email");
     }
 }
