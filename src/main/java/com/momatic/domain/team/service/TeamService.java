@@ -18,6 +18,8 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /** 팀 생성, 초대, 구성원 권한 관리를 처리하는 서비스입니다. */
 @Service
@@ -140,8 +142,23 @@ public class TeamService {
         }
 
         TeamInvite invite = teamInviteRepository.save(TeamInvite.create(team, inviter, inviteeEmail));
-        teamInviteMailService.sendTeamInvite(invite);
+        sendTeamInviteAfterCommit(invite);
         return invite;
+    }
+
+    /**
+     * 초대 생성 트랜잭션 커밋 이후 팀 초대 메일을 발송합니다.
+     *
+     * @param invite 발송할 팀 초대
+     */
+    private void sendTeamInviteAfterCommit(TeamInvite invite) {
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            /** 초대 생성 트랜잭션 커밋 이후 팀 초대 메일을 발송합니다. */
+            @Override
+            public void afterCommit() {
+                teamInviteMailService.sendTeamInvite(invite);
+            }
+        });
     }
 
     /**
