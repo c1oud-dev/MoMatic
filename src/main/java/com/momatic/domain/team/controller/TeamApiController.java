@@ -4,6 +4,7 @@ import com.momatic.domain.team.dto.*;
 import com.momatic.domain.team.entity.Team;
 import com.momatic.domain.team.service.TeamService;
 import com.momatic.global.api.ApiResponse;
+import com.momatic.global.security.AuthenticatedUserResolver;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -16,7 +17,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/teams")
 @RequiredArgsConstructor
-public class TeamController {
+public class TeamApiController {
 
     private final TeamService teamService;
 
@@ -41,9 +42,12 @@ public class TeamController {
      * @return 생성된 팀 응답
      */
     @PostMapping
-    public ApiResponse<TeamResponse> createTeam(@RequestBody TeamCreateRequest request,
+    public ApiResponse<TeamResponse> createTeam(@Valid @RequestBody TeamCreateRequest request,
                                                 @AuthenticationPrincipal OAuth2User principal) {
-        Team team = teamService.createTeam(getEmail(principal), request.name());
+        Team team = teamService.createTeam(
+                AuthenticatedUserResolver.getEmail(principal),
+                request.name()
+        );
         return ApiResponse.ok(TeamResponse.from(team));
     }
 
@@ -57,10 +61,14 @@ public class TeamController {
      */
     @PostMapping("/{teamId}/invites")
     public ApiResponse<TeamInviteResponse> inviteMember(@PathVariable Long teamId,
-                                                        @RequestBody TeamInviteRequest request,
+                                                        @Valid @RequestBody TeamInviteRequest request,
                                                         @AuthenticationPrincipal OAuth2User principal) {
         return ApiResponse.ok(TeamInviteResponse.from(
-                teamService.inviteMember(teamId, getEmail(principal), request.email())
+                teamService.inviteMember(
+                        teamId,
+                        AuthenticatedUserResolver.getEmail(principal),
+                        request.email()
+                )
         ));
     }
 
@@ -75,7 +83,7 @@ public class TeamController {
     public ApiResponse<TeamMemberResponse> joinTeam(@RequestParam String code,
                                                     @AuthenticationPrincipal OAuth2User principal) {
         return ApiResponse.ok(TeamMemberResponse.from(
-                teamService.joinTeam(code, getEmail(principal))
+                teamService.joinTeam(code, AuthenticatedUserResolver.getEmail(principal))
         ));
     }
 
@@ -91,7 +99,11 @@ public class TeamController {
     public ApiResponse<Void> updateTeamName(@PathVariable Long teamId,
                                             @Valid @RequestBody TeamNameUpdateRequest request,
                                             @AuthenticationPrincipal OAuth2User principal) {
-        teamService.updateTeamName(teamId, getEmail(principal), request.name());
+        teamService.updateTeamName(
+                teamId,
+                AuthenticatedUserResolver.getEmail(principal),
+                request.name()
+        );
         return ApiResponse.ok(null);
     }
 
@@ -107,10 +119,15 @@ public class TeamController {
     @PatchMapping("/{teamId}/members/{memberId}/role")
     public ApiResponse<TeamMemberResponse> updateMemberRole(@PathVariable Long teamId,
                                                             @PathVariable Long memberId,
-                                                            @RequestBody TeamRoleUpdateRequest request,
+                                                            @Valid @RequestBody TeamRoleUpdateRequest request,
                                                             @AuthenticationPrincipal OAuth2User principal) {
         return ApiResponse.ok(TeamMemberResponse.from(
-                teamService.updateMemberRole(teamId, memberId, getEmail(principal), request.role())
+                teamService.updateMemberRole(
+                        teamId,
+                        memberId,
+                        AuthenticatedUserResolver.getEmail(principal),
+                        request.role()
+                )
         ));
     }
 
@@ -126,7 +143,11 @@ public class TeamController {
     public ApiResponse<Void> removeMember(@PathVariable Long teamId,
                                           @PathVariable Long memberId,
                                           @AuthenticationPrincipal OAuth2User principal) {
-        teamService.removeMember(teamId, memberId, getEmail(principal));
+        teamService.removeMember(
+                teamId,
+                memberId,
+                AuthenticatedUserResolver.getEmail(principal)
+        );
         return ApiResponse.ok(null);
     }
 
@@ -140,17 +161,10 @@ public class TeamController {
     @DeleteMapping("/{teamId}/leave")
     public ApiResponse<Void> leaveTeam(@PathVariable Long teamId,
                                        @AuthenticationPrincipal OAuth2User principal) {
-        teamService.leaveTeam(teamId, getEmail(principal));
+        teamService.leaveTeam(
+                teamId,
+                AuthenticatedUserResolver.getEmail(principal)
+        );
         return ApiResponse.ok(null);
-    }
-
-    /**
-     * 인증 사용자 정보에서 이메일을 조회합니다.
-     *
-     * @param principal 인증 사용자 정보
-     * @return 인증 사용자 이메일
-     */
-    private String getEmail(OAuth2User principal) {
-        return principal.getAttribute("email");
     }
 }
