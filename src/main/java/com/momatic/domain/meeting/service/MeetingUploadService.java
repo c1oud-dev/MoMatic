@@ -1,13 +1,15 @@
 package com.momatic.domain.meeting.service;
 
-import com.momatic.domain.meeting.aop.UploadLimitCheck;
 import com.momatic.domain.meeting.entity.Meeting;
 import com.momatic.domain.meeting.repository.MeetingRepository;
+import com.momatic.domain.plan.entity.PlanPolicy;
+import com.momatic.domain.subscription.service.SubscriptionService;
 import com.momatic.domain.team.entity.Team;
 import com.momatic.domain.team.repository.TeamRepository;
 import com.momatic.domain.usage.entity.UsageRecord;
 import com.momatic.domain.usage.entity.UsageType;
 import com.momatic.domain.usage.repository.UsageRecordRepository;
+import com.momatic.domain.usage.util.UsagePeriod;
 import com.momatic.domain.user.entity.User;
 import com.momatic.domain.user.repository.UserRepository;
 import com.momatic.global.error.CustomException;
@@ -42,6 +44,7 @@ public class MeetingUploadService {
     private final UserRepository userRepository;
     private final UsageRecordRepository usageRecordRepository;
     private final MeetingProcessingService meetingProcessingService;
+    private final SubscriptionService subscriptionService;
 
     private final MeetingFileStorageService meetingFileStorageService;
 
@@ -54,13 +57,13 @@ public class MeetingUploadService {
      * @param file 업로드 파일
      * @return 저장된 회의
      */
-    @UploadLimitCheck
     @Transactional
     public Meeting upload(Long userId, @Nullable Long teamId, String title, MultipartFile file) {
         validateFile(file);
 
-        User owner = userRepository.findById(userId)
+        User owner = userRepository.findByIdForUpdate(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        validateUploadQuota(owner, file);
         Team team = findUploadTeam(teamId, owner);
 
         String storedFileName = meetingFileStorageService.storeFile(file);
@@ -75,6 +78,32 @@ public class MeetingUploadService {
         ));
         processMeetingAfterCommit(savedMeeting.getId());
         return savedMeeting;
+    }
+
+    /**
+     * 사용자의 플랜에 따른 파일 크기와 월간 업로드 횟수를 검증합니다.
+     *
+     * @param owner 업로드 사용자
+     * @param file 업로드 파일
+     */
+    private void validateUploadQuota(User owner,
+                                     MultipartFile file) {
+        PlanPolicy planPolicy = subscriptionService.getActivePlan(owner.getId());
+        if (file.getSize() > planPolicy.getMaxFileSizeBytes()) {
+            throw new CustomException(ErrorCode.UPLOAD_FILE_SIZE_EXCEEDED);
+        }
+
+        UsagePeriod period = UsagePeriod.currentMonth();
+        long usageCount = usageRecordRepository
+                .countByUserIdAndUsageTypeAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(
+                        owner.getId(),
+                        UsageType.UPLOAD.name(),
+                        period.start(),
+                        period.end()
+                );
+        if (usageCount >= planPolicy.getMonthlyUploadCount()) {
+            throw new CustomException(ErrorCode.UPLOAD_MONTHLY_LIMIT_EXCEEDED);
+        }
     }
 
     /**
