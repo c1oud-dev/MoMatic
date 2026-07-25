@@ -7,6 +7,7 @@ import com.momatic.domain.user.service.UserService;
 import com.momatic.global.api.ApiResponse;
 import com.momatic.global.error.CustomException;
 import com.momatic.global.error.ErrorCode;
+import com.momatic.global.security.AuthenticatedUserResolver;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -15,7 +16,6 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.ModelAndView;
 
 /**
  * 사용자 조회 및 계정 관리 API 컨트롤러입니다.
@@ -23,7 +23,7 @@ import org.springframework.web.servlet.ModelAndView;
 @RestController
 @RequestMapping("/users")
 @RequiredArgsConstructor
-public class UserController {
+public class UserApiController {
 
     private final UserRepository userRepository;
     private final UserService userService;
@@ -36,20 +36,10 @@ public class UserController {
      */
     @GetMapping("/me")
     public ApiResponse<UserResponse> getCurrent(@AuthenticationPrincipal OAuth2User principal) {
-        String email = principal.getAttribute("email");
+        String email = AuthenticatedUserResolver.getEmail(principal);
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         return ApiResponse.ok(UserResponse.from(user));
-    }
-
-    /**
-     * 사용자 설정 페이지를 조회합니다.
-     *
-     * @return 사용자 설정 페이지 모델과 뷰
-     */
-    @GetMapping("/settings")
-    public ModelAndView settings() {
-        return new ModelAndView("user/settings");
     }
 
     /**
@@ -62,7 +52,7 @@ public class UserController {
     @DeleteMapping("/me")
     public ApiResponse<Void> deleteCurrent(@AuthenticationPrincipal OAuth2User principal,
                                            HttpSession session) {
-        String email = principal.getAttribute("email");
+        String email = AuthenticatedUserResolver.getEmail(principal);
         userService.deleteAccount(email, session);
         return ApiResponse.ok(null);
     }

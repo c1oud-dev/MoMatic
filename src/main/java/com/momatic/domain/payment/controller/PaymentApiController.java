@@ -6,6 +6,7 @@ import com.momatic.domain.payment.service.PaymentService;
 import com.momatic.domain.subscription.service.SubscriptionService;
 import com.momatic.global.api.ApiResponse;
 import com.momatic.global.security.AuthenticatedUserResolver;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -35,7 +36,7 @@ public class PaymentApiController {
      */
     @PostMapping("/payments/confirm")
     public ApiResponse<PaymentResponse> confirm(@AuthenticationPrincipal OAuth2User principal,
-                                                @RequestBody PaymentConfirmRequest request) {
+                                                @Valid @RequestBody PaymentConfirmRequest request) {
         return ApiResponse.ok(PaymentResponse.from(paymentService.confirm(
                 AuthenticatedUserResolver.getEmail(principal),
                 request
