@@ -87,14 +87,14 @@ public interface MeetingRepository extends JpaRepository<Meeting, Long> {
     long countByTeamId(Long teamId);
 
     /**
-     * 팀 구성원이 업로드한 팀 회의 수를 조회합니다.
+     * 팀 회의 수를 소유자별로 집계합니다.
      *
      * @param teamId 팀 ID
-     * @param ownerId 업로드 사용자 ID
-     * @return 업로드한 회의 수
+     * @return 소유자별 회의 수 목록
      */
-    long countByTeamIdAndOwnerId(Long teamId,
-                                 Long ownerId);
+    @Query("select new com.momatic.domain.meeting.repository.MeetingCountByOwner(m.owner.id, count(m)) "
+            + "from Meeting m where m.team.id = :teamId group by m.owner.id")
+    List<MeetingCountByOwner> countGroupedByOwnerForTeam(@Param("teamId") Long teamId);
 
     /**
      * 소유자 ID에 해당하는 회의 목록을 조회합니다.
