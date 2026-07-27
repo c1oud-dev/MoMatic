@@ -2,12 +2,16 @@ package com.momatic.domain.team.service;
 
 import com.momatic.domain.actionItem.entity.ActionStatus;
 import com.momatic.domain.actionItem.repository.ActionItemRepository;
+import com.momatic.domain.meeting.repository.MeetingCountByOwner;
 import com.momatic.domain.meeting.repository.MeetingRepository;
 import com.momatic.domain.team.dto.TeamDashboardResponse;
 import com.momatic.domain.team.dto.TeamResponse;
 import com.momatic.domain.team.entity.Team;
 import com.momatic.domain.team.entity.TeamMember;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +37,12 @@ public class TeamDashboardService {
                                               String requesterEmail) {
         Team team = teamService.findTeamForMember(teamId, requesterEmail);
         List<TeamMember> members = teamService.findMembers(teamId, requesterEmail);
+        Map<Long, Long> meetingCountByOwner = meetingRepository.countGroupedByOwnerForTeam(teamId)
+                .stream()
+                .collect(Collectors.toMap(
+                        MeetingCountByOwner::ownerId,
+                        MeetingCountByOwner::meetingCount
+                ));
         long totalActionItemCount = actionItemRepository.countByMeetingTeamId(teamId);
         long incompleteActionItemCount = actionItemRepository.countByMeetingTeamIdAndStatusIn(
                 teamId,
@@ -52,7 +62,7 @@ public class TeamDashboardService {
                                 member.getUser().getName(),
                                 member.getUser().getEmail(),
                                 member.getRole().name(),
-                                meetingRepository.countByTeamIdAndOwnerId(teamId, member.getUser().getId())
+                                meetingCountByOwner.getOrDefault(member.getUser().getId(), 0L)
                         ))
                         .toList()
         );

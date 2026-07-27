@@ -5,6 +5,7 @@ import com.momatic.domain.meeting.repository.MeetingRepository;
 import com.momatic.domain.plan.entity.PlanPolicy;
 import com.momatic.domain.subscription.service.SubscriptionService;
 import com.momatic.domain.team.entity.Team;
+import com.momatic.domain.team.repository.TeamMemberRepository;
 import com.momatic.domain.team.repository.TeamRepository;
 import com.momatic.domain.usage.entity.UsageRecord;
 import com.momatic.domain.usage.entity.UsageType;
@@ -41,6 +42,7 @@ public class MeetingUploadService {
 
     private final MeetingRepository meetingRepository;
     private final TeamRepository teamRepository;
+    private final TeamMemberRepository teamMemberRepository;
     private final UserRepository userRepository;
     private final UsageRecordRepository usageRecordRepository;
     private final MeetingProcessingService meetingProcessingService;
@@ -121,8 +123,7 @@ public class MeetingUploadService {
 
         Team team = teamRepository.findById(teamId)
                 .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REQUEST));
-        if (team.getMembers().stream()
-                .noneMatch(member -> member.getUser().getId().equals(owner.getId()))) {
+        if (!teamMemberRepository.existsByTeamIdAndUserId(teamId, owner.getId())) {
             throw new CustomException(ErrorCode.FORBIDDEN);
         }
         return team;
