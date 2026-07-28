@@ -32,6 +32,7 @@ public class TeamService {
     private final TeamMemberRepository teamMemberRepository;
     private final TeamInviteRepository teamInviteRepository;
     private final UserRepository userRepository;
+    private final TeamPermissionService teamPermissionService;
     private final SubscriptionService subscriptionService;
     private final TeamInviteMailService teamInviteMailService;
 
@@ -69,7 +70,7 @@ public class TeamService {
     public List<TeamMember> findMembers(Long teamId,
                                         String requesterEmail) {
         User requester = findUser(requesterEmail);
-        validateMembership(teamId, requester.getId());
+        teamPermissionService.requireMembership(teamId, requester.getId());
         return teamMemberRepository.findAllByTeamIdOrderByCreatedAtAsc(teamId);
     }
 
@@ -84,7 +85,7 @@ public class TeamService {
     public TeamMember findRequesterMember(Long teamId,
                                           String requesterEmail) {
         User requester = findUser(requesterEmail);
-        return validateMembership(teamId, requester.getId());
+        return teamPermissionService.requireMembership(teamId, requester.getId());
     }
 
     /**
@@ -98,7 +99,7 @@ public class TeamService {
     public Team findTeamForMember(Long teamId,
                                   String requesterEmail) {
         User requester = findUser(requesterEmail);
-        validateMembership(teamId, requester.getId());
+        teamPermissionService.requireMembership(teamId, requester.getId());
         return findTeam(teamId);
     }
 
@@ -132,7 +133,7 @@ public class TeamService {
                                    String inviteeEmail) {
         Team team = findTeam(teamId);
         User inviter = findUser(inviterEmail);
-        validateManagePermission(teamId, inviter.getId());
+        teamPermissionService.requireManagePermission(teamId, inviter.getId());
         validateMemberLimit(teamId);
         validateRequiredText(inviteeEmail);
         User invitee = userRepository.findByEmail(inviteeEmail)
@@ -195,7 +196,7 @@ public class TeamService {
                                String name) {
         Team team = findTeam(teamId);
         User requester = findUser(requesterEmail);
-        validateManagePermission(teamId, requester.getId());
+        teamPermissionService.requireManagePermission(teamId, requester.getId());
         validateRequiredText(name);
         team.updateName(name);
     }
@@ -215,7 +216,7 @@ public class TeamService {
                                        String requesterEmail,
                                        String role) {
         User requester = findUser(requesterEmail);
-        validateManagePermission(teamId, requester.getId());
+        teamPermissionService.requireManagePermission(teamId, requester.getId());
         TeamMember target = findTeamMember(teamId, memberId);
         target.updateRole(TeamRole.from(role));
         return target;
@@ -233,7 +234,10 @@ public class TeamService {
                              Long memberId,
                              String requesterEmail) {
         User requester = findUser(requesterEmail);
-        TeamMember requesterMember = validateManagePermission(teamId, requester.getId());
+        TeamMember requesterMember = teamPermissionService.requireManagePermission(
+                teamId,
+                requester.getId()
+        );
         TeamMember target = findTeamMember(teamId, memberId);
         if (target.isOwner() && requesterMember.getId().equals(target.getId())) {
             throw new CustomException(ErrorCode.TEAM_OWNER_SELF_REMOVE_DENIED);
@@ -251,7 +255,7 @@ public class TeamService {
     public void leaveTeam(Long teamId,
                           String requesterEmail) {
         User requester = findUser(requesterEmail);
-        TeamMember member = validateMembership(teamId, requester.getId());
+        TeamMember member = teamPermissionService.requireMembership(teamId, requester.getId());
         if (member.isOwner()) {
             throw new CustomException(ErrorCode.TEAM_OWNER_SELF_REMOVE_DENIED);
         }
@@ -267,35 +271,6 @@ public class TeamService {
         if (subscriptionService.getActivePlan(user.getId()) != PlanPolicy.TEAM) {
             throw new CustomException(ErrorCode.TEAM_PLAN_REQUIRED);
         }
-    }
-
-    /**
-     * 팀 소속 여부를 확인합니다.
-     *
-     * @param teamId 팀 ID
-     * @param userId 사용자 ID
-     * @return 요청자의 팀 구성원 정보
-     */
-    private TeamMember validateMembership(Long teamId,
-                                          Long userId) {
-        return teamMemberRepository.findByTeamIdAndUserId(teamId, userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.FORBIDDEN));
-    }
-
-    /**
-     * 팀 관리 권한을 확인합니다.
-     *
-     * @param teamId 팀 ID
-     * @param userId 사용자 ID
-     * @return 요청자의 팀 구성원 정보
-     */
-    private TeamMember validateManagePermission(Long teamId,
-                                                Long userId) {
-        TeamMember member = validateMembership(teamId, userId);
-        if (!member.canManageTeam()) {
-            throw new CustomException(ErrorCode.FORBIDDEN);
-        }
-        return member;
     }
 
     /**
