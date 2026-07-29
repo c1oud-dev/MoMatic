@@ -5,6 +5,7 @@ import com.momatic.domain.actionItem.entity.ActionStatus;
 import com.momatic.domain.actionItem.repository.ActionItemRepository;
 import com.momatic.domain.calendar.service.GoogleCalendarService;
 import com.momatic.domain.meeting.entity.Meeting;
+import com.momatic.domain.meeting.service.MeetingPermissionService;
 import com.momatic.domain.meeting.service.MeetingService;
 import com.momatic.domain.user.entity.User;
 import com.momatic.domain.user.repository.UserRepository;
@@ -25,6 +26,7 @@ public class ActionItemService {
 
     private final ActionItemRepository actionItemRepository;
     private final MeetingService meetingService;
+    private final MeetingPermissionService meetingPermissionService;
     private final GoogleCalendarService googleCalendarService;
     private final UserRepository userRepository;
 
@@ -45,7 +47,7 @@ public class ActionItemService {
                                     String assignee,
                                     LocalDate dueDate) {
         Meeting meeting = meetingService.findMeeting(meetingId);
-        meetingService.validateMeetingEditable(meeting, requesterEmail);
+        meetingPermissionService.requireEditable(meeting, requesterEmail);
         ActionItem actionItem = ActionItem.create(task, assignee, dueDate);
         actionItem.assignMeeting(meeting);
         return actionItemRepository.save(actionItem);
@@ -138,7 +140,7 @@ public class ActionItemService {
                                               String requesterEmail) {
         ActionItem actionItem = actionItemRepository.findById(actionItemId)
                 .orElseThrow(() -> new CustomException(ErrorCode.FORBIDDEN));
-        meetingService.validateMeetingEditable(actionItem.getMeeting(), requesterEmail);
+        meetingPermissionService.requireEditable(actionItem.getMeeting(), requesterEmail);
         return actionItem;
     }
 }

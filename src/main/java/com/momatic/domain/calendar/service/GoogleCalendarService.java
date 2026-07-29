@@ -2,7 +2,7 @@ package com.momatic.domain.calendar.service;
 
 import com.momatic.domain.actionItem.entity.ActionItem;
 import com.momatic.domain.actionItem.repository.ActionItemRepository;
-import com.momatic.domain.meeting.service.MeetingService;
+import com.momatic.domain.meeting.service.MeetingPermissionService;
 import com.momatic.domain.user.entity.User;
 import com.momatic.domain.user.repository.UserRepository;
 import com.momatic.global.error.CustomException;
@@ -36,7 +36,7 @@ public class GoogleCalendarService {
 
     private final ActionItemRepository actionItemRepository;
     private final UserRepository userRepository;
-    private final MeetingService meetingService;
+    private final MeetingPermissionService meetingPermissionService;
     private final RestTemplate restTemplate = new RestTemplate();
 
     @Value("${app.external.google.calendar-client-id}")
@@ -58,7 +58,7 @@ public class GoogleCalendarService {
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         ActionItem actionItem = actionItemRepository.findById(actionItemId)
                 .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REQUEST));
-        meetingService.validateMeetingEditable(actionItem.getMeeting(), requesterEmail);
+        meetingPermissionService.requireEditable(actionItem.getMeeting(), requesterEmail);
         createEvent(user, actionItem);
     }
 

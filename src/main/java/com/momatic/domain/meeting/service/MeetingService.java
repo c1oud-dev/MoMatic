@@ -2,8 +2,7 @@ package com.momatic.domain.meeting.service;
 
 import com.momatic.domain.actionItem.entity.ActionItem;
 import com.momatic.domain.meeting.entity.Meeting;
-import com.momatic.domain.team.entity.TeamMember;
-import com.momatic.domain.team.repository.TeamMemberRepository;
+import com.momatic.domain.team.service.TeamPermissionService;
 import com.momatic.domain.transcript.entity.Transcript;
 import com.momatic.domain.actionItem.repository.ActionItemRepository;
 import com.momatic.domain.meeting.repository.MeetingRepository;
@@ -34,8 +33,9 @@ public class MeetingService {
     private final MeetingRepository meetingRepository;
     private final ActionItemRepository actionItemRepository;
     private final TranscriptRepository transcriptRepository;
-    private final TeamMemberRepository teamMemberRepository;
     private final UserRepository userRepository;
+    private final MeetingPermissionService meetingPermissionService;
+    private final TeamPermissionService teamPermissionService;
 
     private final MeetingFileStorageService meetingFileStorageService;
     private final MeetingFileDeletionRetryService meetingFileDeletionRetryService;
@@ -83,7 +83,7 @@ public class MeetingService {
                                           String requesterEmail,
                                           Pageable pageable) {
         User requester = findUser(requesterEmail);
-        validateTeamMembership(teamId, requester.getId());
+        teamPermissionService.requireMembership(teamId, requester.getId());
         return meetingRepository.findAllByTeamId(teamId, pageable);
     }
 
@@ -110,7 +110,7 @@ public class MeetingService {
     public Meeting findAccessibleMeeting(Long meetingId,
                                          String requesterEmail) {
         Meeting meeting = findMeeting(meetingId);
-        validateMeetingReadable(meeting, requesterEmail);
+        meetingPermissionService.requireReadable(meeting, requesterEmail);
         return meeting;
     }
 
@@ -211,7 +211,7 @@ public class MeetingService {
                             String requesterEmail,
                             String newTitle) {
         Meeting meeting = findMeeting(meetingId);
-        validateMeetingEditable(meeting, requesterEmail);
+        meetingPermissionService.requireEditable(meeting, requesterEmail);
         meeting.updateTitle(newTitle);
     }
 
@@ -231,60 +231,6 @@ public class MeetingService {
         String storedFileName = meeting.getStoredFileName();
         meetingRepository.delete(meeting);
         deleteStoredFileAfterCommit(storedFileName);
-    }
-
-    /**
-     * 회의 조회 가능 여부를 검증합니다.
-     *
-     * @param meeting 회의
-     * @param requesterEmail 요청자 이메일
-     */
-    private void validateMeetingReadable(Meeting meeting,
-                                         String requesterEmail) {
-        User requester = findUser(requesterEmail);
-        if (!meeting.hasTeam()) {
-            if (!meeting.getOwner().getId().equals(requester.getId())) {
-                throw new CustomException(ErrorCode.FORBIDDEN);
-            }
-            return;
-        }
-
-        validateTeamMembership(meeting.getTeam().getId(), requester.getId());
-    }
-
-    /**
-     * 팀 회의록 편집 가능 여부를 검증합니다.
-     *
-     * @param meeting 회의
-     * @param requesterEmail 요청자 이메일
-     */
-    public void validateMeetingEditable(Meeting meeting,
-                                        String requesterEmail) {
-        User requester = findUser(requesterEmail);
-        if (!meeting.hasTeam()) {
-            if (!meeting.getOwner().getId().equals(requester.getId())) {
-                throw new CustomException(ErrorCode.FORBIDDEN);
-            }
-            return;
-        }
-
-        TeamMember member = validateTeamMembership(meeting.getTeam().getId(), requester.getId());
-        if (!member.canManageTeam()) {
-            throw new CustomException(ErrorCode.FORBIDDEN);
-        }
-    }
-
-    /**
-     * 팀 소속 여부를 검증합니다.
-     *
-     * @param teamId 팀 ID
-     * @param userId 사용자 ID
-     * @return 팀 구성원 정보
-     */
-    private TeamMember validateTeamMembership(Long teamId,
-                                              Long userId) {
-        return teamMemberRepository.findByTeamIdAndUserId(teamId, userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.FORBIDDEN));
     }
 
     /**
