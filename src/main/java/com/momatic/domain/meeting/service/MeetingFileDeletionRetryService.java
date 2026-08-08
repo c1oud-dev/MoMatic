@@ -6,6 +6,7 @@ import com.momatic.domain.meeting.repository.FailedFileDeletionRepository;
 import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 /** 삭제 실패한 회의 업로드 파일을 기록하고 재시도하는 서비스입니다. */
@@ -20,10 +21,12 @@ public class MeetingFileDeletionRetryService {
 
     /**
      * 삭제 실패한 저장 파일명을 재시도 큐에 기록합니다.
+     * afterCommit 콜백 등 원래 트랜잭션이 이미 종료된 시점에서 호출될 수 있으므로,
+     * 독립적인 새 트랜잭션에서 확실히 커밋되도록 REQUIRES_NEW로 전파합니다.
      *
      * @param storedFileName 저장 파일명
      */
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void recordFailure(String storedFileName) {
         failedFileDeletionRepository.save(FailedFileDeletion.create(storedFileName));
     }
