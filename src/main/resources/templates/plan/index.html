@@ -27,7 +27,6 @@
         <th scope="row" th:text="${plan.planType}">FREE</th>
         <td th:text="|${plan.monthlyUploadCount}회|">3회</td>
         <td th:text="|${plan.maxFileSizeLabel}|">26214400 bytes</td>
-        <td th:text="|${plan.maxFileSizeBytes} bytes|">26214400 bytes</td>
         <td th:text="|${plan.price}원|">0원</td>
         <td>
           <strong th:if="${authenticated and currentPlan == plan.planType}">현재 플랜</strong>
