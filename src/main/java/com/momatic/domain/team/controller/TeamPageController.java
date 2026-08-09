@@ -66,7 +66,7 @@ public class TeamPageController {
                                 Model model) {
         TeamDashboardResponse dashboard = teamDashboardService.getDashboard(teamId, getEmail(principal));
         model.addAttribute("dashboard", dashboard);
-        return "team-dashboard";
+        return "team/team-dashboard";
     }
 
     /**
@@ -89,7 +89,7 @@ public class TeamPageController {
         model.addAttribute("members", members);
         model.addAttribute("requesterRole", requester.getRole().name());
         model.addAttribute("canManage", requester.canManageTeam());
-        return "team-members";
+        return "team/team-members";
     }
 
     /**
