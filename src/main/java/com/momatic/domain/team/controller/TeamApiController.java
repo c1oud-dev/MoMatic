@@ -22,13 +22,14 @@ public class TeamApiController {
     private final TeamService teamService;
 
     /**
-     * 팀 목록을 조회합니다.
+     * 현재 로그인 사용자가 속한 팀 목록을 조회합니다.
      *
+     * @param principal 인증 사용자 정보
      * @return 팀 목록 응답
      */
     @GetMapping
-    public ApiResponse<List<TeamResponse>> listTeams() {
-        List<TeamResponse> teams = teamService.findTeams().stream()
+    public ApiResponse<List<TeamResponse>> listTeams(@AuthenticationPrincipal OAuth2User principal) {
+        List<TeamResponse> teams = teamService.findTeamsByMemberEmail(AuthenticatedUserResolver.getEmail(principal)).stream()
                 .map(TeamResponse::from)
                 .toList();
         return ApiResponse.ok(teams);

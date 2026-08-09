@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>팀 생성</title>
+</head>
+<body>
+<div th:replace="~{layouts/default :: layout(~{::section})}">
+    <section>
+        <header>
+            <a th:href="@{/teams}">팀 목록으로</a>
+            <h1>새 팀 생성</h1>
+            <p>함께 회의록과 액션 아이템을 관리할 팀을 만들어 보세요.</p>
+        </header>
+
+        <form id="team-create-form" th:action="@{/teams}" method="post">
+            <label for="team-name">팀 이름</label>
+            <input
+                    id="team-name"
+                    type="text"
+                    name="name"
+                    required
+                    autofocus
+                    autocomplete="organization"
+                    maxlength="255"
+                    aria-describedby="team-name-help"
+            />
+            <p id="team-name-help">팀을 구분할 수 있는 이름을 입력해 주세요.</p>
+
+            <button id="create-button" type="submit">생성</button>
+            <a th:href="@{/teams}">취소</a>
+        </form>
+
+        <p id="create-result" role="alert" aria-live="polite"></p>
+
+        <script>
+            const form = document.getElementById('team-create-form');
+            const nameInput = document.getElementById('team-name');
+            const createButton = document.getElementById('create-button');
+            const createResult = document.getElementById('create-result');
+
+            function csrfHeader() {
+                const tokenCookie = document.cookie
+                    .split('; ')
+                    .find((cookie) => cookie.startsWith('XSRF-TOKEN='));
+                return tokenCookie ? decodeURIComponent(tokenCookie.split('=')[1]) : '';
+            }
+
+            form.addEventListener('submit', async (event) => {
+                event.preventDefault();
+
+                const name = nameInput.value.trim();
+                if (!name) {
+                    createResult.textContent = '팀 이름을 입력해 주세요.';
+                    nameInput.focus();
+                    return;
+                }
+
+                createButton.disabled = true;
+                createResult.textContent = '팀을 생성하고 있습니다.';
+
+                try {
+                    const response = await fetch(form.action, {
+                        method: 'POST',
+                        credentials: 'same-origin',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrfHeader()
+                        },
+                        body: JSON.stringify({name})
+                    });
+                    const result = await response.json();
+
+                    if (!response.ok || !result.success) {
+                        createResult.textContent = result.message || '팀 생성에 실패했습니다.';
+                        return;
+                    }
+
+                    window.location.href = '/teams/list';
+                } catch (error) {
+                    createResult.textContent = '팀 생성 요청 중 오류가 발생했습니다.';
+                } finally {
+                    createButton.disabled = false;
+                }
+            });
+        </script>
+    </section>
+</div>
+</body>
+</html>

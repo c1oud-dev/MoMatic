@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>팀 목록</title>
+</head>
+<body>
+<div th:replace="~{layouts/default :: layout(~{::section})}">
+    <section>
+        <header>
+            <h1>팀 목록</h1>
+            <p>소속된 팀을 선택해 팀 대시보드로 이동하세요.</p>
+            <a th:href="@{/teams/create}">새 팀 생성</a>
+        </header>
+
+        <p id="team-list-status" aria-live="polite">팀 목록을 불러오고 있습니다.</p>
+
+        <table id="team-list-table" hidden>
+            <thead>
+            <tr>
+                <th>팀 이름</th>
+            </tr>
+            </thead>
+            <tbody id="team-list-body"></tbody>
+        </table>
+
+        <template id="team-row-template">
+            <tr>
+                <td>
+                    <a class="team-dashboard-link"></a>
+                </td>
+            </tr>
+        </template>
+
+        <script>
+            const statusMessage = document.getElementById('team-list-status');
+            const teamTable = document.getElementById('team-list-table');
+            const teamListBody = document.getElementById('team-list-body');
+            const teamRowTemplate = document.getElementById('team-row-template');
+
+            function renderTeams(teams) {
+                if (teams.length === 0) {
+                    statusMessage.textContent = '아직 소속된 팀이 없습니다. 새 팀을 만들어 보세요.';
+                    return;
+                }
+
+                const rows = document.createDocumentFragment();
+                teams.forEach((team) => {
+                    const row = teamRowTemplate.content.cloneNode(true);
+                    const link = row.querySelector('.team-dashboard-link');
+                    link.href = `/teams/${team.id}/dashboard`;
+                    link.textContent = team.name;
+                    rows.appendChild(row);
+                });
+
+                teamListBody.replaceChildren(rows);
+                statusMessage.hidden = true;
+                teamTable.hidden = false;
+            }
+
+            async function loadTeams() {
+                try {
+                    const response = await fetch('/teams', {
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    });
+                    const result = await response.json();
+
+                    if (!response.ok || !result.success) {
+                        statusMessage.textContent = result.message || '팀 목록을 불러오지 못했습니다.';
+                        return;
+                    }
+
+                    renderTeams(result.data || []);
+                } catch (error) {
+                    statusMessage.textContent = '팀 목록 요청 중 오류가 발생했습니다.';
+                }
+            }
+
+            loadTeams();
+        </script>
+    </section>
+</div>
+</body>
+</html>

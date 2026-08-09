@@ -32,6 +32,26 @@ public class TeamPageController {
     private final TeamDashboardService teamDashboardService;
 
     /**
+     * 팀 목록 페이지를 표시합니다.
+     *
+     * @return 팀 목록 템플릿 경로
+     */
+    @GetMapping("/list")
+    public String teamList() {
+        return "team/team-list";
+    }
+
+    /**
+     * 팀 생성 폼 페이지를 표시합니다.
+     *
+     * @return 팀 생성 폼 템플릿 경로
+     */
+    @GetMapping("/create")
+    public String createTeamForm() {
+        return "team/team-create";
+    }
+
+    /**
      * 팀 회의록 목록 페이지를 표시합니다.
      *
      * @param teamId 팀 ID
