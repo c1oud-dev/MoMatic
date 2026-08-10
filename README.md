@@ -1,211 +1,163 @@
-# MoMatic - AI 기반 회의록 자동화 시스템
+# 회의 음성을 전사·요약하고 액션 아이템까지 자동 정리하는 회의록 서비스
 
-## 📋 프로젝트 소개
+> 회의 음성 파일을 업로드하면 전사, 요약, 액션 아이템 추출까지 이어지는 Spring Boot 기반 회의록 관리 서비스입니다.
 
-**MoMatic**은 회의 음성 녹음을 자동으로 텍스트로 변환하고, AI를 활용해 요약 및 액션 아이템을 추출하여 팀 협업 도구(현재 Notion)와 연동하는 통합 회의록 관리 시스템입니다.
+회의 후 정리 과정에서 반복적으로 발생하는 음성 전사, 핵심 내용 요약, 후속 업무 정리를 자동화하기 위해 개발한 서버 사이드 렌더링 웹 애플리케이션입니다. Google OAuth2 인증, 회의 파일 업로드, 비동기 STT/요약 처리, 액션 아이템 관리, 구독/결제, 팀 협업, Google Calendar 연동을 하나의 Spring Boot 애플리케이션 안에서 도메인별로 분리해 구현했습니다.
 
-### 주요 특징
-- 🎙️ **음성 자동 전사**: OpenAI Whisper API를 활용한 STT(Speech-to-Text)
-- 🤖 **AI 회의 요약**: GPT를 통한 회의 내용 자동 요약 및 액션 아이템 추출
-- 📒 **Notion 정리(계획)**: 회의 결과와 일정 관리를 Notion 워크스페이스로 정리
-- 📅 **Google Calendar 연동**: 액션 아이템 자동 일정 등록
-- 🔐 **OAuth2 인증**: Google OAuth2 로그인 지원
+![Java](https://img.shields.io/badge/Java-17-007396?style=for-the-badge&logo=openjdk&logoColor=white)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.3.4-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)
+![MySQL](https://img.shields.io/badge/MySQL-8-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
+![JPA](https://img.shields.io/badge/JPA-Hibernate-59666C?style=for-the-badge&logo=hibernate&logoColor=white)
+![Google OAuth2](https://img.shields.io/badge/Google%20OAuth2-4285F4?style=for-the-badge&logo=google&logoColor=white)
+![OpenAI](https://img.shields.io/badge/OpenAI-Whisper%20%7C%20GPT--4o--mini-412991?style=for-the-badge&logo=openai&logoColor=white)
+![Toss Payments](https://img.shields.io/badge/Toss%20Payments-0064FF?style=for-the-badge&logoColor=white)
 
-## 🛠️ 기술 스택
+## 목차
 
-### Backend
-- **Framework**: Spring Boot 3.5.3
-- **Language**: Java 17
-- **Build Tool**: Gradle 8.14.2
+- [프로젝트 개요](#프로젝트-개요)
+- [데모](#데모)
+- [핵심 기능](#핵심-기능)
+- [기술 스택](#기술-스택)
+- [아키텍처](#아키텍처)
+- [ERD](#erd)
+- [DB 스키마 관리](#db-스키마-관리)
+- [기술적 의사결정](#기술적-의사결정)
+- [트러블슈팅](#트러블슈팅)
 
-### Database
-- **Production**: MySQL 
-- **Development**: H2 (In-memory)
-- **Migration**: Flyway
+## 프로젝트 개요
 
-### Security
-- Spring Security
-- OAuth2 Client (Google)
-- SSL/TLS (HTTPS)
+| 항목 | 내용 |
+| --- | --- |
+| 개발 기간 | 2025.07 ~ 2025.12 (1차 개발), 2026.05 ~ 진행 중 (전면 재개발) |
+| 개발 인원 | 1인 개발 |
+| 개발 방식 | Backend, DB 설계, 외부 API 연동, 인프라 전 영역 단독 수행 |
 
-### External APIs & Libraries
-- **OpenAI**: Whisper (STT), GPT-3.5 (텍스트 처리)
-- **Google**: Calendar API
-- **HTTP Client**: OkHttp3
-- **JSON Processing**: Jackson
+## 데모
 
-## 📁 프로젝트 구조
+<!-- 스크린샷 또는 데모 GIF 추가 예정 -->
+![데모](./docs/images/demo.gif)
 
-```
-momatic/
-├── src/main/java/com/momatic/
-│   ├── config/           # 설정 클래스 (Security, OAuth2)
-│   ├── controller/       # REST API 컨트롤러
-│   ├── domain/          # JPA 엔티티 (Meeting, User, Team, ActionItem 등)
-│   ├── repository/      # 데이터 접근 계층
-│   ├── service/         # 비즈니스 로직 (Audio, Whisper, LLM, 등)
-│   └── util/            # 유틸리티 클래스
-├── src/main/resources/
-│   ├── application.properties      # 메인 설정
-│   ├── application-dev.properties  # 개발 환경 설정
-│   ├── application-prod.properties # 운영 환경 설정
-│   └── db/migration/               # Flyway 마이그레이션 스크립트
-└── build.gradle
-```
+## 핵심 기능
 
-## 🚀 시작하기
+- **Google OAuth2 인증**: Google 계정으로 로그인하며, 세션 기반으로 접근을 제어합니다. 공개 경로, 인증 필요 경로, 관리자 경로를 분리해 관리합니다.
+- **회의 음성 업로드**: mp3, mp4, wav, m4a 형식의 파일을 업로드할 수 있으며, MIME 타입을 검증한 뒤 UUID 기반 파일명으로 저장합니다.
+- **회의 비동기 처리**: 업로드가 완료되면 Whisper API로 음성을 전사하고, GPT API로 요약 및 액션 아이템을 추출합니다. 처리 상태는 실시간으로 갱신됩니다.
+- **회의 관리**: 회의 목록/상세 조회, 상태 확인, 제목 수정, 삭제, PDF 다운로드를 지원합니다.
+- **액션 아이템 관리**: 회의별로 액션 아이템을 생성·수정·삭제하고 상태를 변경할 수 있으며, 전체 액션 아이템을 한눈에 볼 수 있는 목록 페이지를 제공합니다.
+- **Google Calendar 연동**: 액션 아이템의 마감일을 기준으로 캘린더 일정을 자동 생성·삭제합니다. 토큰 만료 시 refresh token으로 재발급합니다.
+- **구독 및 결제**: Free/Pro/Team 플랜별로 업로드 횟수, 파일 크기 제한, 가격 정책을 운영하며, 토스페이먼츠로 결제 주문 생성부터 승인, Webhook 처리까지 지원합니다.
+- **팀 협업**: 팀 생성, 초대 코드 기반 참가, 팀명 수정, 멤버 권한 변경 및 추방/탈퇴 기능을 제공하며, OWNER/ADMIN/MEMBER 역할로 권한을 구분합니다.
+- **관리자 콘솔**: 전체 사용자 및 구독 현황을 조회하고, 사용자 플랜을 수동으로 변경할 수 있습니다.
+- **사용량 관리**: 사용자별 업로드 횟수와 파일 크기를 기록하고, 매월 사용량을 초기화하는 스케줄러를 운영합니다.
 
-### 필수 요구사항
-- Java 17+
-- MySQL (운영 환경)
-- 각종 API 키 (OpenAI, Google)
+## 기술 스택
 
-### 환경 변수 설정
+| 구분 | 기술 |
+| --- | --- |
+| Backend | Java 17, Spring Boot 3.3.4, Spring Web, Spring Security, Spring Validation, Spring Data JPA |
+| View | Thymeleaf SSR |
+| Database | MySQL 8(prod), H2(dev/test), Flyway |
+| Auth | Google OAuth2 Client, Spring Security Session |
+| Async | Spring `@Async`, `ThreadPoolTaskExecutor` |
+| External API | OpenAI Whisper API, OpenAI Chat Completions API(`gpt-4o-mini` 기본값), 토스페이먼츠, Google Calendar API, Google OAuth Token API |
+| Mail | Spring Boot Starter Mail, 팀 초대 메일 템플릿 |
+| PDF | iText 7, html2pdf |
+| Test | JUnit 5, Spring Boot Test |
+| Build | Gradle, Spring Boot Gradle Plugin |
+| CI | GitHub Actions |
 
-`.env` 파일 또는 시스템 환경 변수에 다음 값들을 설정하세요:
+## 아키텍처
 
-```bash
-# OpenAI
-OPENAI_API_KEY=your-openai-api-key
+현재 구조는 단일 Spring Boot 애플리케이션 안에서 도메인 패키지를 분리한 모놀리식 아키텍처입니다. 패키지는 `com.momatic`을 루트로 사용하며, 비즈니스 기능은 `domain`, 공통 설정/예외/응답은 `global`, 외부 API 클라이언트는 `infra`에 배치되어 있습니다.
 
-# Google OAuth2
-GOOGLE_CLIENT_ID=your-google-client-id
-GOOGLE_CLIENT_SECRET=your-google-client-secret
-```
+![아키텍처 다이어그램](./docs/images/architecture.png)
 
-### 실행 방법
+### 회의 처리 흐름
 
-#### 개발 환경 (H2 Database)
-```bash
-./gradlew bootRun --args='--spring.profiles.active=dev'
-```
-
-#### 운영 환경 (MySQL)
-```bash
-./gradlew bootRun --args='--spring.profiles.active=prod'
-```
-
-### SSL 인증서 설정
-
-프로젝트는 HTTPS를 사용합니다. `src/main/resources/keystore.p12` 파일을 생성하거나 기존 인증서를 사용하세요:
-
-```bash
-keytool -genkeypair -alias tomcat -keyalg RSA -keysize 2048 \
-  -storetype PKCS12 -keystore keystore.p12 -validity 3650
+```text
+1. 사용자 파일 업로드
+2. 파일 확장자/MIME 타입 검증
+3. 로컬 스토리지 저장
+4. Meeting(PENDING) 및 UsageRecord 저장
+5. DB 트랜잭션 커밋 이후 비동기 처리 시작
+6. Meeting(PROCESSING) 변경
+7. Whisper API 전사
+8. GPT API 요약 및 액션 아이템 추출
+9. Transcript, ActionItem 저장
+10. Meeting(COMPLETED) 변경
+11. 예외 발생 시 Meeting(FAILED) 변경
 ```
 
-## 📡 API 엔드포인트
+## ERD
 
-### 인증
-- `GET /login` - OAuth2 로그인 페이지
-- `GET /loginSuccess` - 로그인 성공 콜백
+![ERD](./docs/images/erd.png)
 
-### 오디오 업로드
-- `POST /api/audio/upload` - 음성 파일 업로드 및 처리
-  - Request: `multipart/form-data` with audio file
-  - Response: JSON (요약 및 액션 아이템)
+| 엔티티 | 주요 필드/역할 |
+| --- | --- |
+| `User` | email, name, role, OAuth provider 정보, Google Calendar token |
+| `Team` | 팀 이름, 팀 멤버 목록 |
+| `TeamMember` | 팀-사용자 매핑, `OWNER`/`ADMIN`/`MEMBER` 역할 |
+| `TeamInvite` | 초대 대상 이메일, 초대 코드, 만료 시각, 수락 여부 |
+| `Meeting` | 제목, 저장 파일명, 원본 파일명, 처리 상태, 팀, 소유자, 요약 |
+| `Transcript` | 회의 전사 발화자, 내용, 시작/종료 초 |
+| `ActionItem` | 할 일, 담당자, 마감일, 상태, Google Calendar event id |
+| `Subscription` | 사용자 플랜, 구독 상태, 시작/만료 시각 |
+| `Payment` | orderId, paymentKey, 결제 금액, 상태, 플랜, 사용자 |
+| `UsageRecord` | 사용자별 사용 타입, 사용량, 파일 크기 |
 
-### 사용자 관리
-- `GET /api/users/me` - 현재 로그인 사용자 정보
+## DB 스키마 관리
 
-### 팀 관리
-- `GET /api/teams` - 팀 목록 조회
+DB 스키마는 Flyway로 버전 관리되며, 개인 회의 지원을 위한 nullable 컬럼 변경, 결제 구조 재설계, Google Calendar 연동을 위한 토큰 컬럼 추가 등 총 10개 버전에 걸쳐 점진적으로 발전했습니다.
 
-## 💾 데이터베이스 스키마
+## 기술적 의사결정
 
-### 주요 테이블
+설계 단계에서 의도적으로 선택한 구조입니다.
 
-#### Meeting (회의)
-- `id`: 회의 ID
-- `title`: 회의 제목
-- `started_at`: 시작 시간
-- `ended_at`: 종료 시간
-- `summary`: AI 생성 요약
-- `team_id`: 팀 ID (FK)
-- `owner_id`: 회의 주최자 (FK)
+### 1. 개발 환경에서도 운영 DB와 동일한 방식으로 검증
 
-#### ActionItem (액션 아이템)
-- `id`: 액션 아이템 ID
-- `task`: 작업 내용
-- `assignee`: 담당자
-- `due_date`: 마감일
-- `status`: 상태 (TODO/IN_PROGRESS/DONE)
-- `meeting_id`: 회의 ID (FK)
+개발 단계에서는 가벼운 인메모리 데이터베이스(H2)를 사용하면서도, 운영에서 쓰는 MySQL과 동일한 문법 규칙으로 동작하도록 설정했습니다. 덕분에 로컬에서 미리 검증한 데이터베이스 변경 사항을 운영 환경에서도 안심하고 그대로 적용할 수 있습니다.
 
-#### Transcript (전사 기록)
-- `id`: 전사 ID
-- `speaker`: 발언자
-- `content`: 전사 내용
-- `start_sec`: 시작 시간
-- `end_sec`: 종료 시간
-- `meeting_id`: 회의 ID (FK)
+### 2. 요금제별 정책을 한 곳에서 관리
 
-#### User (사용자)
-- `id`: 사용자 ID
-- `email`: 이메일
-- `name`: 이름
-- `team_id`: 팀 ID (FK)
-- `roles`: 권한 (CSV 형태)
+Free/Pro/Team 요금제마다 다른 업로드 횟수, 파일 크기, 가격 정책을 한 곳에 모아 관리합니다. 업로드 제한, 결제 금액 계산, 요금제 안내 화면이 모두 같은 기준을 참조하기 때문에, 정책이 바뀌어도 한 곳만 수정하면 전체에 일관되게 반영됩니다.
 
-#### Team (팀)
-- `id`: 팀 ID
-- `name`: 팀 이름
+### 3. 외부 서비스 오류를 일관된 방식으로 처리
 
-## 🔄 워크플로우
+Whisper, GPT, 토스페이먼츠, Google Calendar 등 외부 서비스 연동 중 문제가 생기면, 종류와 상관없이 동일한 방식의 오류 처리 구조로 변환해서 관리합니다. 어떤 외부 서비스에서 오류가 나든 사용자에게는 일관된 안내가 전달됩니다.
 
-1. **음성 업로드**: 사용자가 회의 녹음 파일을 업로드
-2. **음성 전사**: Whisper API를 통해 음성을 텍스트로 변환
-3. **AI 처리**: GPT가 전사 내용을 분석하여 요약 및 액션 아이템 추출
-4. **데이터 저장**: Meeting, Transcript, ActionItem 데이터베이스 저장
-5. **통합 알림**:
-   - Google Calendar에 액션 아이템 일정 추가
-   - 회의 결과/일정은 Notion으로 정리
+## 트러블슈팅
 
-## 🔧 주요 서비스 컴포넌트
+실제로 문제가 발생해서 원인을 파악하고 구조를 바꿔 해결한 사례입니다.
 
-### AudioService
-- 음성 파일 업로드 및 저장 관리
+### 1. OAuth2/OIDC 인증 흐름 불일치로 인한 회원 동기화 누락 해결
 
-### WhisperService
-- OpenAI Whisper API를 통한 음성-텍스트 변환
+#### 문제
+Google 로그인 자체는 정상적으로 완료됐지만, 로그인 이후 이어지는 신규 회원 확인·동기화 처리가 정상적으로 동작하지 않았습니다.
 
-### LLMService
-- GPT를 활용한 회의 요약 및 액션 아이템 추출
+#### 원인
+Google 인증 요청에 `openid` 스코프가 포함되면서 Spring Security가 이를 OAuth2가 아닌 OIDC 흐름으로 처리하고 있었습니다. 기존에 구현해둔 커스텀 서비스는 OAuth2 기준(`DefaultOAuth2UserService`)으로 작성되어 있어서, OIDC 흐름에서는 이 서비스가 호출되지 않고 Spring Security 기본 `OidcUserService`가 대신 동작하고 있었습니다.
 
-### GoogleCalendarService
-- Google Calendar API를 통한 일정 생성
+#### 해결
+실제 인증 흐름에 맞춰 커스텀 서비스를 OIDC 기준(`OidcUserService`)으로 다시 구현하고 등록했습니다. 이 과정에서 뒤섞여 있던 인증 정보 처리와 신규 회원 확인 절차를 분리해, OIDC 표준을 따르면서도 각 처리 단계의 책임이 명확히 나뉘도록 구조를 개선했습니다.
 
-### MeetingService
-- 회의 데이터 통합 관리 및 외부 서비스 연동 조율
+### 2. afterCommit 후속 작업의 트랜잭션 전파 문제 해결
 
-## 🔐 보안 설정
+#### 문제
+회의 파일 삭제 요청을 처리했을 때, 삭제 로직은 정상적으로 실행됐지만 실제 DB에는 삭제 이력이 반영되지 않는 문제가 있었습니다.
 
-### OAuth2 Provider 설정
-- **Google**: 프로필, 이메일, 캘린더 권한
+#### 원인
+파일 삭제 이력 저장 로직이 `afterCommit()` 콜백 안에서 실행되고 있었는데, 이 시점은 이미 원래 트랜잭션이 종료된 이후라 별도 전파 옵션 없이 DB 작업을 수행하면 커밋되지 않고 조용히 사라진다는 점을 놓치고 있었습니다.
 
-### API 접근 권한
-- `/api/**` - 인증 없이 접근 가능 (개발 편의)
-- 기타 엔드포인트 - 인증 필요
+#### 해결
+`afterCommit()` 내부의 저장 로직에 `Propagation.REQUIRES_NEW`를 적용해, 원래 트랜잭션과 분리된 새 트랜잭션에서 확실히 커밋되도록 변경했습니다. 추가로 스케줄러 기반 재확인 로직을 마련해, 삭제 이력이 누락된 경우 후속 작업이 재실행되도록 보완했습니다.
 
-## 📝 환경별 설정
+### 3. 비관적 락을 활용한 업로드 횟수 제한 동시성 문제 해결
 
-### 개발 환경 (dev)
-- H2 인메모리 데이터베이스 사용
-- H2 콘솔 활성화 (`/h2-console`)
-- DDL 자동 생성 (`update`)
+#### 문제
+요금제별 월 업로드 횟수 제한을 두고 있었지만, 같은 사용자가 짧은 시간에 여러 업로드 요청을 동시에 보내면 제한 횟수를 초과해 업로드되는 문제가 있었습니다.
 
-### 운영 환경 (prod)
-- MySQL 데이터베이스 사용
-- DDL 검증 모드 (`validate`)
-- Flyway 마이그레이션 활성화
+#### 원인
+기존 구조는 현재 사용량을 조회한 뒤 제한 초과 여부를 판단하고 반영하는 방식이었는데, 조회와 반영 사이에 시간차가 있다 보니 여러 요청이 동시에 들어오면 서로 같은 시점의 사용량을 읽어가면서 실제로는 제한을 넘었는데도 넘지 않은 것으로 판단되는 경쟁 상태가 발생했습니다.
 
-## 🚧 주의사항
-
-1. **API 키 보안**: 모든 API 키는 환경 변수로 관리하고 절대 코드에 하드코딩하지 마세요
-2. **SSL 인증서**: 운영 환경에서는 반드시 유효한 SSL 인증서를 사용하세요
-3. **파일 업로드 경로**: `file.upload-dir` 설정을 환경에 맞게 조정하세요
-4. **CORS 설정**: 프론트엔드 연동 시 CORS 설정이 필요할 수 있습니다
-
----
-
-**MoMatic** - Making Meetings Matter 🚀
+#### 해결
+사용자 사용량을 조회하는 시점에 `PESSIMISTIC_WRITE` 락을 적용해, 동시에 들어온 다른 요청은 처리 중인 요청이 끝날 때까지 대기하도록 변경했습니다. 사용량 조회와 반영을 하나의 트랜잭션 안에서 원자적으로 처리해, 동시 요청이 들어와도 순서대로 하나씩 처리되도록 개선했습니다.
