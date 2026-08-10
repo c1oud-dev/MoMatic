@@ -14,6 +14,29 @@
       <p th:text="|내 권한: ${requesterRole}|">내 권한: MEMBER</p>
     </header>
 
+    <section>
+      <h2>팀 설정</h2>
+      <div th:if="${canManage}">
+        <form id="team-name-form">
+          <label for="team-name">팀 이름</label>
+          <input id="team-name"
+                 name="name"
+                 type="text"
+                 th:value="${team.name}"
+                 required />
+          <button type="submit">팀 이름 변경</button>
+        </form>
+        <p id="team-name-result" role="alert" aria-live="polite"></p>
+      </div>
+      <div>
+        <button id="leave-team-button"
+                type="button"
+                th:disabled="${requesterRole == 'OWNER'}">팀 탈퇴</button>
+        <p th:if="${requesterRole == 'OWNER'}">OWNER는 팀을 탈퇴할 수 없습니다.</p>
+        <p id="leave-team-result" role="alert" aria-live="polite"></p>
+      </div>
+    </section>
+
     <section th:if="${canManage}">
       <h2>초대 링크 복사</h2>
       <form id="invite-form">
@@ -65,8 +88,13 @@
       <p id="member-result" aria-live="polite"></p>
     </section>
 
-    <script th:if="${canManage}" th:inline="javascript">
+    <script th:inline="javascript">
       const teamId = /*[[${team.id}]]*/ 0;
+      const teamNameForm = document.getElementById('team-name-form');
+      const teamNameInput = document.getElementById('team-name');
+      const teamNameResult = document.getElementById('team-name-result');
+      const leaveTeamButton = document.getElementById('leave-team-button');
+      const leaveTeamResult = document.getElementById('leave-team-result');
       const inviteForm = document.getElementById('invite-form');
       const inviteEmail = document.getElementById('invite-email');
       const inviteResult = document.getElementById('invite-result');
@@ -85,7 +113,62 @@
           inviteResult.textContent = `초대 링크를 복사했습니다: ${inviteLink}`;
       }
 
-      inviteForm.addEventListener('submit', async (event) => {
+      if (teamNameForm) {
+          teamNameForm.addEventListener('submit', async (event) => {
+              event.preventDefault();
+              const name = teamNameInput.value.trim();
+
+              try {
+                  const response = await fetch(`/teams/${teamId}/name`, {
+                      method: 'PATCH',
+                      headers: {
+                          'Content-Type': 'application/json',
+                          'X-XSRF-TOKEN': csrfHeader()
+                      },
+                      body: JSON.stringify({name})
+                  });
+                  const result = await response.json();
+
+                  if (!response.ok || !result.success) {
+                      teamNameResult.textContent = result.message || '팀 이름 변경에 실패했습니다.';
+                      return;
+                  }
+
+                  document.querySelector('header h1').textContent = `${name} 멤버 관리`;
+                  teamNameInput.value = name;
+                  teamNameResult.textContent = '팀 이름을 변경했습니다.';
+              } catch (error) {
+                  teamNameResult.textContent = '팀 이름 변경 요청 중 오류가 발생했습니다.';
+              }
+          });
+      }
+
+      leaveTeamButton.addEventListener('click', async () => {
+          if (!window.confirm('정말 팀에서 탈퇴하시겠습니까?')) {
+              return;
+          }
+
+          try {
+              const response = await fetch(`/teams/${teamId}/leave`, {
+                  method: 'DELETE',
+                  headers: {
+                      'X-XSRF-TOKEN': csrfHeader()
+                  }
+              });
+              const result = await response.json();
+
+              if (!response.ok || !result.success) {
+                  leaveTeamResult.textContent = result.message || '팀 탈퇴에 실패했습니다.';
+                  return;
+              }
+
+              window.location.href = '/teams/list';
+          } catch (error) {
+              leaveTeamResult.textContent = '팀 탈퇴 요청 중 오류가 발생했습니다.';
+          }
+      });
+
+      inviteForm?.addEventListener('submit', async (event) => {
           event.preventDefault();
           const response = await fetch(`/teams/${teamId}/invites`, {
               method: 'POST',
