@@ -5,16 +5,17 @@
 회의 후 정리 과정에서 반복적으로 발생하는 음성 전사, 핵심 내용 요약, 후속 업무 정리를 자동화하기 위해 개발한 서버 사이드 렌더링 웹 애플리케이션입니다. Google OAuth2 인증, 회의 파일 업로드, 비동기 STT/요약 처리, 액션 아이템 관리, 구독/결제, 팀 협업, Google Calendar 연동을 하나의 Spring Boot 애플리케이션 안에서 도메인별로 분리해 구현했습니다.
 
 <p align="center">
-  ![Java](https://img.shields.io/badge/Java-17-007396?style=for-the-badge&logo=openjdk&logoColor=white)
-  ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.3.4-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)
-  ![MySQL](https://img.shields.io/badge/MySQL-8-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
-  ![JPA](https://img.shields.io/badge/JPA-Hibernate-59666C?style=for-the-badge&logo=hibernate&logoColor=white)
-  ![Google OAuth2](https://img.shields.io/badge/Google%20OAuth2-4285F4?style=for-the-badge&logo=google&logoColor=white)
-  ![OpenAI](https://img.shields.io/badge/OpenAI-Whisper%20%7C%20GPT--4o--mini-412991?style=for-the-badge&logo=openai&logoColor=white)
-  ![Toss Payments](https://img.shields.io/badge/Toss%20Payments-0064FF?style=for-the-badge&logoColor=white)
+
+![Java](https://img.shields.io/badge/Java-17-007396?style=for-the-badge&logo=openjdk&logoColor=white)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.3.4-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)
+![MySQL](https://img.shields.io/badge/MySQL-8-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
+![JPA](https://img.shields.io/badge/JPA-Hibernate-59666C?style=for-the-badge&logo=hibernate&logoColor=white)
+![Google OAuth2](https://img.shields.io/badge/Google%20OAuth2-4285F4?style=for-the-badge&logo=google&logoColor=white)
+![OpenAI](https://img.shields.io/badge/OpenAI-Whisper%20%7C%20GPT--4o--mini-412991?style=for-the-badge&logo=openai&logoColor=white)
+![Toss Payments](https://img.shields.io/badge/Toss%20Payments-0064FF?style=for-the-badge&logoColor=white)
+
 </p>
 
-<br>
 <br>
 
 ## 목차
@@ -30,7 +31,6 @@
 - [트러블슈팅](#트러블슈팅)
 
 <br>
-<br>
 
 ## 프로젝트 개요
 
@@ -41,14 +41,12 @@
 | 개발 방식 | Backend, DB 설계, 외부 API 연동, 인프라 전 영역 단독 수행 |
 
 <br>
-<br>
 
 ## 데모
 
 <!-- 스크린샷 또는 데모 GIF 추가 예정 -->
 ![데모](./docs/images/demo.gif)
 
-<br>
 <br>
 
 ## 핵심 기능
@@ -64,7 +62,6 @@
 - **관리자 콘솔**: 전체 사용자 및 구독 현황을 조회하고, 사용자 플랜을 수동으로 변경할 수 있습니다.
 - **사용량 관리**: 사용자별 업로드 횟수와 파일 크기를 기록하고, 매월 사용량을 초기화하는 스케줄러를 운영합니다.
 
-<br>
 <br>
 
 ## 기술 스택
@@ -83,7 +80,6 @@
 | Build | Gradle, Spring Boot Gradle Plugin |
 | CI | GitHub Actions |
 
-<br>
 <br>
 
 ## 아키텍처
@@ -109,7 +105,6 @@
 ```
 
 <br>
-<br>
 
 ## ERD
 
@@ -129,13 +124,11 @@
 | `UsageRecord` | 사용자별 사용 타입, 사용량, 파일 크기 |
 
 <br>
-<br>
 
 ## DB 스키마 관리
 
 DB 스키마는 Flyway로 버전 관리되며, 개인 회의 지원을 위한 nullable 컬럼 변경, 결제 구조 재설계, Google Calendar 연동을 위한 토큰 컬럼 추가 등 총 10개 버전에 걸쳐 점진적으로 발전했습니다.
 
-<br>
 <br>
 
 ## 기술적 의사결정
@@ -154,7 +147,6 @@ Free/Pro/Team 요금제마다 다른 업로드 횟수, 파일 크기, 가격 정
 
 Whisper, GPT, 토스페이먼츠, Google Calendar 등 외부 서비스 연동 중 문제가 생기면, 종류와 상관없이 동일한 방식의 오류 처리 구조로 변환해서 관리합니다. 어떤 외부 서비스에서 오류가 나든 사용자에게는 일관된 안내가 전달됩니다.
 
-<br>
 <br>
 
 ## 트러블슈팅
