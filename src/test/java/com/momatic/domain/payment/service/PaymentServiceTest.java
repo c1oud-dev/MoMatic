@@ -1,12 +1,8 @@
 package com.momatic.domain.payment.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import com.momatic.domain.payment.dto.PaymentConfirmRequest;
 import com.momatic.domain.payment.dto.PaymentWebhookRequest;
@@ -197,16 +193,10 @@ class PaymentServiceTest {
     }
 
     @Test
-    @DisplayName("PAYMENT_DONE 이벤트 수신 시 PENDING 결제가 완료 처리되고 구독이 업그레이드된다")
+    @DisplayName("결제 상태 변경 Webhook의 DONE 상태는 결제를 완료하고 구독을 업그레이드한다")
     void handleWebhookCompletesPaymentAndUpgradesSubscription() {
         // given
-        PaymentWebhookRequest request = new PaymentWebhookRequest(
-                "PAYMENT_DONE",
-                new PaymentWebhookRequest.PaymentWebhookData(
-                        ORDER_ID,
-                        PAYMENT_KEY
-                )
-        );
+        PaymentWebhookRequest request = webhookRequest("DONE", AMOUNT);
         when(paymentRepository.findByOrderId(ORDER_ID))
                 .thenReturn(Optional.of(payment));
 
@@ -214,20 +204,15 @@ class PaymentServiceTest {
         paymentService.handleWebhook(request);
 
         // then
+        assertEquals(PaymentStatus.DONE, payment.getStatus());
         verify(subscriptionService).upgrade(user.getId(), payment.getPlanType());
     }
 
     @Test
-    @DisplayName("PAYMENT_FAILED 이벤트 수신 시 PENDING 결제가 실패 처리된다")
+    @DisplayName("결제 상태 변경 Webhook의 EXPIRED 상태는 결제를 실패 처리한다")
     void handleWebhookMarksPendingPaymentAsFailed() {
         // given
-        PaymentWebhookRequest request = new PaymentWebhookRequest(
-                "PAYMENT_FAILED",
-                new PaymentWebhookRequest.PaymentWebhookData(
-                        ORDER_ID,
-                        PAYMENT_KEY
-                )
-        );
+        PaymentWebhookRequest request = webhookRequest("EXPIRED", AMOUNT);
         when(paymentRepository.findByOrderId(ORDER_ID))
                 .thenReturn(Optional.of(payment));
 
@@ -239,17 +224,10 @@ class PaymentServiceTest {
     }
 
     @Test
-    @DisplayName("PAYMENT_CANCELED 이벤트 수신 시 완료된 결제가 취소되고 구독이 취소된다")
+    @DisplayName("결제 상태 변경 Webhook의 CANCELED 상태는 결제를 취소하고 구독을 취소한다")
     void handleWebhookCancelsCompletedPaymentAndSubscription() {
         // given
-        ReflectionTestUtils.setField(payment, "status", PaymentStatus.DONE);
-        PaymentWebhookRequest request = new PaymentWebhookRequest(
-                "PAYMENT_CANCELED",
-                new PaymentWebhookRequest.PaymentWebhookData(
-                        ORDER_ID,
-                        PAYMENT_KEY
-                )
-        );
+        PaymentWebhookRequest request = webhookRequest("CANCELED", AMOUNT);
         when(paymentRepository.findByOrderId(ORDER_ID))
                 .thenReturn(Optional.of(payment));
 
@@ -259,6 +237,80 @@ class PaymentServiceTest {
         // then
         assertEquals(PaymentStatus.CANCELLED, payment.getStatus());
         verify(subscriptionService).cancelActiveSubscription(user.getId());
+    }
+
+    @Test
+    @DisplayName("결제 상태 변경 Webhook의 READY 상태는 결제를 변경하지 않는다")
+    void handleWebhookIgnoresReadyStatus() {
+        // given
+        PaymentWebhookRequest request = webhookRequest("READY", AMOUNT);
+        when(paymentRepository.findByOrderId(ORDER_ID))
+                .thenReturn(Optional.of(payment));
+
+        // when
+        assertDoesNotThrow(() -> paymentService.handleWebhook(request));
+
+        // then
+        assertEquals(PaymentStatus.PENDING, payment.getStatus());
+        verifyNoInteractions(subscriptionService);
+    }
+
+    @Test
+    @DisplayName("알 수 없는 Webhook 이벤트 타입은 예외 없이 무시한다")
+    void handleWebhookIgnoresUnknownEventType() {
+        // given
+        PaymentWebhookRequest request = new PaymentWebhookRequest(
+                "UNKNOWN_EVENT",
+                "2026-08-11T10:00:00.000000",
+                null
+        );
+
+        // when
+        assertDoesNotThrow(() -> paymentService.handleWebhook(request));
+
+        // then
+        verifyNoInteractions(paymentRepository, subscriptionService);
+    }
+
+    @Test
+    @DisplayName("DONE 상태의 Webhook 금액이 주문 금액과 다르면 예외가 발생한다")
+    void handleWebhookThrowsWhenDoneAmountDoesNotMatch() {
+        // given
+        PaymentWebhookRequest request = webhookRequest(
+                "DONE",
+                AMOUNT.add(BigDecimal.ONE)
+        );
+        when(paymentRepository.findByOrderId(ORDER_ID))
+                .thenReturn(Optional.of(payment));
+
+        // when
+        CustomException exception = assertThrows(
+                CustomException.class,
+                () -> paymentService.handleWebhook(request)
+        );
+
+        // then
+        assertEquals(ErrorCode.INVALID_PAYMENT_AMOUNT, exception.getErrorCode());
+        assertEquals(PaymentStatus.PENDING, payment.getStatus());
+        verifyNoInteractions(subscriptionService);
+    }
+
+    @Test
+    @DisplayName("이미 완료된 결제의 DONE Webhook은 구독을 다시 업그레이드하지 않는다")
+    void handleWebhookDoesNotUpgradeAlreadyCompletedPayment() {
+        // given
+        ReflectionTestUtils.setField(payment, "status", PaymentStatus.DONE);
+        ReflectionTestUtils.setField(payment, "paymentKey", PAYMENT_KEY);
+        PaymentWebhookRequest request = webhookRequest("DONE", AMOUNT);
+        when(paymentRepository.findByOrderId(ORDER_ID))
+                .thenReturn(Optional.of(payment));
+
+        // when
+        paymentService.handleWebhook(request);
+
+        // then
+        assertEquals(PaymentStatus.DONE, payment.getStatus());
+        verifyNoInteractions(subscriptionService);
     }
 
     @Test
@@ -279,5 +331,26 @@ class PaymentServiceTest {
         // then
         assertEquals(ErrorCode.INVALID_PLAN_TYPE, exception.getErrorCode());
         verify(paymentRepository, never()).save(any());
+    }
+
+    /**
+     * 결제 상태 변경 Webhook 테스트 요청을 생성합니다.
+     *
+     * @param status 토스페이먼츠 결제 상태
+     * @param totalAmount 총 결제 금액
+     * @return Webhook 테스트 요청
+     */
+    private PaymentWebhookRequest webhookRequest(String status,
+                                                 BigDecimal totalAmount) {
+        return new PaymentWebhookRequest(
+                "PAYMENT_STATUS_CHANGED",
+                "2026-08-11T10:00:00.000000",
+                new TossPaymentResponse(
+                        ORDER_ID,
+                        PAYMENT_KEY,
+                        totalAmount,
+                        status
+                )
+        );
     }
 }
