@@ -52,6 +52,9 @@ class PaymentServiceTest {
     @Mock
     private PaymentConfirmProcessor paymentConfirmProcessor;
 
+    @Mock
+    private SubscriptionUpgradeRetryService subscriptionUpgradeRetryService;
+
     @InjectMocks
     private PaymentService paymentService;
 
@@ -255,6 +258,7 @@ class PaymentServiceTest {
 
         // then
         assertEquals(PaymentStatus.DONE, result.getStatus());
+        verify(subscriptionUpgradeRetryService).recordFailure(payment.getId(), "DB 오류");
     }
 
     @Test

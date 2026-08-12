@@ -2,6 +2,7 @@ package com.momatic.domain.payment.scheduler;
 
 import com.momatic.domain.payment.entity.Payment;
 import com.momatic.domain.payment.service.PaymentConfirmProcessor;
+import com.momatic.domain.payment.service.SubscriptionUpgradeRetryService;
 import com.momatic.infra.toss.TossPaymentClient;
 import com.momatic.infra.toss.TossPaymentResponse;
 import java.time.LocalDateTime;
@@ -21,6 +22,7 @@ public class PaymentProcessingRecoveryScheduler {
 
     private final PaymentConfirmProcessor paymentConfirmProcessor;
     private final TossPaymentClient tossPaymentClient;
+    private final SubscriptionUpgradeRetryService subscriptionUpgradeRetryService;
 
     /** 5분마다 정체된 처리 중 결제를 복구합니다. */
     @Scheduled(fixedDelay = 300_000L)
@@ -79,11 +81,31 @@ public class PaymentProcessingRecoveryScheduler {
         try {
             paymentConfirmProcessor.upgradeSubscription(paymentId);
         } catch (RuntimeException exception) {
-            // TODO 실패한 구독 업그레이드를 재시도 큐에 등록합니다.
             log.error(
                     "정체 결제 복구 후 구독 업그레이드에 실패했습니다: paymentId={}",
                     paymentId,
                     exception
+            );
+            recordSubscriptionUpgradeFailure(paymentId, exception);
+        }
+    }
+
+    /**
+     * 구독 업그레이드 실패를 재시도 큐에 기록하되 기록 실패를 전파하지 않습니다.
+     *
+     * @param paymentId 결제 ID
+     * @param cause 구독 업그레이드 실패 원인
+     */
+    private void recordSubscriptionUpgradeFailure(Long paymentId,
+                                                  RuntimeException cause) {
+        try {
+            subscriptionUpgradeRetryService.recordFailure(paymentId, cause.getMessage());
+        } catch (RuntimeException recordException) {
+            log.error(
+                    "정체 결제의 구독 업그레이드 재시도 기록 저장에 실패했습니다: "
+                            + "paymentId={}",
+                    paymentId,
+                    recordException
             );
         }
     }
