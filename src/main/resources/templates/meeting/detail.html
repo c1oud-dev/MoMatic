@@ -28,8 +28,24 @@
   <section>
     <header>
       <a th:href="@{/meetings}">목록으로</a>
-      <h1 th:text="${detail.meeting.title}">회의 제목</h1>
+      <div>
+        <h1 id="meeting-title" th:text="${detail.meeting.title}">회의 제목</h1>
+        <button id="title-edit-button" type="button">제목 편집</button>
+      </div>
+      <form id="title-edit-form" hidden>
+        <label for="meeting-title-input">회의록 제목</label>
+        <input id="meeting-title-input"
+               name="title"
+               type="text"
+               th:value="${detail.meeting.title}"
+               required />
+        <button type="submit">저장</button>
+        <button id="title-edit-cancel-button" type="button">취소</button>
+      </form>
+      <p id="title-edit-result" role="alert" aria-live="polite"></p>
       <a th:href="@{/meetings/{meetingId}/pdf(meetingId=${detail.meeting.id})}">PDF 다운로드</a>
+      <button id="meeting-delete-button" type="button">회의록 삭제</button>
+      <p id="meeting-delete-result" role="alert" aria-live="polite"></p>
       <span th:text="${detail.meeting.status}"
             th:class="|status-badge status-${#strings.toLowerCase(detail.meeting.status.name())}|">
                 COMPLETED
@@ -78,9 +94,110 @@
     </section>
   </section>
 </div>
-<script>
+<script th:inline="javascript">
+  const meetingId = /*[[${detail.meeting.id}]]*/ 0;
   const csrfToken = document.querySelector('meta[name="_csrf"]').content;
   const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+  const meetingTitle = document.getElementById('meeting-title');
+  const titleEditButton = document.getElementById('title-edit-button');
+  const titleEditForm = document.getElementById('title-edit-form');
+  const titleInput = document.getElementById('meeting-title-input');
+  const titleEditCancelButton = document.getElementById('title-edit-cancel-button');
+  const titleEditResult = document.getElementById('title-edit-result');
+  const meetingDeleteButton = document.getElementById('meeting-delete-button');
+  const meetingDeleteResult = document.getElementById('meeting-delete-result');
+
+  function closeTitleEditForm() {
+    titleEditForm.hidden = true;
+    titleEditButton.hidden = false;
+  }
+
+  titleEditButton.addEventListener('click', () => {
+    titleEditForm.hidden = false;
+    titleEditButton.hidden = true;
+    titleEditResult.textContent = '';
+    titleInput.focus();
+    titleInput.select();
+  });
+
+  titleEditCancelButton.addEventListener('click', () => {
+    titleInput.value = meetingTitle.textContent;
+    titleEditResult.textContent = '';
+    closeTitleEditForm();
+  });
+
+  titleEditForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const title = titleInput.value.trim();
+
+    if (!title) {
+      titleEditResult.textContent = '회의록 제목을 입력해 주세요.';
+      return;
+    }
+
+    const submitButton = titleEditForm.querySelector('button[type="submit"]');
+    submitButton.disabled = true;
+
+    try {
+      const response = await fetch(`/meetings/${meetingId}/title`, {
+        method: 'PATCH',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+          [csrfHeader]: csrfToken
+        },
+        body: JSON.stringify({title})
+      });
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        titleEditResult.textContent = result.message || '회의록 제목 변경에 실패했습니다.';
+        return;
+      }
+
+      meetingTitle.textContent = title;
+      titleInput.value = title;
+      titleEditResult.textContent = '회의록 제목을 변경했습니다.';
+      closeTitleEditForm();
+    } catch (error) {
+      titleEditResult.textContent = '회의록 제목 변경 요청 중 오류가 발생했습니다.';
+    } finally {
+      submitButton.disabled = false;
+    }
+  });
+
+  meetingDeleteButton.addEventListener('click', async () => {
+    if (!window.confirm('정말 삭제하시겠습니까?')) {
+      return;
+    }
+
+    meetingDeleteButton.disabled = true;
+    meetingDeleteResult.textContent = '';
+
+    try {
+      const response = await fetch(`/meetings/${meetingId}`, {
+        method: 'DELETE',
+        headers: {
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+          [csrfHeader]: csrfToken
+        }
+      });
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        meetingDeleteResult.textContent = result.message || '회의록 삭제에 실패했습니다.';
+        return;
+      }
+
+      window.location.href = '/meetings';
+    } catch (error) {
+      meetingDeleteResult.textContent = '회의록 삭제 요청 중 오류가 발생했습니다.';
+    } finally {
+      meetingDeleteButton.disabled = false;
+    }
+  });
 
   document.querySelectorAll('.action-item-status').forEach((select) => {
     select.addEventListener('change', async (event) => {
