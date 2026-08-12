@@ -73,7 +73,7 @@ public class SubscriptionService {
     @Transactional
     public Subscription upgrade(String email,
                                 String planType) {
-        return upgrade(findUser(email).getId(), PlanPolicy.from(planType));
+        return upgradeInternal(findUser(email).getId(), PlanPolicy.from(planType));
     }
 
     /**
@@ -86,6 +86,18 @@ public class SubscriptionService {
     @Transactional
     public Subscription upgrade(Long userId,
                                 PlanPolicy planType) {
+        return upgradeInternal(userId, planType);
+    }
+
+    /**
+     * 사용자의 구독 플랜을 변경하는 공통 로직을 수행합니다.
+     *
+     * @param userId 사용자 ID
+     * @param planType 변경할 플랜
+     * @return 변경된 구독
+     */
+    private Subscription upgradeInternal(Long userId,
+                                         PlanPolicy planType) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         Subscription subscription = findActiveSubscription(userId)
@@ -131,7 +143,7 @@ public class SubscriptionService {
         if (subscription.getPlanType() == PlanPolicy.FREE) {
             throw new CustomException(ErrorCode.INVALID_REQUEST);
         }
-        cancelActiveSubscription(user.getId());
+        cancelActiveSubscriptionInternal(user.getId());
     }
 
     /**
@@ -141,6 +153,15 @@ public class SubscriptionService {
      */
     @Transactional
     public void cancelActiveSubscription(Long userId) {
+        cancelActiveSubscriptionInternal(userId);
+    }
+
+    /**
+     * 사용자의 활성 구독을 취소하는 공통 로직을 수행합니다.
+     *
+     * @param userId 사용자 ID
+     */
+    private void cancelActiveSubscriptionInternal(Long userId) {
         findActiveSubscription(userId).ifPresent(Subscription::cancel);
     }
 
