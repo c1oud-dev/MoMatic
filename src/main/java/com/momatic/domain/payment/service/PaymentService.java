@@ -16,12 +16,14 @@ import com.momatic.infra.toss.TossPaymentResponse;
 import java.math.BigDecimal;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /** 결제 주문 생성, 승인, Webhook 상태 변경을 처리하는 서비스입니다. */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PaymentService {
@@ -92,15 +94,37 @@ public class PaymentService {
      */
     @Transactional
     public void handleWebhook(PaymentWebhookRequest request) {
-        if (request == null || request.data() == null || request.eventType() == null) {
+        if (request == null) {
             throw new CustomException(ErrorCode.INVALID_REQUEST);
         }
+        if (!"PAYMENT_STATUS_CHANGED".equals(request.eventType())) {
+            log.warn("처리 대상이 아닌 토스페이먼츠 Webhook 이벤트입니다: eventType={}",
+                    request.eventType());
+            return;
+        }
+        if (request.data() == null) {
+            throw new CustomException(ErrorCode.INVALID_REQUEST);
+        }
+
+        if (request.data().status() == null) {
+            log.warn("처리할 수 없는 토스페이먼츠 결제 상태입니다: orderId={}, status=null",
+                    request.data().orderId());
+            return;
+        }
+
         Payment payment = findWebhookPayment(request.data());
-        switch (request.eventType()) {
-            case "PAYMENT_DONE" -> completeFromWebhook(payment, request.data().paymentKey());
-            case "PAYMENT_FAILED" -> failFromWebhook(payment);
-            case "PAYMENT_CANCELED" -> cancelFromWebhook(payment);
-            default -> throw new CustomException(ErrorCode.INVALID_PAYMENT_WEBHOOK);
+        switch (request.data().status()) {
+            case "DONE" -> completeFromWebhook(payment, request.data());
+            case "CANCELED", "PARTIAL_CANCELED" -> cancelFromWebhook(payment);
+            case "EXPIRED", "ABORTED" -> failFromWebhook(payment);
+            case "READY", "IN_PROGRESS", "WAITING_FOR_DEPOSIT" -> {
+                // 정상적인 중간 상태이므로 후속 Webhook을 기다립니다.
+            }
+            default -> log.warn(
+                    "처리할 수 없는 토스페이먼츠 결제 상태입니다: orderId={}, status={}",
+                    request.data().orderId(),
+                    request.data().status()
+            );
         }
     }
 
@@ -134,20 +158,24 @@ public class PaymentService {
      * Webhook 승인 완료 이벤트를 반영합니다.
      *
      * @param payment 결제 엔티티
-     * @param paymentKey 토스페이먼츠 결제 키
+     * @param data 토스페이먼츠 결제 객체
      */
     private void completeFromWebhook(Payment payment,
-                                     String paymentKey) {
+                                     TossPaymentResponse data) {
         if (payment.getStatus() == PaymentStatus.DONE) {
             return;
         }
         if (payment.getStatus() != PaymentStatus.PENDING) {
             return;
         }
-        if (paymentKey == null || paymentKey.isBlank()) {
+        if (data.paymentKey() == null || data.paymentKey().isBlank()) {
             throw new CustomException(ErrorCode.INVALID_PAYMENT_WEBHOOK);
         }
-        payment.complete(paymentKey);
+        if (data.totalAmount() == null
+                || payment.getAmount().compareTo(data.totalAmount()) != 0) {
+            throw new CustomException(ErrorCode.INVALID_PAYMENT_AMOUNT);
+        }
+        payment.complete(data.paymentKey());
         subscriptionService.upgrade(payment.getUser().getId(), payment.getPlanType());
     }
 
@@ -189,7 +217,7 @@ public class PaymentService {
      * @param data Webhook 결제 데이터
      * @return 결제 엔티티
      */
-    private Payment findWebhookPayment(PaymentWebhookRequest.PaymentWebhookData data) {
+    private Payment findWebhookPayment(TossPaymentResponse data) {
         if (data.orderId() != null && !data.orderId().isBlank()) {
             return paymentRepository.findByOrderId(data.orderId())
                     .orElseThrow(() -> new CustomException(ErrorCode.PAYMENT_NOT_FOUND));
