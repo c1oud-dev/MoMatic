@@ -10,6 +10,8 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.Base64;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.MediaType;
@@ -29,10 +31,17 @@ public class TossPaymentClient {
 
     private static final MediaType JSON_MEDIA_TYPE = MediaType.parse("application/json; charset=utf-8");
     private static final String CONFIRM_URL = "https://api.tosspayments.com/v1/payments/confirm";
+    private static final long CONNECT_TIMEOUT_SECONDS = 5L;
+    private static final long READ_TIMEOUT_SECONDS = 15L;
+    private static final long WRITE_TIMEOUT_SECONDS = 5L;
 
     private final ObjectMapper objectMapper;
 
-    private final OkHttpClient okHttpClient = new OkHttpClient();
+    private final OkHttpClient okHttpClient = new OkHttpClient.Builder()
+            .connectTimeout(CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+            .readTimeout(READ_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+            .writeTimeout(WRITE_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+            .build();
 
     @Value("${app.external.toss.payments.secret-key}")
     private String secretKey;
@@ -51,6 +60,7 @@ public class TossPaymentClient {
         Request tossRequest = new Request.Builder()
                 .url(CONFIRM_URL)
                 .header("Authorization", createAuthorizationHeader())
+                .header("Idempotency-Key", createIdempotencyKey(request))
                 .post(RequestBody.create(createRequestBody(request), JSON_MEDIA_TYPE))
                 .build();
 
@@ -58,7 +68,12 @@ public class TossPaymentClient {
             ResponseBody responseBody = response.body();
             String body = responseBody == null ? "" : responseBody.string();
             if (!response.isSuccessful()) {
-                log.error("토스페이먼츠 승인 실패: status={}, body={}", response.code(), body);
+                log.error(
+                        "토스페이먼츠 승인 실패: orderId={}, status={}, body={}",
+                        request.orderId(),
+                        response.code(),
+                        body
+                );
                 throw new CustomException(ErrorCode.PAYMENT_CONFIRM_FAILED);
             }
             return objectMapper.readValue(body, TossPaymentResponse.class);
@@ -90,6 +105,16 @@ public class TossPaymentClient {
      */
     private String createAuthorizationHeader() {
         return createBasicAuthorizationHeader(secretKey);
+    }
+
+    /**
+     * 주문 ID를 기반으로 승인 요청의 멱등성 키를 생성합니다.
+     *
+     * @param request 결제 승인 요청
+     * @return 주문별로 결정적인 멱등성 키
+     */
+    private String createIdempotencyKey(PaymentConfirmRequest request) {
+        return request.orderId();
     }
 
     /**
