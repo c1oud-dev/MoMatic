@@ -10,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.Base64;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import lombok.RequiredArgsConstructor;
@@ -31,6 +32,7 @@ public class TossPaymentClient {
 
     private static final MediaType JSON_MEDIA_TYPE = MediaType.parse("application/json; charset=utf-8");
     private static final String CONFIRM_URL = "https://api.tosspayments.com/v1/payments/confirm";
+    private static final String ORDER_URL = "https://api.tosspayments.com/v1/payments/orders/";
     private static final long CONNECT_TIMEOUT_SECONDS = 5L;
     private static final long READ_TIMEOUT_SECONDS = 15L;
     private static final long WRITE_TIMEOUT_SECONDS = 5L;
@@ -78,7 +80,41 @@ public class TossPaymentClient {
             }
             return objectMapper.readValue(body, TossPaymentResponse.class);
         } catch (IOException exception) {
-            throw new CustomException(ErrorCode.PAYMENT_CONFIRM_FAILED);
+            throw new TossPaymentNetworkException(exception);
+        }
+    }
+
+    /**
+     * 주문 ID로 토스페이먼츠 결제 상태를 조회합니다.
+     *
+     * @param orderId 주문 ID
+     * @return 조회된 결제 또는 존재하지 않는 경우 빈 값
+     */
+    public Optional<TossPaymentResponse> findByOrderId(String orderId) {
+        Request tossRequest = new Request.Builder()
+                .url(ORDER_URL + orderId)
+                .header("Authorization", createAuthorizationHeader())
+                .get()
+                .build();
+
+        try (Response response = okHttpClient.newCall(tossRequest).execute()) {
+            if (response.code() == 404) {
+                return Optional.empty();
+            }
+            ResponseBody responseBody = response.body();
+            String body = responseBody == null ? "" : responseBody.string();
+            if (!response.isSuccessful()) {
+                log.error(
+                        "토스페이먼츠 결제 조회 실패: orderId={}, status={}, body={}",
+                        orderId,
+                        response.code(),
+                        body
+                );
+                throw new CustomException(ErrorCode.PAYMENT_CONFIRM_FAILED);
+            }
+            return Optional.of(objectMapper.readValue(body, TossPaymentResponse.class));
+        } catch (IOException exception) {
+            throw new TossPaymentNetworkException(exception);
         }
     }
 

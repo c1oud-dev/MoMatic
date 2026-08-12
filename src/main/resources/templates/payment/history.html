@@ -23,7 +23,7 @@
         <td th:text="${#temporals.format(payment.createdAt, 'yyyy-MM-dd HH:mm')}">2026-06-02 00:00</td>
         <td th:text="|${payment.amount}원|">19900원</td>
         <td th:text="${payment.planType}">PRO</td>
-        <td th:text="${payment.status}">DONE</td>
+        <td th:text="${payment.status == 'PROCESSING' ? '처리중' : payment.status}">DONE</td>
       </tr>
       </tbody>
     </table>

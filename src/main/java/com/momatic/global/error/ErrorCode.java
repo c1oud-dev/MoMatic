@@ -24,6 +24,7 @@ public enum ErrorCode {
     INVALID_TEAM_ROLE(HttpStatus.BAD_REQUEST, "지원하지 않는 팀 권한입니다."),
     PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "결제 정보를 찾을 수 없습니다."),
     PAYMENT_CONFIRM_FAILED(HttpStatus.BAD_GATEWAY, "결제 승인에 실패했습니다."),
+    PAYMENT_ALREADY_PROCESSING(HttpStatus.CONFLICT, "이미 처리 중인 결제입니다."),
     INVALID_PAYMENT_AMOUNT(HttpStatus.BAD_REQUEST, "결제 금액이 올바르지 않습니다."),
     INVALID_PAYMENT_STATUS(HttpStatus.CONFLICT, "처리할 수 없는 결제 상태입니다."),
     INVALID_PAYMENT_WEBHOOK(HttpStatus.BAD_REQUEST, "올바르지 않은 결제 Webhook입니다."),

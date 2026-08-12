@@ -12,6 +12,7 @@ import com.momatic.domain.user.repository.UserRepository;
 import com.momatic.global.error.CustomException;
 import com.momatic.global.error.ErrorCode;
 import com.momatic.infra.toss.TossPaymentClient;
+import com.momatic.infra.toss.TossPaymentNetworkException;
 import com.momatic.infra.toss.TossPaymentResponse;
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -32,6 +33,7 @@ public class PaymentService {
     private final UserRepository userRepository;
     private final SubscriptionService subscriptionService;
     private final TossPaymentClient tossPaymentClient;
+    private final PaymentConfirmProcessor paymentConfirmProcessor;
 
     /**
      * 결제창에 전달할 승인 대기 주문을 생성합니다.
@@ -63,28 +65,95 @@ public class PaymentService {
      * @param request 결제 승인 요청
      * @return 승인 완료 결제
      */
-    @Transactional
     public Payment confirm(String email,
                            PaymentConfirmRequest request) {
         if (request == null) {
             throw new CustomException(ErrorCode.INVALID_REQUEST);
         }
-        Payment payment = getPayment(request.orderId());
-        validateOwner(payment, email);
-        validatePaymentRequest(payment, request);
+
+        Payment payment = paymentConfirmProcessor.claim(email, request);
+
         if (payment.getStatus() == PaymentStatus.DONE) {
-            validateCompletedPayment(payment, request);
             return payment;
         }
-        if (payment.getStatus() != PaymentStatus.PENDING) {
-            throw new CustomException(ErrorCode.INVALID_PAYMENT_STATUS);
+
+        TossPaymentResponse tossResponse;
+        try {
+            tossResponse = tossPaymentClient.confirm(request);
+        } catch (TossPaymentNetworkException exception) {
+            return resolveAmbiguousConfirmation(payment, request, exception);
+        } catch (CustomException exception) {
+            paymentConfirmProcessor.restoreToPending(payment.getId());
+            throw exception;
         }
 
-        TossPaymentResponse tossResponse = tossPaymentClient.confirm(request);
-        validateTossResponse(payment, request, tossResponse);
-        payment.complete(tossResponse.paymentKey());
-        subscriptionService.upgrade(payment.getUser().getId(), payment.getPlanType());
-        return payment;
+        Payment completed = paymentConfirmProcessor.complete(
+                payment.getId(),
+                request,
+                tossResponse
+        );
+        upgradeSubscriptionSafely(completed.getId());
+        return completed;
+    }
+
+    /**
+     * 네트워크 오류 뒤 토스 결제 상태를 조회하여 승인 결과를 확정합니다.
+     *
+     * @param payment 처리 중 결제
+     * @param request 최초 승인 요청
+     * @param cause 승인 호출 네트워크 예외
+     * @return 토스에서 완료된 것으로 확인된 결제
+     */
+    private Payment resolveAmbiguousConfirmation(Payment payment,
+                                                 PaymentConfirmRequest request,
+                                                 TossPaymentNetworkException cause) {
+        log.warn(
+                "토스 결제 승인 결과가 불명확하여 상태를 조회합니다: orderId={}",
+                payment.getOrderId(),
+                cause
+        );
+        TossPaymentResponse response;
+        try {
+            response = tossPaymentClient
+                    .findByOrderId(payment.getOrderId())
+                    .orElse(null);
+        } catch (TossPaymentNetworkException lookupException) {
+            log.error(
+                    "토스 결제 승인 결과를 확인하지 못했습니다: orderId={}",
+                    payment.getOrderId(),
+                    lookupException
+            );
+            throw new CustomException(ErrorCode.PAYMENT_CONFIRM_FAILED);
+        }
+
+        if (response != null && "DONE".equals(response.status())) {
+            Payment completed = paymentConfirmProcessor.complete(
+                    payment.getId(),
+                    request,
+                    response
+            );
+            upgradeSubscriptionSafely(completed.getId());
+            return completed;
+        }
+
+        paymentConfirmProcessor.restoreToPending(payment.getId());
+        throw new CustomException(ErrorCode.PAYMENT_CONFIRM_FAILED);
+    }
+
+    /**
+     * 결제 완료 후 구독 업그레이드를 시도하고 실패를 기록합니다.
+     *
+     * @param paymentId 결제 ID
+     */
+    private void upgradeSubscriptionSafely(Long paymentId) {
+        try {
+            paymentConfirmProcessor.upgradeSubscription(paymentId);
+        } catch (RuntimeException exception) {
+            // TODO 실패한 구독 업그레이드를 재시도 큐에 등록합니다.
+            log.error("결제 완료 후 구독 업그레이드에 실패했습니다: paymentId={}",
+                    paymentId,
+                    exception);
+        }
     }
 
     /**
@@ -165,7 +234,8 @@ public class PaymentService {
         if (payment.getStatus() == PaymentStatus.DONE) {
             return;
         }
-        if (payment.getStatus() != PaymentStatus.PENDING) {
+        if (payment.getStatus() != PaymentStatus.PENDING
+                && payment.getStatus() != PaymentStatus.PROCESSING) {
             return;
         }
         if (data.paymentKey() == null || data.paymentKey().isBlank()) {
@@ -188,7 +258,8 @@ public class PaymentService {
         if (payment.getStatus() == PaymentStatus.FAILED) {
             return;
         }
-        if (payment.getStatus() == PaymentStatus.PENDING) {
+        if (payment.getStatus() == PaymentStatus.PENDING
+                || payment.getStatus() == PaymentStatus.PROCESSING) {
             payment.fail();
         }
     }
@@ -203,6 +274,7 @@ public class PaymentService {
             return;
         }
         if (payment.getStatus() != PaymentStatus.PENDING
+                && payment.getStatus() != PaymentStatus.PROCESSING
                 && payment.getStatus() != PaymentStatus.DONE) {
             return;
         }
@@ -227,81 +299,6 @@ public class PaymentService {
                     .orElseThrow(() -> new CustomException(ErrorCode.PAYMENT_NOT_FOUND));
         }
         throw new CustomException(ErrorCode.INVALID_PAYMENT_WEBHOOK);
-    }
-
-    /**
-     * 주문 ID에 해당하는 결제를 조회합니다.
-     *
-     * @param orderId 주문 ID
-     * @return 결제 엔티티
-     */
-    private Payment getPayment(String orderId) {
-        if (orderId == null || orderId.isBlank()) {
-            throw new CustomException(ErrorCode.INVALID_REQUEST);
-        }
-        return paymentRepository.findByOrderId(orderId)
-                .orElseThrow(() -> new CustomException(ErrorCode.PAYMENT_NOT_FOUND));
-    }
-
-    /**
-     * 결제 요청 사용자가 주문 소유자인지 검증합니다.
-     *
-     * @param payment 결제 엔티티
-     * @param email 사용자 이메일
-     */
-    private void validateOwner(Payment payment,
-                               String email) {
-        if (!payment.getUser().getEmail().equals(email)) {
-            throw new CustomException(ErrorCode.FORBIDDEN);
-        }
-    }
-
-    /**
-     * 브라우저가 전달한 승인 값이 서버 주문과 일치하는지 검증합니다.
-     *
-     * @param payment 결제 엔티티
-     * @param request 결제 승인 요청
-     */
-    private void validatePaymentRequest(Payment payment,
-                                        PaymentConfirmRequest request) {
-        if (request.paymentKey() == null
-                || request.paymentKey().isBlank()
-                || request.amount() == null
-                || payment.getAmount().compareTo(request.amount()) != 0) {
-            throw new CustomException(ErrorCode.INVALID_PAYMENT_AMOUNT);
-        }
-    }
-
-    /**
-     * 이미 승인 완료된 결제가 동일 승인 요청인지 검증합니다.
-     *
-     * @param payment 결제 엔티티
-     * @param request 결제 승인 요청
-     */
-    private void validateCompletedPayment(Payment payment,
-                                          PaymentConfirmRequest request) {
-        if (!request.paymentKey().equals(payment.getPaymentKey())) {
-            throw new CustomException(ErrorCode.INVALID_PAYMENT_STATUS);
-        }
-    }
-
-    /**
-     * 토스페이먼츠 승인 응답이 서버 주문과 일치하는지 검증합니다.
-     *
-     * @param payment 결제 엔티티
-     * @param request 결제 승인 요청
-     * @param response 토스페이먼츠 승인 응답
-     */
-    private void validateTossResponse(Payment payment,
-                                      PaymentConfirmRequest request,
-                                      TossPaymentResponse response) {
-        if (!payment.getOrderId().equals(response.orderId())
-                || !request.paymentKey().equals(response.paymentKey())
-                || !"DONE".equals(response.status())
-                || response.totalAmount() == null
-                || payment.getAmount().compareTo(response.totalAmount()) != 0) {
-            throw new CustomException(ErrorCode.PAYMENT_CONFIRM_FAILED);
-        }
     }
 
     /**
