@@ -16,6 +16,7 @@ import com.momatic.domain.user.repository.UserRepository;
 import com.momatic.global.error.CustomException;
 import com.momatic.global.error.ErrorCode;
 import com.momatic.infra.toss.TossPaymentClient;
+import com.momatic.infra.toss.TossPaymentNetworkException;
 import com.momatic.infra.toss.TossPaymentResponse;
 import java.math.BigDecimal;
 import java.util.Optional;
@@ -47,6 +48,9 @@ class PaymentServiceTest {
 
     @Mock
     private TossPaymentClient tossPaymentClient;
+
+    @Mock
+    private PaymentConfirmProcessor paymentConfirmProcessor;
 
     @InjectMocks
     private PaymentService paymentService;
@@ -88,9 +92,14 @@ class PaymentServiceTest {
                 AMOUNT,
                 "DONE"
         );
-        when(paymentRepository.findByOrderId(ORDER_ID))
-                .thenReturn(Optional.of(payment));
+        payment.markProcessing();
+        when(paymentConfirmProcessor.claim(EMAIL, request)).thenReturn(payment);
         when(tossPaymentClient.confirm(request)).thenReturn(response);
+        when(paymentConfirmProcessor.complete(payment.getId(), request, response))
+                .thenAnswer(invocation -> {
+                    payment.complete(PAYMENT_KEY);
+                    return payment;
+                });
 
         // when
         Payment result = paymentService.confirm(EMAIL, request);
@@ -98,7 +107,7 @@ class PaymentServiceTest {
         // then
         assertEquals(PaymentStatus.DONE, result.getStatus());
         assertEquals(PAYMENT_KEY, result.getPaymentKey());
-        verify(subscriptionService).upgrade(user.getId(), payment.getPlanType());
+        verify(paymentConfirmProcessor).upgradeSubscription(payment.getId());
     }
 
     @Test
@@ -112,8 +121,7 @@ class PaymentServiceTest {
                 PAYMENT_KEY,
                 AMOUNT
         );
-        when(paymentRepository.findByOrderId(ORDER_ID))
-                .thenReturn(Optional.of(payment));
+        when(paymentConfirmProcessor.claim(EMAIL, request)).thenReturn(payment);
 
         // when
         Payment result = paymentService.confirm(EMAIL, request);
@@ -134,8 +142,8 @@ class PaymentServiceTest {
                 "key-B",
                 AMOUNT
         );
-        when(paymentRepository.findByOrderId(ORDER_ID))
-                .thenReturn(Optional.of(payment));
+        when(paymentConfirmProcessor.claim(EMAIL, request))
+                .thenThrow(new CustomException(ErrorCode.INVALID_PAYMENT_STATUS));
 
         // when
         CustomException exception = assertThrows(
@@ -156,8 +164,8 @@ class PaymentServiceTest {
                 PAYMENT_KEY,
                 AMOUNT.add(BigDecimal.ONE)
         );
-        when(paymentRepository.findByOrderId(ORDER_ID))
-                .thenReturn(Optional.of(payment));
+        when(paymentConfirmProcessor.claim(EMAIL, request))
+                .thenThrow(new CustomException(ErrorCode.INVALID_PAYMENT_AMOUNT));
 
         // when
         CustomException exception = assertThrows(
@@ -179,8 +187,8 @@ class PaymentServiceTest {
                 PAYMENT_KEY,
                 AMOUNT
         );
-        when(paymentRepository.findByOrderId(ORDER_ID))
-                .thenReturn(Optional.of(payment));
+        when(paymentConfirmProcessor.claim("other@example.com", request))
+                .thenThrow(new CustomException(ErrorCode.FORBIDDEN));
 
         // when
         CustomException exception = assertThrows(
@@ -190,6 +198,139 @@ class PaymentServiceTest {
 
         // then
         assertEquals(ErrorCode.FORBIDDEN, exception.getErrorCode());
+    }
+
+    @Test
+    @DisplayName("결제 선점에 실패하면 처리 중 예외가 발생하고 토스 API를 호출하지 않는다")
+    void confirmDoesNotCallTossWhenClaimFails() {
+        // given
+        PaymentConfirmRequest request = new PaymentConfirmRequest(
+                ORDER_ID,
+                PAYMENT_KEY,
+                AMOUNT
+        );
+        when(paymentConfirmProcessor.claim(EMAIL, request))
+                .thenThrow(new CustomException(ErrorCode.PAYMENT_ALREADY_PROCESSING));
+
+        // when
+        CustomException exception = assertThrows(
+                CustomException.class,
+                () -> paymentService.confirm(EMAIL, request)
+        );
+
+        // then
+        assertEquals(ErrorCode.PAYMENT_ALREADY_PROCESSING, exception.getErrorCode());
+        verifyNoInteractions(tossPaymentClient);
+    }
+
+    @Test
+    @DisplayName("구독 업그레이드가 실패해도 완료된 결제를 반환한다")
+    void confirmKeepsDoneWhenSubscriptionUpgradeFails() {
+        // given
+        PaymentConfirmRequest request = new PaymentConfirmRequest(
+                ORDER_ID,
+                PAYMENT_KEY,
+                AMOUNT
+        );
+        TossPaymentResponse response = new TossPaymentResponse(
+                ORDER_ID,
+                PAYMENT_KEY,
+                AMOUNT,
+                "DONE"
+        );
+        payment.markProcessing();
+        when(paymentConfirmProcessor.claim(EMAIL, request)).thenReturn(payment);
+        when(tossPaymentClient.confirm(request)).thenReturn(response);
+        when(paymentConfirmProcessor.complete(payment.getId(), request, response))
+                .thenAnswer(invocation -> {
+                    payment.complete(PAYMENT_KEY);
+                    return payment;
+                });
+        doThrow(new RuntimeException("DB 오류"))
+                .when(paymentConfirmProcessor)
+                .upgradeSubscription(payment.getId());
+
+        // when
+        Payment result = paymentService.confirm(EMAIL, request);
+
+        // then
+        assertEquals(PaymentStatus.DONE, result.getStatus());
+    }
+
+    @Test
+    @DisplayName("승인 호출 타임아웃 후 조회 결과가 완료이면 결제를 완료한다")
+    void confirmCompletesWhenLookupAfterTimeoutIsDone() {
+        // given
+        PaymentConfirmRequest request = new PaymentConfirmRequest(
+                ORDER_ID,
+                PAYMENT_KEY,
+                AMOUNT
+        );
+        TossPaymentResponse response = new TossPaymentResponse(
+                ORDER_ID,
+                PAYMENT_KEY,
+                AMOUNT,
+                "DONE"
+        );
+        payment.markProcessing();
+        when(paymentConfirmProcessor.claim(EMAIL, request)).thenReturn(payment);
+        when(tossPaymentClient.confirm(request))
+                .thenThrow(new TossPaymentNetworkException(new java.io.IOException()));
+        when(tossPaymentClient.findByOrderId(ORDER_ID)).thenReturn(Optional.of(response));
+        when(paymentConfirmProcessor.complete(payment.getId(), request, response))
+                .thenAnswer(invocation -> {
+                    payment.complete(PAYMENT_KEY);
+                    return payment;
+                });
+
+        // when
+        Payment result = paymentService.confirm(EMAIL, request);
+
+        // then
+        assertEquals(PaymentStatus.DONE, result.getStatus());
+    }
+
+    @Test
+    @DisplayName("승인 호출 타임아웃 후 조회 결과가 완료가 아니면 대기 상태로 복구한다")
+    void confirmRestoresPendingWhenLookupAfterTimeoutIsNotDone() {
+        // given
+        PaymentConfirmRequest request = new PaymentConfirmRequest(
+                ORDER_ID,
+                PAYMENT_KEY,
+                AMOUNT
+        );
+        payment.markProcessing();
+        when(paymentConfirmProcessor.claim(EMAIL, request)).thenReturn(payment);
+        when(tossPaymentClient.confirm(request))
+                .thenThrow(new TossPaymentNetworkException(new java.io.IOException()));
+        when(tossPaymentClient.findByOrderId(ORDER_ID)).thenReturn(Optional.empty());
+
+        // when
+        CustomException exception = assertThrows(
+                CustomException.class,
+                () -> paymentService.confirm(EMAIL, request)
+        );
+
+        // then
+        assertEquals(ErrorCode.PAYMENT_CONFIRM_FAILED, exception.getErrorCode());
+        verify(paymentConfirmProcessor).restoreToPending(payment.getId());
+    }
+
+    @Test
+    @DisplayName("처리 중 결제에 완료 Webhook이 오면 정상적으로 완료한다")
+    void handleWebhookCompletesProcessingPayment() {
+        // given
+        payment.markProcessing();
+        PaymentWebhookRequest request = webhookRequest("DONE", AMOUNT);
+        when(paymentRepository.findByOrderId(ORDER_ID))
+                .thenReturn(Optional.of(payment));
+
+        // when
+        paymentService.handleWebhook(request);
+
+        // then
+        assertEquals(PaymentStatus.DONE, payment.getStatus());
+        verify(subscriptionService).upgrade(user.getId(), payment.getPlanType());
     }
 
     @Test

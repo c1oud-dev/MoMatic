@@ -63,6 +63,18 @@ public class Payment extends BaseEntity {
         return payment;
     }
 
+    /** 결제를 승인 처리 선점 상태로 변경합니다. */
+    public void markProcessing() {
+        this.status = PaymentStatus.PROCESSING;
+    }
+
+    /** 승인 처리가 끝나지 않은 결제를 승인 대기 상태로 복구합니다. */
+    public void restoreToPending() {
+        if (this.status == PaymentStatus.PROCESSING) {
+            this.status = PaymentStatus.PENDING;
+        }
+    }
+
     /**
      * 결제를 승인 완료 상태로 변경합니다.
      *
