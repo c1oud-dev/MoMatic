@@ -131,7 +131,9 @@ public class SubscriptionService {
     }
 
     /**
-     * 이메일에 해당하는 사용자의 유료 구독을 취소 요청 상태로 변경합니다.
+     * 이메일에 해당하는 사용자의 유료 구독을 기간 종료 시 취소하도록 예약합니다.
+     *
+     * 사용자가 갱신 의사를 철회하는 경로이며, 이미 결제한 기간에는 플랜과 활성 상태를 유지합니다.
      *
      * @param email 사용자 이메일
      */
@@ -143,25 +145,38 @@ public class SubscriptionService {
         if (subscription.getPlanType() == PlanPolicy.FREE) {
             throw new CustomException(ErrorCode.INVALID_REQUEST);
         }
-        cancelActiveSubscriptionInternal(user.getId());
+        if (subscription.isCancelScheduled()) {
+            throw new CustomException(ErrorCode.SUBSCRIPTION_ALREADY_CANCEL_REQUESTED);
+        }
+        subscription.requestCancel();
     }
 
     /**
-     * 사용자의 활성 구독을 취소 처리합니다.
+     * 이메일에 해당하는 사용자의 기간 종료 시 취소 예약을 철회합니다.
+     *
+     * @param email 사용자 이메일
+     */
+    @Transactional
+    public void revokeCancelSubscription(String email) {
+        User user = findUser(email);
+        Subscription subscription = findActiveSubscription(user.getId())
+                .orElseThrow(() -> new CustomException(ErrorCode.SUBSCRIPTION_NOT_FOUND));
+        if (!subscription.isCancelScheduled()
+                || (subscription.getExpiredAt() != null
+                && subscription.getExpiredAt().isBefore(LocalDateTime.now()))) {
+            throw new CustomException(ErrorCode.INVALID_REQUEST);
+        }
+        subscription.revokeCancel();
+    }
+
+    /**
+     * 결제 취소 Webhook에 따라 사용자의 활성 구독을 즉시 취소 처리합니다.
+     * 결제 자체가 취소된 경우 사용하는 경로이며, 플랜을 즉시 무료로 전환합니다.
      *
      * @param userId 사용자 ID
      */
     @Transactional
     public void cancelActiveSubscription(Long userId) {
-        cancelActiveSubscriptionInternal(userId);
-    }
-
-    /**
-     * 사용자의 활성 구독을 취소하는 공통 로직을 수행합니다.
-     *
-     * @param userId 사용자 ID
-     */
-    private void cancelActiveSubscriptionInternal(Long userId) {
         findActiveSubscription(userId).ifPresent(Subscription::cancel);
     }
 

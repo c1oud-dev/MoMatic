@@ -8,10 +8,14 @@ import java.time.LocalDateTime;
  *
  * @param planType 현재 플랜 타입
  * @param expiredAt 구독 만료 시각
+ * @param cancelRequestedAt 구독 취소 요청 시각
+ * @param cancelScheduled 구독 취소 예약 여부
  */
 public record SubscriptionSummary(
         String planType,
-        LocalDateTime expiredAt
+        LocalDateTime expiredAt,
+        LocalDateTime cancelRequestedAt,
+        boolean cancelScheduled
 ) {
 
     /**
@@ -23,7 +27,9 @@ public record SubscriptionSummary(
     public static SubscriptionSummary from(Subscription subscription) {
         return new SubscriptionSummary(
                 subscription.getPlanType().name(),
-                subscription.getExpiredAt()
+                subscription.getExpiredAt(),
+                subscription.getCancelRequestedAt(),
+                subscription.isCancelScheduled()
         );
     }
 
@@ -33,6 +39,6 @@ public record SubscriptionSummary(
      * @return 무료 플랜 구독 요약 DTO
      */
     public static SubscriptionSummary free() {
-        return new SubscriptionSummary("FREE", null);
+        return new SubscriptionSummary("FREE", null, null, false);
     }
 }

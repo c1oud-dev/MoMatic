@@ -36,6 +36,8 @@ public class Subscription extends BaseEntity {
 
     private LocalDateTime expiredAt;
 
+    private LocalDateTime cancelRequestedAt;
+
     /**
      * 활성 구독을 생성합니다.
      *
@@ -65,6 +67,32 @@ public class Subscription extends BaseEntity {
         this.expiredAt = planType == PlanPolicy.FREE
                 ? null
                 : this.startedAt.plusMonths(1);
+        this.cancelRequestedAt = null;
+    }
+
+    /**
+     * 구독의 기간 종료 시점 취소를 요청합니다.
+     *
+     * <p>이미 취소가 예약된 경우 기존 요청 시각을 유지합니다.</p>
+     */
+    public void requestCancel() {
+        if (cancelRequestedAt == null) {
+            cancelRequestedAt = LocalDateTime.now();
+        }
+    }
+
+    /** 기간 종료 시점의 구독 취소 요청을 철회합니다. */
+    public void revokeCancel() {
+        cancelRequestedAt = null;
+    }
+
+    /**
+     * 기간 종료 시점의 구독 취소가 예약되어 있는지 확인합니다.
+     *
+     * @return 취소가 예약되어 있으면 {@code true}
+     */
+    public boolean isCancelScheduled() {
+        return cancelRequestedAt != null;
     }
 
     /** 구독을 만료 처리하고 무료 플랜으로 전환합니다. */
