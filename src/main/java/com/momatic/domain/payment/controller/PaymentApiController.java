@@ -70,4 +70,19 @@ public class PaymentApiController {
         subscriptionService.cancelSubscription(AuthenticatedUserResolver.getEmail(principal));
         return ApiResponse.ok(null);
     }
+
+    /**
+     * 인증 사용자의 기간 종료 시 구독 취소 요청을 철회합니다.
+     *
+     * @param principal 인증 사용자 정보
+     * @return 구독 취소 철회 처리 결과
+     */
+    @PostMapping("/subscription/cancel/revoke")
+    public ApiResponse<Void> revokeCancelSubscription(
+            @AuthenticationPrincipal OAuth2User principal) {
+        subscriptionService.revokeCancelSubscription(
+                AuthenticatedUserResolver.getEmail(principal)
+        );
+        return ApiResponse.ok(null);
+    }
 }

@@ -14,11 +14,19 @@
             <a th:href="@{/plans}">업그레이드</a>
             <button type="button"
                     id="cancel-subscription-button"
+                    th:unless="${subscription.cancelScheduled}"
                     th:disabled="${subscription.planType == 'FREE'}">구독 취소</button>
+            <button type="button"
+                    id="revoke-cancel-subscription-button"
+                    th:if="${subscription.cancelScheduled}">취소 철회</button>
         </header>
 
         <section aria-labelledby="subscription-summary-title">
             <h2 id="subscription-summary-title">현재 구독</h2>
+            <p th:if="${subscription.cancelScheduled}"
+               th:text="|구독이 취소 예약되었습니다. ${#temporals.format(subscription.expiredAt, 'yyyy-MM-dd HH:mm')}까지 이용할 수 있습니다.|">
+                구독이 취소 예약되었습니다.
+            </p>
             <dl>
                 <dt>현재 플랜</dt>
                 <dd th:text="${subscription.planType}">FREE</dd>
@@ -67,6 +75,7 @@
     const csrfToken = document.querySelector('meta[name="_csrf"]').content;
     const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
     const cancelButton = document.getElementById('cancel-subscription-button');
+    const revokeCancelButton = document.getElementById('revoke-cancel-subscription-button');
 
     if (cancelButton) {
         cancelButton.addEventListener('click', async () => {
@@ -92,6 +101,34 @@
             } catch (error) {
                 window.alert(error.message);
                 cancelButton.disabled = false;
+            }
+        });
+    }
+
+    if (revokeCancelButton) {
+        revokeCancelButton.addEventListener('click', async () => {
+            if (!window.confirm('구독 취소를 철회하시겠습니까?')) {
+                return;
+            }
+            revokeCancelButton.disabled = true;
+
+            try {
+                const response = await fetch('/subscription/cancel/revoke', {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        [csrfHeader]: csrfToken
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('구독 취소 철회에 실패했습니다.');
+                }
+                window.location.reload();
+            } catch (error) {
+                window.alert(error.message);
+                revokeCancelButton.disabled = false;
             }
         });
     }
