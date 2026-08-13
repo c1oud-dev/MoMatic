@@ -34,6 +34,7 @@ public class PaymentService {
     private final SubscriptionService subscriptionService;
     private final TossPaymentClient tossPaymentClient;
     private final PaymentConfirmProcessor paymentConfirmProcessor;
+    private final SubscriptionUpgradeRetryService subscriptionUpgradeRetryService;
 
     /**
      * 결제창에 전달할 승인 대기 주문을 생성합니다.
@@ -149,10 +150,29 @@ public class PaymentService {
         try {
             paymentConfirmProcessor.upgradeSubscription(paymentId);
         } catch (RuntimeException exception) {
-            // TODO 실패한 구독 업그레이드를 재시도 큐에 등록합니다.
             log.error("결제 완료 후 구독 업그레이드에 실패했습니다: paymentId={}",
                     paymentId,
                     exception);
+            recordSubscriptionUpgradeFailure(paymentId, exception);
+        }
+    }
+
+    /**
+     * 구독 업그레이드 실패를 재시도 큐에 기록하되 기록 실패를 전파하지 않습니다.
+     *
+     * @param paymentId 결제 ID
+     * @param cause 구독 업그레이드 실패 원인
+     */
+    private void recordSubscriptionUpgradeFailure(Long paymentId,
+                                                  RuntimeException cause) {
+        try {
+            subscriptionUpgradeRetryService.recordFailure(paymentId, cause.getMessage());
+        } catch (RuntimeException recordException) {
+            log.error(
+                    "구독 업그레이드 재시도 기록 저장에 실패했습니다: paymentId={}",
+                    paymentId,
+                    recordException
+            );
         }
     }
 
