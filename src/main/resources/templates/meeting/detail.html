@@ -21,6 +21,16 @@
     .status-failed {
         background: #f8d7da;
     }
+    .action-item-fields,
+    .action-item-controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin: 0.5rem 0;
+    }
+    .action-item-edit-form {
+        margin-top: 0.5rem;
+    }
   </style>
 </head>
 <body>
@@ -72,23 +82,73 @@
 
     <section>
       <h2>액션 아이템</h2>
-      <p th:if="${#lists.isEmpty(detail.actionItems)}">등록된 액션 아이템이 없습니다.</p>
-      <ul th:unless="${#lists.isEmpty(detail.actionItems)}">
-        <li th:each="actionItem : ${detail.actionItems}">
-          <span th:text="${actionItem.task}">할 일</span>
-          <span th:if="${!#strings.isEmpty(actionItem.assignee)}"
-                th:text="|담당: ${actionItem.assignee}|">담당자</span>
-          <time th:if="${actionItem.dueDate != null}"
-                th:datetime="${actionItem.dueDate}"
-                th:text="|마감일: ${actionItem.dueDate}|">마감일: 2026-06-01</time>
-          <select class="action-item-status"
-                  th:data-action-item-id="${actionItem.id}"
-                  aria-label="액션 아이템 상태">
-            <option th:each="status : ${ {'TODO', 'IN_PROGRESS', 'DONE'} }"
-                    th:value="${status}"
-                    th:text="${status}"
-                    th:selected="${status == actionItem.status}">TODO</option>
-          </select>
+      <button id="action-item-create-button" type="button">새 액션 아이템 추가</button>
+      <form id="action-item-create-form" hidden>
+        <div class="action-item-fields">
+          <label>
+            내용
+            <input name="task" type="text" required />
+          </label>
+          <label>
+            담당자
+            <input name="assignee" type="text" />
+          </label>
+          <label>
+            마감일
+            <input name="dueDate" type="date" />
+          </label>
+        </div>
+        <button type="submit">추가</button>
+        <button class="action-item-create-cancel" type="button">취소</button>
+      </form>
+      <p id="action-item-result" role="alert" aria-live="polite"></p>
+      <p id="action-item-empty" th:hidden="${!#lists.isEmpty(detail.actionItems)}">
+        등록된 액션 아이템이 없습니다.
+      </p>
+      <ul id="action-item-list" th:hidden="${#lists.isEmpty(detail.actionItems)}">
+        <li class="action-item" th:each="actionItem : ${detail.actionItems}"
+            th:data-action-item-id="${actionItem.id}">
+          <div class="action-item-view">
+            <span class="action-item-task" th:text="${actionItem.task}">할 일</span>
+            <span class="action-item-assignee"
+                  th:hidden="${#strings.isEmpty(actionItem.assignee)}"
+                  th:text="|담당: ${actionItem.assignee}|">담당자</span>
+            <time class="action-item-due-date"
+                  th:hidden="${actionItem.dueDate == null}"
+                  th:datetime="${actionItem.dueDate}"
+                  th:text="|마감일: ${actionItem.dueDate}|">마감일: 2026-06-01</time>
+            <div class="action-item-controls">
+              <select class="action-item-status"
+                      th:data-action-item-id="${actionItem.id}"
+                      aria-label="액션 아이템 상태">
+                <option th:each="status : ${ {'TODO', 'IN_PROGRESS', 'DONE'} }"
+                        th:value="${status}"
+                        th:text="${status}"
+                        th:selected="${status == actionItem.status}">TODO</option>
+              </select>
+              <button class="action-item-edit-button" type="button">편집</button>
+              <button class="action-item-delete-button" type="button">삭제</button>
+            </div>
+          </div>
+          <form class="action-item-edit-form" hidden>
+            <div class="action-item-fields">
+              <label>
+                내용
+                <input name="task" type="text" th:value="${actionItem.task}" required />
+              </label>
+              <label>
+                담당자
+                <input name="assignee" type="text" th:value="${actionItem.assignee}" />
+              </label>
+              <label>
+                마감일
+                <input name="dueDate" type="date" th:value="${actionItem.dueDate}" />
+              </label>
+            </div>
+            <button type="submit">저장</button>
+            <button class="action-item-edit-cancel" type="button">취소</button>
+          </form>
+          <p class="action-item-row-result" role="alert" aria-live="polite"></p>
         </li>
       </ul>
     </section>
@@ -106,6 +166,88 @@
   const titleEditResult = document.getElementById('title-edit-result');
   const meetingDeleteButton = document.getElementById('meeting-delete-button');
   const meetingDeleteResult = document.getElementById('meeting-delete-result');
+  const actionItemCreateButton = document.getElementById('action-item-create-button');
+  const actionItemCreateForm = document.getElementById('action-item-create-form');
+  const actionItemResult = document.getElementById('action-item-result');
+  const actionItemEmpty = document.getElementById('action-item-empty');
+  const actionItemList = document.getElementById('action-item-list');
+
+  function actionItemPayload(form) {
+    const formData = new FormData(form);
+    return {
+      task: formData.get('task').trim(),
+      assignee: formData.get('assignee').trim() || null,
+      dueDate: formData.get('dueDate') || null
+    };
+  }
+
+  async function requestJson(url, options) {
+    const response = await fetch(url, options);
+    const result = await response.json();
+
+    if (!response.ok || !result.success) {
+      throw new Error(result.message || '요청을 처리하지 못했습니다.');
+    }
+    return result.data;
+  }
+
+  function updateEmptyState() {
+    const isEmpty = !actionItemList.querySelector('.action-item');
+    actionItemEmpty.hidden = !isEmpty;
+    actionItemList.hidden = isEmpty;
+  }
+
+  function updateActionItemView(item, payload) {
+    item.querySelector('.action-item-task').textContent = payload.task;
+    const assignee = item.querySelector('.action-item-assignee');
+    assignee.textContent = payload.assignee ? `담당: ${payload.assignee}` : '';
+    assignee.hidden = !payload.assignee;
+    const dueDate = item.querySelector('.action-item-due-date');
+    dueDate.textContent = payload.dueDate ? `마감일: ${payload.dueDate}` : '';
+    dueDate.dateTime = payload.dueDate || '';
+    dueDate.hidden = !payload.dueDate;
+  }
+
+  function createActionItemElement(actionItem) {
+    const template = document.createElement('template');
+    template.innerHTML = `
+      <li class="action-item" data-action-item-id="${actionItem.id}">
+        <div class="action-item-view">
+          <span class="action-item-task"></span>
+          <span class="action-item-assignee"></span>
+          <time class="action-item-due-date"></time>
+          <div class="action-item-controls">
+            <select class="action-item-status" data-action-item-id="${actionItem.id}"
+                    aria-label="액션 아이템 상태">
+              <option value="TODO">TODO</option>
+              <option value="IN_PROGRESS">IN_PROGRESS</option>
+              <option value="DONE">DONE</option>
+            </select>
+            <button class="action-item-edit-button" type="button">편집</button>
+            <button class="action-item-delete-button" type="button">삭제</button>
+          </div>
+        </div>
+        <form class="action-item-edit-form" hidden>
+          <div class="action-item-fields">
+            <label>내용 <input name="task" type="text" required /></label>
+            <label>담당자 <input name="assignee" type="text" /></label>
+            <label>마감일 <input name="dueDate" type="date" /></label>
+          </div>
+          <button type="submit">저장</button>
+          <button class="action-item-edit-cancel" type="button">취소</button>
+        </form>
+        <p class="action-item-row-result" role="alert" aria-live="polite"></p>
+      </li>`;
+    const item = template.content.firstElementChild;
+    const form = item.querySelector('.action-item-edit-form');
+    form.elements.task.value = actionItem.task;
+    form.elements.assignee.value = actionItem.assignee || '';
+    form.elements.dueDate.value = actionItem.dueDate || '';
+    item.querySelector('.action-item-status').value = actionItem.status;
+    updateActionItemView(item, actionItem);
+    bindActionItem(item);
+    return item;
+  }
 
   function closeTitleEditForm() {
     titleEditForm.hidden = true;
@@ -199,14 +341,96 @@
     }
   });
 
-  document.querySelectorAll('.action-item-status').forEach((select) => {
-    select.addEventListener('change', async (event) => {
-      const target = event.currentTarget;
-      const previousStatus = target.dataset.previousStatus ?? target.defaultValue;
-      target.disabled = true;
+  function bindActionItem(item) {
+    const view = item.querySelector('.action-item-view');
+    const editForm = item.querySelector('.action-item-edit-form');
+    const resultElement = item.querySelector('.action-item-row-result');
+    const editButton = item.querySelector('.action-item-edit-button');
+    const deleteButton = item.querySelector('.action-item-delete-button');
+    const select = item.querySelector('.action-item-status');
+
+    editButton.addEventListener('click', () => {
+      view.hidden = true;
+      editForm.hidden = false;
+      resultElement.textContent = '';
+      editForm.elements.task.focus();
+    });
+
+    editForm.querySelector('.action-item-edit-cancel').addEventListener('click', () => {
+      editForm.hidden = true;
+      view.hidden = false;
+      resultElement.textContent = '';
+    });
+
+    editForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const payload = actionItemPayload(editForm);
+
+      if (!payload.task) {
+        resultElement.textContent = '액션 아이템 내용을 입력해 주세요.';
+        return;
+      }
+
+      const submitButton = editForm.querySelector('button[type="submit"]');
+      submitButton.disabled = true;
+      resultElement.textContent = '';
 
       try {
-        const response = await fetch(`/action-items/${target.dataset.actionItemId}/status`, {
+        await requestJson(`/action-items/${item.dataset.actionItemId}`, {
+          method: 'PATCH',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            [csrfHeader]: csrfToken
+          },
+          body: JSON.stringify(payload)
+        });
+        updateActionItemView(item, payload);
+        editForm.hidden = true;
+        view.hidden = false;
+        resultElement.textContent = '액션 아이템을 수정했습니다.';
+      } catch (error) {
+        resultElement.textContent = error.message || '액션 아이템 수정에 실패했습니다.';
+      } finally {
+        submitButton.disabled = false;
+      }
+    });
+
+    deleteButton.addEventListener('click', async () => {
+      if (!window.confirm('이 액션 아이템을 삭제하시겠습니까?')) {
+        return;
+      }
+
+      deleteButton.disabled = true;
+      resultElement.textContent = '';
+
+      try {
+        await requestJson(`/action-items/${item.dataset.actionItemId}`, {
+          method: 'DELETE',
+          headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            [csrfHeader]: csrfToken
+          }
+        });
+        item.remove();
+        updateEmptyState();
+        actionItemResult.textContent = '액션 아이템을 삭제했습니다.';
+      } catch (error) {
+        resultElement.textContent = error.message || '액션 아이템 삭제에 실패했습니다.';
+        deleteButton.disabled = false;
+      }
+    });
+
+    select.addEventListener('change', async (event) => {
+      const target = event.currentTarget;
+      const previousStatus = target.dataset.previousStatus;
+      target.disabled = true;
+      resultElement.textContent = '';
+
+      try {
+        await requestJson(`/action-items/${target.dataset.actionItemId}/status`, {
           method: 'PATCH',
           headers: {
             'Accept': 'application/json',
@@ -223,12 +447,67 @@
         target.dataset.previousStatus = target.value;
       } catch (error) {
         target.value = previousStatus;
-        window.alert(error.message);
+        resultElement.textContent = error.message || '액션 아이템 상태 변경에 실패했습니다.';
       } finally {
         target.disabled = false;
       }
     });
     select.dataset.previousStatus = select.value;
+    }
+
+  actionItemCreateButton.addEventListener('click', () => {
+    actionItemCreateForm.hidden = false;
+    actionItemCreateButton.hidden = true;
+    actionItemResult.textContent = '';
+    actionItemCreateForm.elements.task.focus();
+  });
+
+  actionItemCreateForm.querySelector('.action-item-create-cancel').addEventListener('click', () => {
+    actionItemCreateForm.reset();
+    actionItemCreateForm.hidden = true;
+    actionItemCreateButton.hidden = false;
+    actionItemResult.textContent = '';
+  });
+
+  actionItemCreateForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const payload = actionItemPayload(actionItemCreateForm);
+
+    if (!payload.task) {
+      actionItemResult.textContent = '액션 아이템 내용을 입력해 주세요.';
+      return;
+    }
+
+    const submitButton = actionItemCreateForm.querySelector('button[type="submit"]');
+    submitButton.disabled = true;
+    actionItemResult.textContent = '';
+
+    try {
+      const actionItem = await requestJson(`/meetings/${meetingId}/action-items`, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+          [csrfHeader]: csrfToken
+        },
+        body: JSON.stringify(payload)
+      });
+      actionItemList.append(createActionItemElement(actionItem));
+      actionItemCreateForm.reset();
+      actionItemCreateForm.hidden = true;
+      actionItemCreateButton.hidden = false;
+      actionItemResult.textContent = '액션 아이템을 추가했습니다.';
+      updateEmptyState();
+    } catch (error) {
+      actionItemResult.textContent = error.message || '액션 아이템 추가에 실패했습니다.';
+    } finally {
+      submitButton.disabled = false;
+    }
+  });
+
+  document.querySelectorAll('.action-item').forEach((item) => {
+    bindActionItem(item);
   });
 </script>
 </body>
