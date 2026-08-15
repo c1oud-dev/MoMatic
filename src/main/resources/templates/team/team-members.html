@@ -108,7 +108,7 @@
       }
 
       async function copyInviteLink(code) {
-          const inviteLink = `${window.location.origin}/teams/join?code=${code}`;
+          const inviteLink = `${window.location.origin}/teams/invite-confirm?code=${code}`;
           await navigator.clipboard.writeText(inviteLink);
           inviteResult.textContent = `초대 링크를 복사했습니다: ${inviteLink}`;
       }

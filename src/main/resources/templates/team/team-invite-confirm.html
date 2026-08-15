@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+    <title>팀 초대 확인</title>
+</head>
+<body>
+<div th:replace="~{layouts/default :: layout(~{::section})}">
+    <section>
+        <header>
+            <h1>팀 초대 확인</h1>
+            <p th:if="${errorMessage == null}">초대 정보를 확인한 뒤 수락 여부를 선택해 주세요.</p>
+        </header>
+
+        <div th:if="${errorMessage != null}" role="alert">
+            <h2>초대를 확인할 수 없습니다</h2>
+            <p th:text="${errorMessage}">유효하지 않은 초대 링크입니다</p>
+            <a th:href="@{/dashboard}">대시보드로 이동</a>
+        </div>
+
+        <div th:if="${errorMessage == null}">
+            <dl>
+                <dt>초대팀</dt>
+                <dd th:text="${teamName}">팀 이름</dd>
+
+                <dt>초대자</dt>
+                <dd th:text="${inviterName}">초대자 이름</dd>
+
+                <dt>초대 대상 이메일</dt>
+                <dd th:text="${inviteeEmail}">invitee@example.com</dd>
+
+                <dt>초대 만료 시각</dt>
+                <dd th:text="${#temporals.format(expireAt, 'yyyy-MM-dd HH:mm')}">
+                    2026-08-15 12:00
+                </dd>
+            </dl>
+
+            <input id="invite-code" type="hidden" th:value="${code}" />
+            <button id="accept-button" type="button">초대 수락</button>
+            <button id="decline-button" type="button">초대 거절</button>
+            <p id="invite-result" role="alert" aria-live="polite"></p>
+        </div>
+
+        <script th:if="${errorMessage == null}">
+            const inviteCode = document.getElementById('invite-code').value;
+            const acceptButton = document.getElementById('accept-button');
+            const declineButton = document.getElementById('decline-button');
+            const inviteResult = document.getElementById('invite-result');
+            const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+
+            async function submitInvite(method, redirectUrl) {
+                acceptButton.disabled = true;
+                declineButton.disabled = true;
+                inviteResult.textContent = '초대 요청을 처리하고 있습니다.';
+
+                try {
+                    const response = await fetch('/teams/invite-confirm', {
+                        method,
+                        credentials: 'same-origin',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            [csrfHeader]: csrfToken
+                        },
+                        body: JSON.stringify({code: inviteCode})
+                    });
+                    const result = await response.json();
+
+                    if (!response.ok || !result.success) {
+                        inviteResult.textContent = result.message || '초대 처리에 실패했습니다.';
+                        return;
+                    }
+                    window.location.href = redirectUrl;
+                } catch (error) {
+                    inviteResult.textContent = '초대 처리 요청 중 오류가 발생했습니다.';
+                } finally {
+                    acceptButton.disabled = false;
+                    declineButton.disabled = false;
+                }
+            }
+
+            acceptButton.addEventListener('click', () => {
+                submitInvite('POST', '/teams/list');
+            });
+
+            declineButton.addEventListener('click', () => {
+                if (window.confirm('이 팀 초대를 거절하시겠습니까?')) {
+                    submitInvite('DELETE', '/dashboard');
+                }
+            });
+        </script>
+    </section>
+</div>
+</body>
+</html>

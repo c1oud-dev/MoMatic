@@ -74,18 +74,40 @@ public class TeamApiController {
     }
 
     /**
-     * 초대 코드로 팀에 가입합니다.
+     * 확인한 팀 초대를 수락합니다.
      *
-     * @param code 초대 코드
+     * @param request 팀 초대 코드 요청
      * @param principal 인증 사용자 정보
      * @return 추가된 팀 구성원 응답
      */
-    @GetMapping("/join")
-    public ApiResponse<TeamMemberResponse> joinTeam(@RequestParam String code,
-                                                    @AuthenticationPrincipal OAuth2User principal) {
+    @PostMapping("/invite-confirm")
+    public ApiResponse<TeamMemberResponse> acceptInvite(
+            @Valid @RequestBody TeamInviteCodeRequest request,
+            @AuthenticationPrincipal OAuth2User principal) {
         return ApiResponse.ok(TeamMemberResponse.from(
-                teamService.joinTeam(code, AuthenticatedUserResolver.getEmail(principal))
+                teamService.joinTeam(
+                        request.code(),
+                        AuthenticatedUserResolver.getEmail(principal)
+                )
         ));
+    }
+
+    /**
+     * 확인한 팀 초대를 거절합니다.
+     *
+     * @param request 팀 초대 코드 요청
+     * @param principal 인증 사용자 정보
+     * @return 거절 완료 응답
+     */
+    @DeleteMapping("/invite-confirm")
+    public ApiResponse<Void> declineInvite(
+            @Valid @RequestBody TeamInviteCodeRequest request,
+            @AuthenticationPrincipal OAuth2User principal) {
+        teamService.declineInvite(
+                request.code(),
+                AuthenticatedUserResolver.getEmail(principal)
+        );
+        return ApiResponse.ok(null);
     }
 
     /**

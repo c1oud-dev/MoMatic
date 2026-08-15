@@ -54,7 +54,7 @@ public class TeamInviteMailService {
         Context context = new Context();
         context.setVariable("teamName", invite.getTeam().getName());
         context.setVariable("inviterName", invite.getInviter().getName());
-        context.setVariable("joinUrl", baseUrl + "/teams/join?code=" + invite.getCode());
+        context.setVariable("joinUrl", baseUrl + "/teams/invite-confirm?code=" + invite.getCode());
         context.setVariable("expiredAt", invite.getExpiredAt());
         return templateEngine.process("mail/team-invite", context);
     }

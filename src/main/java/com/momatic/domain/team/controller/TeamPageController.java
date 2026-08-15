@@ -5,10 +5,13 @@ import com.momatic.domain.meeting.service.MeetingService;
 import com.momatic.domain.team.dto.TeamDashboardResponse;
 import com.momatic.domain.team.dto.TeamMemberResponse;
 import com.momatic.domain.team.dto.TeamResponse;
+import com.momatic.domain.team.entity.TeamInvite;
 import com.momatic.domain.team.entity.TeamMember;
 import com.momatic.domain.team.service.TeamDashboardService;
 import com.momatic.domain.team.service.TeamService;
 import java.util.List;
+
+import com.momatic.global.error.CustomException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,6 +23,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 /** 팀 화면 요청을 처리하는 컨트롤러입니다. */
 @Controller
@@ -49,6 +53,31 @@ public class TeamPageController {
     @GetMapping("/create")
     public String createTeamForm() {
         return "team/team-create";
+    }
+
+    /**
+     * 팀 초대 정보를 검증하고 수락 또는 거절 확인 페이지를 표시합니다.
+     *
+     * @param code 초대 코드
+     * @param principal 인증 사용자 정보
+     * @param model 화면 모델
+     * @return 팀 초대 확인 템플릿 경로
+     */
+    @GetMapping("/invite-confirm")
+    public String inviteConfirm(@RequestParam(required = false) String code,
+                                @AuthenticationPrincipal OAuth2User principal,
+                                Model model) {
+        try {
+            TeamInvite invite = teamService.findInviteForConfirmation(code, getEmail(principal));
+            model.addAttribute("teamName", invite.getTeam().getName());
+            model.addAttribute("inviterName", invite.getInviter().getName());
+            model.addAttribute("inviteeEmail", invite.getInviteeEmail());
+            model.addAttribute("expireAt", invite.getExpiredAt());
+            model.addAttribute("code", invite.getCode());
+        } catch (CustomException exception) {
+            model.addAttribute("errorMessage", exception.getMessage());
+        }
+        return "team/team-invite-confirm";
     }
 
     /**
