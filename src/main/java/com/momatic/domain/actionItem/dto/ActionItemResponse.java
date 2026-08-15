@@ -14,6 +14,7 @@ import java.time.LocalDate;
  * @param assignee 담당자
  * @param dueDate 마감일
  * @param status 진행 상태
+ * @param calendarEventRegistered Google Calendar 일정 등록 여부
  */
 public record ActionItemResponse(
         Long id,
@@ -21,7 +22,8 @@ public record ActionItemResponse(
         String task,
         String assignee,
         LocalDate dueDate,
-        ActionStatus status
+        ActionStatus status,
+        boolean calendarEventRegistered
 ) {
 
     /**
@@ -37,7 +39,8 @@ public record ActionItemResponse(
                 actionItem.getTask(),
                 actionItem.getAssignee(),
                 actionItem.getDueDate(),
-                actionItem.getStatus()
+                actionItem.getStatus(),
+                actionItem.getGoogleCalendarEventId() != null
         );
     }
 }
