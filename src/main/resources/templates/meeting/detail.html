@@ -126,6 +126,12 @@
                         th:text="${status}"
                         th:selected="${status == actionItem.status}">TODO</option>
               </select>
+              <button class="calendar-event-button"
+                      type="button"
+                      th:disabled="${actionItem.calendarEventRegistered}"
+                      th:text="${actionItem.calendarEventRegistered} ? '캘린더 등록 완료' : '캘린더 등록'">
+                캘린더 등록
+              </button>
               <button class="action-item-edit-button" type="button">편집</button>
               <button class="action-item-delete-button" type="button">삭제</button>
             </div>
@@ -223,6 +229,7 @@
               <option value="IN_PROGRESS">IN_PROGRESS</option>
               <option value="DONE">DONE</option>
             </select>
+            <button class="calendar-event-button" type="button">캘린더 등록</button>
             <button class="action-item-edit-button" type="button">편집</button>
             <button class="action-item-delete-button" type="button">삭제</button>
           </div>
@@ -348,6 +355,30 @@
     const editButton = item.querySelector('.action-item-edit-button');
     const deleteButton = item.querySelector('.action-item-delete-button');
     const select = item.querySelector('.action-item-status');
+    const calendarButton = item.querySelector('.calendar-event-button');
+
+    calendarButton.addEventListener('click', async () => {
+      calendarButton.disabled = true;
+      calendarButton.textContent = '등록 중...';
+      resultElement.textContent = '';
+
+      try {
+        await requestJson(`/action-items/${item.dataset.actionItemId}/calendar`, {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            [csrfHeader]: csrfToken
+          }
+        });
+        calendarButton.textContent = '캘린더 등록 완료';
+        resultElement.textContent = 'Google Calendar에 일정을 등록했습니다.';
+      } catch (error) {
+        calendarButton.disabled = false;
+        calendarButton.textContent = '캘린더 등록';
+        resultElement.textContent = error.message || '캘린더 일정 등록에 실패했습니다.';
+      }
+    });
 
     editButton.addEventListener('click', () => {
       view.hidden = true;

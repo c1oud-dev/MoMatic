@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8" />
     <title>액션아이템 목록</title>
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
     <style>
         .filter-tabs {
             display: flex;
@@ -72,6 +74,7 @@
                     <a th:href="@{/action-items(status=${selectedStatus},sort='dueDate',page=0,size=${actionItems.size})}">마감일</a>
                 </th>
                 <th>상태</th>
+                <th>Google Calendar</th>
             </tr>
             </thead>
             <tbody>
@@ -86,6 +89,18 @@
             TODO
           </span>
                 </td>
+                <td>
+                    <button class="calendar-event-button"
+                            type="button"
+                            th:data-action-item-id="${actionItem.id}"
+                            th:disabled="${actionItem.calendarEventRegistered}"
+                            th:text="${actionItem.calendarEventRegistered} ? '등록 완료' : '캘린더 등록'">
+                        캘린더 등록
+                    </button>
+                    <span class="calendar-event-result"
+                          role="alert"
+                          aria-live="polite"></span>
+                </td>
             </tr>
             </tbody>
         </table>
@@ -99,5 +114,44 @@
         </nav>
     </section>
 </div>
+<script>
+    const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+
+    document.querySelectorAll('.calendar-event-button').forEach((button) => {
+        button.addEventListener('click', async () => {
+            const resultElement = button.parentElement.querySelector('.calendar-event-result');
+            button.disabled = true;
+            button.textContent = '등록 중...';
+            resultElement.textContent = '';
+
+            try {
+                const response = await fetch(
+                    `/action-items/${button.dataset.actionItemId}/calendar`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                            [csrfHeader]: csrfToken
+                        }
+                    }
+                );
+                const result = await response.json();
+
+                if (!response.ok || !result.success) {
+                    throw new Error(result.message || '캘린더 일정 등록에 실패했습니다.');
+                }
+
+                button.textContent = '등록 완료';
+                resultElement.textContent = 'Google Calendar에 일정을 등록했습니다.';
+            } catch (error) {
+                button.disabled = false;
+                button.textContent = '캘린더 등록';
+                resultElement.textContent = error.message || '캘린더 일정 등록에 실패했습니다.';
+            }
+        });
+    });
+</script>
 </body>
 </html>
