@@ -286,6 +286,48 @@ class TeamServiceTest {
         assertEquals(ErrorCode.TEAM_OWNER_SELF_REMOVE_DENIED, exception.getErrorCode());
     }
 
+    @Test
+    @DisplayName("정상적인 초대 코드로 거절하면 초대가 삭제된다")
+    void declineInviteDeletesInvite() {
+        // given
+        User inviter = createUser(1L, INVITER_EMAIL, "초대자");
+        User member = createUser(2L, INVITEE_EMAIL, "거절자");
+        Team team = createTeam(TEAM_ID, "개발팀", inviter);
+        TeamInvite invite = TeamInvite.create(team, inviter, INVITEE_EMAIL);
+        when(teamInviteRepository.findByCode(invite.getCode()))
+                .thenReturn(Optional.of(invite));
+        when(userRepository.findByEmail(INVITEE_EMAIL)).thenReturn(Optional.of(member));
+
+        // when
+        teamService.declineInvite(invite.getCode(), INVITEE_EMAIL);
+
+        // then
+        verify(teamInviteRepository).delete(invite);
+    }
+
+    @Test
+    @DisplayName("만료된 초대 코드로 거절하면 예외가 발생한다")
+    void declineInviteThrowsWhenInviteIsExpired() {
+        // given
+        User inviter = createUser(1L, INVITER_EMAIL, "초대자");
+        User member = createUser(2L, INVITEE_EMAIL, "거절자");
+        Team team = createTeam(TEAM_ID, "개발팀", inviter);
+        TeamInvite invite = TeamInvite.create(team, inviter, INVITEE_EMAIL);
+        ReflectionTestUtils.setField(invite, "expiredAt", LocalDateTime.now().minusHours(1));
+        when(teamInviteRepository.findByCode(invite.getCode()))
+                .thenReturn(Optional.of(invite));
+        when(userRepository.findByEmail(INVITEE_EMAIL)).thenReturn(Optional.of(member));
+
+        // when
+        CustomException exception = assertThrows(
+                CustomException.class,
+                () -> teamService.declineInvite(invite.getCode(), INVITEE_EMAIL)
+        );
+
+        // then
+        assertEquals(ErrorCode.TEAM_INVITE_EXPIRED, exception.getErrorCode());
+    }
+
     private User createUser(Long id,
                             String email,
                             String name) {
