@@ -81,6 +81,26 @@ public class TeamPageController {
     }
 
     /**
+     * 팀 초대 수락 또는 거절 결과 페이지를 표시합니다.
+     *
+     * @param status 초대 처리 상태
+     * @param teamId 수락한 팀 ID
+     * @param teamName 수락한 팀 이름
+     * @param model 화면 모델
+     * @return 팀 초대 결과 템플릿 경로
+     */
+    @GetMapping("/invite-result")
+    public String inviteResult(@RequestParam(required = false) String status,
+                               @RequestParam(required = false) Long teamId,
+                               @RequestParam(required = false) String teamName,
+                               Model model) {
+        model.addAttribute("status", status);
+        model.addAttribute("teamId", teamId);
+        model.addAttribute("teamName", teamName);
+        return "team/team-invite-result";
+    }
+
+    /**
      * 팀 회의록 목록 페이지를 표시합니다.
      *
      * @param teamId 팀 ID
