@@ -39,6 +39,9 @@ public class FailedFileDeletion {
 
     private LocalDateTime lastAttemptAt;
 
+    @Column(length = 1000)
+    private String lastFailureReason;
+
     /**
      * 파일 삭제 실패 기록을 생성합니다.
      *
@@ -57,19 +60,28 @@ public class FailedFileDeletion {
     /** 삭제 재시도 성공 상태로 변경합니다. */
     public void markResolved() {
         this.status = FailedFileDeletionStatus.RESOLVED;
-        this.lastAttemptAt = LocalDateTime.now();
     }
 
     /**
      * 삭제 재시도 실패 횟수를 기록하고 최대 횟수 도달 시 포기 상태로 변경합니다.
      *
      * @param maxRetryCount 최대 재시도 횟수
+     * @param failureReason 마지막 삭제 실패 사유
      */
-    public void recordFailedAttempt(int maxRetryCount) {
+    public void recordFailedAttempt(int maxRetryCount, String failureReason) {
         this.retryCount++;
         this.lastAttemptAt = LocalDateTime.now();
+        this.lastFailureReason = failureReason;
         if (this.retryCount >= maxRetryCount) {
             this.status = FailedFileDeletionStatus.GIVEN_UP;
         }
+    }
+
+    /** 포기된 삭제 기록을 최초 재시도 대기 상태로 되돌립니다. */
+    public void resetForManualRetry() {
+        this.status = FailedFileDeletionStatus.PENDING;
+        this.retryCount = 0;
+        this.lastAttemptAt = null;
+        this.lastFailureReason = null;
     }
 }

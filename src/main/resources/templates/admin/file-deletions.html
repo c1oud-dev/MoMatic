@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>관리자 파일 삭제 재시도 큐</title>
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+</head>
+<body>
+<div th:replace="~{layouts/default :: layout(~{::section})}">
+    <section>
+        <header>
+            <h1>파일 삭제 재시도 큐</h1>
+            <a th:href="@{/admin/users}">사용자 목록</a>
+            <a th:href="@{/admin/subscriptions}">구독 현황</a>
+        </header>
+
+        <div aria-label="파일 삭제 재시도 큐 요약">
+            <strong>대기 중</strong>
+            <span id="pending-count">0</span>건
+            <strong>포기</strong>
+            <span id="given-up-count">0</span>건
+        </div>
+
+        <nav aria-label="상태 필터">
+            <button type="button" class="status-filter" data-status="">전체</button>
+            <button type="button" class="status-filter" data-status="PENDING">대기 중</button>
+            <button type="button" class="status-filter" data-status="GIVEN_UP">포기</button>
+            <button type="button" class="status-filter" data-status="RESOLVED">완료</button>
+        </nav>
+
+        <p id="result-message" role="alert" aria-live="polite"></p>
+        <p id="empty-message" hidden>조회된 파일 삭제 재시도 항목이 없습니다.</p>
+        <table id="deletion-table" hidden>
+            <thead>
+            <tr>
+                <th scope="col">파일명</th>
+                <th scope="col">상태</th>
+                <th scope="col">재시도 횟수</th>
+                <th scope="col">마지막 실패 시각</th>
+                <th scope="col">실패 사유</th>
+                <th scope="col">관리</th>
+            </tr>
+            </thead>
+            <tbody id="deletion-list"></tbody>
+        </table>
+
+        <nav id="pagination" aria-label="파일 삭제 재시도 큐 페이지 이동" hidden>
+            <button id="previous-page" type="button">이전</button>
+            <span id="page-summary">1 / 1</span>
+            <button id="next-page" type="button">다음</button>
+        </nav>
+    </section>
+</div>
+<script>
+    const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+    const statusLabels = {
+      PENDING: '대기 중',
+      GIVEN_UP: '포기',
+      RESOLVED: '완료'
+    };
+    let selectedStatus = '';
+    let currentPage = 0;
+
+    function formatDateTime(value) {
+      if (!value) {
+        return '-';
+      }
+      return new Intl.DateTimeFormat('ko-KR', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      }).format(new Date(value));
+    }
+
+    function appendCell(row, value) {
+      const cell = document.createElement('td');
+      cell.textContent = value;
+      row.appendChild(cell);
+      return cell;
+    }
+
+    async function parseError(response, fallbackMessage) {
+      const body = await response.json().catch(() => null);
+      return body?.message || fallbackMessage;
+    }
+
+    async function retryDeletion(id, button) {
+      if (!window.confirm('이 파일 삭제를 다시 시도하시겠습니까?')) {
+        return;
+      }
+
+      button.disabled = true;
+      try {
+        const response = await fetch(`/admin/file-deletions/${id}/retry`, {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            [csrfHeader]: csrfToken
+          }
+        });
+        if (!response.ok) {
+          throw new Error(await parseError(response, '수동 재시도 요청에 실패했습니다.'));
+        }
+        document.getElementById('result-message').textContent = '재시도 대기 상태로 변경했습니다.';
+        currentPage = 0;
+        await loadDeletions();
+      } catch (error) {
+        document.getElementById('result-message').textContent = error.message;
+        button.disabled = false;
+      }
+    }
+
+    function renderRows(items) {
+      const list = document.getElementById('deletion-list');
+      list.replaceChildren();
+
+      items.forEach((item) => {
+        const row = document.createElement('tr');
+        appendCell(row, item.fileName);
+        appendCell(row, statusLabels[item.status] || item.status);
+        appendCell(row, String(item.retryCount));
+        appendCell(row, formatDateTime(item.lastFailureAt));
+        appendCell(row, item.lastFailureReason || '-');
+        const actionCell = appendCell(row, '-');
+        if (item.status === 'GIVEN_UP') {
+          actionCell.textContent = '';
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.textContent = '재시도';
+          button.addEventListener('click', () => retryDeletion(item.id, button));
+          actionCell.appendChild(button);
+        }
+        list.appendChild(row);
+      });
+    }
+
+    function renderPage(data) {
+      document.getElementById('pending-count').textContent = data.pendingCount;
+      document.getElementById('given-up-count').textContent = data.givenUpCount;
+      document.getElementById('empty-message').hidden = data.content.length > 0;
+      document.getElementById('deletion-table').hidden = data.content.length === 0;
+      renderRows(data.content);
+
+      const pagination = document.getElementById('pagination');
+      pagination.hidden = data.totalPages <= 1;
+      document.getElementById('previous-page').disabled = !data.hasPrevious;
+      document.getElementById('next-page').disabled = !data.hasNext;
+      document.getElementById('page-summary').textContent =
+        `${data.page + 1} / ${Math.max(data.totalPages, 1)}`;
+    }
+
+    async function loadDeletions() {
+      const params = new URLSearchParams({page: currentPage, size: 10});
+      if (selectedStatus) {
+        params.set('status', selectedStatus);
+      }
+
+      try {
+        const response = await fetch(`/admin/file-deletions?${params}`, {
+          headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          }
+        });
+        if (!response.ok) {
+          throw new Error(await parseError(response, '목록을 불러오지 못했습니다.'));
+        }
+        const body = await response.json();
+        renderPage(body.data);
+      } catch (error) {
+        document.getElementById('result-message').textContent = error.message;
+      }
+    }
+
+    document.querySelectorAll('.status-filter').forEach((button) => {
+      button.addEventListener('click', () => {
+        selectedStatus = button.dataset.status;
+        currentPage = 0;
+        document.querySelectorAll('.status-filter').forEach((filter) => {
+          filter.disabled = filter === button;
+        });
+        loadDeletions();
+      });
+    });
+    document.getElementById('previous-page').addEventListener('click', () => {
+      currentPage--;
+      loadDeletions();
+    });
+    document.getElementById('next-page').addEventListener('click', () => {
+      currentPage++;
+      loadDeletions();
+    });
+    document.querySelector('.status-filter[data-status=""]').disabled = true;
+    loadDeletions();
+</script>
+</body>
+</html>
