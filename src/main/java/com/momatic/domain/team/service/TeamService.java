@@ -172,15 +172,39 @@ public class TeamService {
     @Transactional
     public TeamMember joinTeam(String code,
                                String memberEmail) {
-        TeamInvite invite = teamInviteRepository.findByCode(code)
-                .orElseThrow(() -> new CustomException(ErrorCode.TEAM_INVITE_NOT_FOUND));
         User user = findUser(memberEmail);
-        validateInvite(invite, user);
+        TeamInvite invite = findInviteForUser(code, user);
         validateMemberLimit(invite.getTeam().getId());
 
         TeamMember member = invite.getTeam().addMember(user, TeamRole.MEMBER);
         invite.accept();
         return teamMemberRepository.save(member);
+    }
+
+    /**
+     * 초대 확인 화면에 표시할 초대 정보를 조회하고 검증합니다.
+     *
+     * @param code 초대 코드
+     * @param memberEmail 초대 확인 사용자 이메일
+     * @return 검증된 팀 초대
+     */
+    @Transactional(readOnly = true)
+    public TeamInvite findInviteForConfirmation(String code,
+                                                String memberEmail) {
+        return findInviteForUser(code, findUser(memberEmail));
+    }
+
+    /**
+     * 팀 초대를 거절하고 더 이상 사용할 수 없도록 삭제합니다.
+     *
+     * @param code 초대 코드
+     * @param memberEmail 초대 거절 사용자 이메일
+     */
+    @Transactional
+    public void declineInvite(String code,
+                              String memberEmail) {
+        TeamInvite invite = findInviteForUser(code, findUser(memberEmail));
+        teamInviteRepository.delete(invite);
     }
 
     /**
@@ -288,12 +312,31 @@ public class TeamService {
             throw new CustomException(ErrorCode.TEAM_INVITE_EXPIRED);
         }
         if (!invite.getInviteeEmail().equalsIgnoreCase(user.getEmail())) {
-            throw new CustomException(ErrorCode.FORBIDDEN);
+            throw new CustomException(ErrorCode.TEAM_INVITE_EMAIL_MISMATCH);
         }
         if (teamMemberRepository.existsByTeamIdAndUserId(invite.getTeam().getId(), user.getId())) {
             throw new CustomException(ErrorCode.TEAM_MEMBER_ALREADY_EXISTS);
         }
     }
+
+    /**
+     * 초대 코드와 사용자 이메일을 검증해 초대 정보를 조회합니다.
+     *
+     * @param code 초대 코드
+     * @param user 초대 확인 사용자
+     * @return 검증된 팀 초대
+     */
+    private TeamInvite findInviteForUser(String code,
+                                         User user) {
+        if (code == null || code.isBlank()) {
+            throw new CustomException(ErrorCode.TEAM_INVITE_NOT_FOUND);
+        }
+        TeamInvite invite = teamInviteRepository.findByCode(code)
+                .orElseThrow(() -> new CustomException(ErrorCode.TEAM_INVITE_NOT_FOUND));
+        validateInvite(invite, user);
+        return invite;
+    }
+
 
     /**
      * 팀 구성원 수 제한을 검증합니다.
