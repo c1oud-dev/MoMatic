@@ -52,7 +52,7 @@
             const csrfToken = document.querySelector('meta[name="_csrf"]').content;
             const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
 
-            async function submitInvite(method, redirectUrl) {
+            async function submitInvite(method) {
                 acceptButton.disabled = true;
                 declineButton.disabled = true;
                 inviteResult.textContent = '초대 요청을 처리하고 있습니다.';
@@ -74,7 +74,16 @@
                         inviteResult.textContent = result.message || '초대 처리에 실패했습니다.';
                         return;
                     }
-                    window.location.href = redirectUrl;
+                    if (method === 'POST') {
+                        const query = new URLSearchParams({
+                            status: 'accepted',
+                            teamId: result.data.teamId,
+                            teamName: result.data.teamName
+                        });
+                        window.location.href = `/teams/invite-result?${query.toString()}`;
+                        return;
+                    }
+                    window.location.href = '/teams/invite-result?status=declined';
                 } catch (error) {
                     inviteResult.textContent = '초대 처리 요청 중 오류가 발생했습니다.';
                 } finally {
@@ -84,12 +93,12 @@
             }
 
             acceptButton.addEventListener('click', () => {
-                submitInvite('POST', '/teams/list');
+                submitInvite('POST');
             });
 
             declineButton.addEventListener('click', () => {
                 if (window.confirm('이 팀 초대를 거절하시겠습니까?')) {
-                    submitInvite('DELETE', '/dashboard');
+                    submitInvite('DELETE');
                 }
             });
         </script>

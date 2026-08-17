@@ -7,7 +7,9 @@ public record TeamMemberResponse(Long id,
                                  Long userId,
                                  String email,
                                  String name,
-                                 String role) {
+                                 String role,
+                                 Long teamId,
+                                 String teamName) {
 
     /**
      * 엔티티를 DTO로 변환합니다.
@@ -21,7 +23,9 @@ public record TeamMemberResponse(Long id,
                 member.getUser().getId(),
                 member.getUser().getEmail(),
                 member.getUser().getName(),
-                member.getRole().name()
+                member.getRole().name(),
+                member.getTeam().getId(),
+                member.getTeam().getName()
         );
     }
 }

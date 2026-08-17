@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>팀 초대 결과</title>
+</head>
+<body>
+<div th:replace="~{layouts/default :: layout(~{::section})}">
+    <section>
+        <div th:if="${status == 'accepted' and teamId != null and teamName != null and !teamName.isBlank()}">
+            <h1 th:text="|${teamName} 팀에 가입되었습니다|">팀에 가입되었습니다</h1>
+            <p>이제 팀원들과 회의록과 액션 아이템을 함께 관리할 수 있습니다.</p>
+            <a th:href="@{/teams/{teamId}/dashboard(teamId=${teamId})}">팀 대시보드로 이동</a>
+            <a th:href="@{/teams/list}">팀 목록으로 이동</a>
+        </div>
+
+        <div th:if="${status == 'declined'}">
+            <h1>초대를 거절했습니다</h1>
+            <p>팀 초대가 거절 처리되었습니다.</p>
+            <a th:href="@{/dashboard}">대시보드로 이동</a>
+        </div>
+
+        <div th:if="${status != 'declined' and !(status == 'accepted' and teamId != null and teamName != null and !teamName.isBlank())}">
+            <h1>초대 결과를 확인할 수 없습니다</h1>
+            <p>대시보드로 이동해 현재 상태를 확인해 주세요.</p>
+            <a th:href="@{/dashboard}">대시보드로 이동</a>
+        </div>
+    </section>
+</div>
+</body>
+</html>
