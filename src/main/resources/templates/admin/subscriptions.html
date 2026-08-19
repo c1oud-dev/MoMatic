@@ -10,6 +10,7 @@
         <header>
             <h1>구독 현황</h1>
             <a th:href="@{/admin/users}">사용자 목록</a>
+            <a th:href="@{/admin/file-deletions}">파일 삭제 재시도 큐</a>
         </header>
 
         <p th:if="${subscriptions.empty}">등록된 구독이 없습니다.</p>

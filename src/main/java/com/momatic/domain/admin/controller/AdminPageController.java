@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,6 +20,16 @@ import org.springframework.web.bind.annotation.RequestMapping;
 public class AdminPageController {
 
     private final AdminUserService adminUserService;
+
+    /**
+     * 파일 삭제 재시도 큐 관리자 화면을 표시합니다.
+     *
+     * @return 파일 삭제 재시도 큐 템플릿
+     */
+    @GetMapping(value = "/file-deletions", produces = MediaType.TEXT_HTML_VALUE)
+    public String fileDeletions() {
+        return "admin/file-deletions";
+    }
 
     /**
      * 사용자 목록 화면을 표시합니다.
