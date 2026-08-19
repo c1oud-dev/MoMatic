@@ -17,6 +17,7 @@ public enum ErrorCode {
     SUBSCRIPTION_NOT_FOUND(HttpStatus.NOT_FOUND, "구독 정보를 찾을 수 없습니다."),
     SUBSCRIPTION_ALREADY_CANCEL_REQUESTED(HttpStatus.CONFLICT, "이미 구독 취소가 예약되어 있습니다."),
     TEAM_PLAN_REQUIRED(HttpStatus.FORBIDDEN, "팀 플랜 사용자만 팀을 생성할 수 있습니다."),
+    CALENDAR_PLAN_REQUIRED(HttpStatus.FORBIDDEN, "Google Calendar 일정 등록은 Pro 이상 플랜에서 사용할 수 있습니다."),
     TEAM_MEMBER_LIMIT_EXCEEDED(HttpStatus.CONFLICT, "팀 구성원은 최대 10명까지 가능합니다."),
     TEAM_MEMBER_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 팀에 가입된 사용자입니다."),
     TEAM_INVITE_EXPIRED(HttpStatus.GONE, "만료된 초대입니다"),

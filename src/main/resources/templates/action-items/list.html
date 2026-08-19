@@ -48,6 +48,11 @@
             <a th:href="@{/meetings}">회의록 목록</a>
         </header>
 
+        <p th:unless="${calendarAvailable}">
+            Google Calendar 신규 일정 등록은 Pro 이상 플랜에서 사용할 수 있습니다.
+            <a th:href="@{/plans}">플랜 확인</a>
+        </p>
+
         <nav class="filter-tabs" aria-label="액션아이템 상태 필터">
             <a th:href="@{/action-items(sort='dueDate',page=0,size=${actionItems.size})}"
                th:classappend="${selectedStatus == null} ? ' active'"
@@ -93,8 +98,11 @@
                     <button class="calendar-event-button"
                             type="button"
                             th:data-action-item-id="${actionItem.id}"
-                            th:disabled="${actionItem.calendarEventRegistered}"
-                            th:text="${actionItem.calendarEventRegistered} ? '등록 완료' : '캘린더 등록'">
+                            th:disabled="${actionItem.calendarEventRegistered
+                                || !calendarAvailable}"
+                            th:text="${actionItem.calendarEventRegistered}
+                                ? '등록 완료'
+                                : (${calendarAvailable} ? '캘린더 등록' : 'Pro 이상 플랜 필요')">
                         캘린더 등록
                     </button>
                     <span class="calendar-event-result"
@@ -140,6 +148,11 @@
                 const result = await response.json();
 
                 if (!response.ok || !result.success) {
+                if (result.errorCode === 'CALENDAR_PLAN_REQUIRED') {
+                        throw new Error(
+                            '구독이 종료되어 캘린더 신규 등록이 제한됩니다. Pro 이상 플랜을 이용해 주세요.'
+                        );
+                    }
                     throw new Error(result.message || '캘린더 일정 등록에 실패했습니다.');
                 }
 

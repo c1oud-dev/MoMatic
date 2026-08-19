@@ -3,6 +3,7 @@ package com.momatic.domain.meeting.controller;
 import com.momatic.domain.meeting.dto.MeetingDetailResponse;
 import com.momatic.domain.meeting.dto.MeetingResponse;
 import com.momatic.domain.meeting.service.MeetingService;
+import com.momatic.domain.plan.service.PlanAccessChecker;
 import com.momatic.domain.team.dto.TeamResponse;
 import com.momatic.domain.team.service.TeamService;
 import com.momatic.global.security.AuthenticatedUserResolver;
@@ -27,6 +28,7 @@ public class MeetingPageController {
 
     private final MeetingService meetingService;
     private final TeamService teamService;
+    private final PlanAccessChecker planAccessChecker;
 
     /**
      * 인증 사용자가 소유한 회의 목록 페이지를 표시합니다.
@@ -72,6 +74,10 @@ public class MeetingPageController {
                 )
         );
         model.addAttribute("detail", meeting);
+        model.addAttribute(
+                "calendarAvailable",
+                planAccessChecker.isCalendarAvailable(principal)
+        );
         return "meeting/detail";
     }
 

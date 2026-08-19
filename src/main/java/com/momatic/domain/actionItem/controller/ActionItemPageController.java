@@ -3,6 +3,7 @@ package com.momatic.domain.actionItem.controller;
 import com.momatic.domain.actionItem.dto.ActionItemResponse;
 import com.momatic.domain.actionItem.entity.ActionStatus;
 import com.momatic.domain.actionItem.service.ActionItemService;
+import com.momatic.domain.plan.service.PlanAccessChecker;
 import com.momatic.global.security.AuthenticatedUserResolver;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 public class ActionItemPageController {
 
     private final ActionItemService actionItemService;
+    private final PlanAccessChecker planAccessChecker;
 
     /**
      * 인증 사용자가 소유한 회의한 전체 액션 아이템 목록 페이지를 표시합니다.
@@ -48,6 +50,10 @@ public class ActionItemPageController {
         model.addAttribute("actionItems", actionItems);
         model.addAttribute("selectedStatus", status);
         model.addAttribute("statuses", ActionStatus.values());
+        model.addAttribute(
+                "calendarAvailable",
+                planAccessChecker.isCalendarAvailable(principal)
+        );
         return "action-items/list";
     }
 }

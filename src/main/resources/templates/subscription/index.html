@@ -27,6 +27,13 @@
                th:text="|구독이 취소 예약되었습니다. ${#temporals.format(subscription.expiredAt, 'yyyy-MM-dd HH:mm')}까지 이용할 수 있습니다.|">
                 구독이 취소 예약되었습니다.
             </p>
+            <aside th:if="${subscription.cancelScheduled}" aria-label="Google Calendar 이용 안내">
+                <strong>Google Calendar 이용 안내</strong>
+                <p>
+                    구독 종료일 이후에는 Google Calendar에 신규 일정을 등록할 수 없습니다.
+                    종료 전에 이미 등록한 일정은 삭제되지 않고 그대로 유지됩니다.
+                </p>
+            </aside>
             <dl>
                 <dt>현재 플랜</dt>
                 <dd th:text="${subscription.planType}">FREE</dd>
