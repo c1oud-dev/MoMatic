@@ -68,19 +68,25 @@ public class MeetingApiController {
     /**
      * 음성 파일 업로드를 수행합니다.
      *
-     * @param userId 사용자 ID
      * @param teamId 팀 ID, 개인 회의록이면 null
      * @param title 회의 제목
      * @param file 음성 파일
+     * @param principal 인증 사용자 정보
      * @return 업로드 결과
      */
     @PostMapping("/upload")
-    public ApiResponse<MeetingUploadResponse> uploadMeetingFile(@RequestParam Long userId,
-                                                                @RequestParam(required = false) @Nullable Long teamId,
-                                                                @RequestParam String title,
-                                                                @RequestParam MultipartFile file) {
+    public ApiResponse<MeetingUploadResponse> uploadMeetingFile(
+            @RequestParam(required = false) @Nullable Long teamId,
+            @RequestParam String title,
+            @RequestParam MultipartFile file,
+            @AuthenticationPrincipal OAuth2User principal) {
         return ApiResponse.ok(MeetingUploadResponse.from(
-                meetingUploadService.upload(userId, teamId, title, file)
+                meetingUploadService.upload(
+                        AuthenticatedUserResolver.getEmail(principal),
+                        teamId,
+                        title,
+                        file
+                )
         ));
     }
 

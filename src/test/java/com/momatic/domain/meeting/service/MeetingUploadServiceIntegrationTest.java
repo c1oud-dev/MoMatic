@@ -55,7 +55,7 @@ class MeetingUploadServiceIntegrationTest {
                 .thenReturn("stored-" + uniqueValue + ".mp3");
 
         // when
-        meetingUploadService.upload(user.getId(), null, "회의 제목", file);
+        meetingUploadService.upload(user.getEmail(), null, "회의 제목", file);
         TestTransaction.flagForCommit();
         TestTransaction.end();
 
