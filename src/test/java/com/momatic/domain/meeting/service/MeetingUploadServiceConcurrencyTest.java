@@ -137,7 +137,7 @@ class MeetingUploadServiceConcurrencyTest {
 
                     try {
                         meetingUploadService.upload(
-                                user.getId(),
+                                user.getEmail(),
                                 null,
                                 "동시 업로드 회의 " + idx,
                                 file

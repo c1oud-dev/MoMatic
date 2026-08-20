@@ -39,6 +39,7 @@ import org.springframework.web.multipart.MultipartFile;
 class MeetingUploadServiceTest {
 
     private static final Long USER_ID = 1L;
+    private static final String USER_EMAIL = "uploader@example.com";
     private static final Long TEAM_ID = 2L;
     private static final String TITLE = "주간 회의";
 
@@ -75,7 +76,7 @@ class MeetingUploadServiceTest {
     @BeforeEach
     void setUp() {
         user = User.create(
-                "uploader@example.com",
+                USER_EMAIL,
                 "업로드 사용자",
                 "ROLE_USER",
                 "google",
@@ -95,7 +96,7 @@ class MeetingUploadServiceTest {
         // when
         CustomException exception = assertThrows(
                 CustomException.class,
-                () -> meetingUploadService.upload(USER_ID, null, TITLE, file)
+                () -> meetingUploadService.upload(USER_EMAIL, null, TITLE, file)
         );
 
         // then
@@ -112,7 +113,7 @@ class MeetingUploadServiceTest {
         when(file.getOriginalFilename()).thenReturn("meeting.mp3");
         when(file.getContentType()).thenReturn("audio/mpeg");
         when(file.getSize()).thenReturn(planPolicy.getMaxFileSizeBytes());
-        when(userRepository.findByIdForUpdate(USER_ID)).thenReturn(Optional.of(user));
+        when(userRepository.findByEmailForUpdate(USER_EMAIL)).thenReturn(Optional.of(user));
         when(subscriptionService.getActivePlan(USER_ID)).thenReturn(planPolicy);
         when(usageRecordRepository
                 .countByUserIdAndUsageTypeAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(
@@ -128,7 +129,7 @@ class MeetingUploadServiceTest {
         // when
         CustomException exception = assertThrows(
                 CustomException.class,
-                () -> meetingUploadService.upload(USER_ID, TEAM_ID, TITLE, file)
+                () -> meetingUploadService.upload(USER_EMAIL, TEAM_ID, TITLE, file)
         );
 
         // then
@@ -144,13 +145,13 @@ class MeetingUploadServiceTest {
         when(file.getOriginalFilename()).thenReturn("meeting.mp3");
         when(file.getContentType()).thenReturn("audio/mpeg");
         when(file.getSize()).thenReturn(planPolicy.getMaxFileSizeBytes() + 1L);
-        when(userRepository.findByIdForUpdate(USER_ID)).thenReturn(Optional.of(user));
+        when(userRepository.findByEmailForUpdate(USER_EMAIL)).thenReturn(Optional.of(user));
         when(subscriptionService.getActivePlan(USER_ID)).thenReturn(planPolicy);
 
         // when
         CustomException exception = assertThrows(
                 CustomException.class,
-                () -> meetingUploadService.upload(USER_ID, null, TITLE, file)
+                () -> meetingUploadService.upload(USER_EMAIL, null, TITLE, file)
         );
 
         // then
@@ -166,7 +167,7 @@ class MeetingUploadServiceTest {
         when(file.getOriginalFilename()).thenReturn("meeting.mp3");
         when(file.getContentType()).thenReturn("audio/mpeg");
         when(file.getSize()).thenReturn(planPolicy.getMaxFileSizeBytes());
-        when(userRepository.findByIdForUpdate(USER_ID)).thenReturn(Optional.of(user));
+        when(userRepository.findByEmailForUpdate(USER_EMAIL)).thenReturn(Optional.of(user));
         when(subscriptionService.getActivePlan(USER_ID)).thenReturn(planPolicy);
         when(usageRecordRepository
                 .countByUserIdAndUsageTypeAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(
@@ -179,7 +180,7 @@ class MeetingUploadServiceTest {
         // when
         CustomException exception = assertThrows(
                 CustomException.class,
-                () -> meetingUploadService.upload(USER_ID, null, TITLE, file)
+                () -> meetingUploadService.upload(USER_EMAIL, null, TITLE, file)
         );
 
         // then
@@ -196,7 +197,7 @@ class MeetingUploadServiceTest {
         when(file.getOriginalFilename()).thenReturn("meeting.mp3");
         when(file.getContentType()).thenReturn("audio/mpeg");
         when(file.getSize()).thenReturn(fileSize);
-        when(userRepository.findByIdForUpdate(USER_ID)).thenReturn(Optional.of(user));
+        when(userRepository.findByEmailForUpdate(USER_EMAIL)).thenReturn(Optional.of(user));
         when(subscriptionService.getActivePlan(USER_ID)).thenReturn(planPolicy);
         when(usageRecordRepository
                 .countByUserIdAndUsageTypeAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(
@@ -215,7 +216,7 @@ class MeetingUploadServiceTest {
 
         try {
             // when
-            meetingUploadService.upload(USER_ID, null, TITLE, file);
+            meetingUploadService.upload(USER_EMAIL, null, TITLE, file);
 
             // then
             ArgumentCaptor<UsageRecord> captor = ArgumentCaptor.forClass(UsageRecord.class);

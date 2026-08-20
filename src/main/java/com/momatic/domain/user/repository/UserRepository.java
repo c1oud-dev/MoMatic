@@ -24,4 +24,14 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select u from User u where u.id = :id")
     Optional<User> findByIdForUpdate(@Param("id") Long id);
+
+    /**
+     * 이메일로 사용자 행에 쓰기 락을 설정하여 조회합니다.
+     *
+     * @param email 사용자 이메일
+     * @return 조회된 사용자
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select u from User u where u.email = :email")
+    Optional<User> findByEmailForUpdate(@Param("email") String email);
 }

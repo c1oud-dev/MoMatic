@@ -53,17 +53,20 @@ public class MeetingUploadService {
     /**
      * 음성 파일을 업로드합니다.
      *
-     * @param userId 사용자 ID
+     * @param email 사용자 이메일
      * @param teamId 팀 ID, 개인 회의록이면 null
      * @param title 회의 제목
      * @param file 업로드 파일
      * @return 저장된 회의
      */
     @Transactional
-    public Meeting upload(Long userId, @Nullable Long teamId, String title, MultipartFile file) {
+    public Meeting upload(String email,
+                          @Nullable Long teamId,
+                          String title,
+                          MultipartFile file) {
         validateFile(file);
 
-        User owner = userRepository.findByIdForUpdate(userId)
+        User owner = userRepository.findByEmailForUpdate(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         validateUploadQuota(owner, file);
         Team team = findUploadTeam(teamId, owner);
