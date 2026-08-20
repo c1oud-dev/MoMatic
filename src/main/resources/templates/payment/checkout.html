@@ -3,7 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <title>결제 진행</title>
-  <script src="https://js.tosspayments.com/v1"></script>
+  <script>
+    window.tossScriptLoadFailed = false;
+  </script>
+  <script src="https://js.tosspayments.com/v1"
+          onerror="window.tossScriptLoadFailed = true"></script>
 </head>
 <body>
 <div th:replace="~{layouts/default :: layout(~{::section})}">
@@ -11,22 +15,60 @@
     <h1>결제 진행</h1>
     <p>토스페이먼츠 결제창을 여는 중입니다.</p>
     <button id="payment-button" type="button">결제창 다시 열기</button>
+    <div id="payment-error" role="alert" aria-live="assertive" hidden>
+      <p id="payment-error-message"></p>
+      <button id="payment-retry-button" type="button">페이지 새로고침 후 다시 시도</button>
+      <a th:href="@{/plans}">플랜 선택으로 돌아가기</a>
+    </div>
     <script th:inline="javascript">
-      const tossPayments = TossPayments(/*[[${clientKey}]]*/ 'test_client_key');
       const payment = /*[[${payment}]]*/ {};
+      const paymentButton = document.getElementById('payment-button');
+      const paymentError = document.getElementById('payment-error');
+      const paymentErrorMessage = document.getElementById('payment-error-message');
 
-      function requestPayment() {
-        tossPayments.requestPayment('카드', {
-          amount: payment.amount,
-          orderId: payment.orderId,
-          orderName: payment.planType + ' 플랜 구독',
-          successUrl: window.location.origin + '/payments/success',
-          failUrl: window.location.origin + '/payments/fail'
-        });
+      function showPaymentError(message) {
+        paymentErrorMessage.textContent = message;
+        paymentError.hidden = false;
+        paymentButton.disabled = false;
       }
 
-      document.getElementById('payment-button').addEventListener('click', requestPayment);
-      requestPayment();
+      async function requestPayment() {
+        paymentError.hidden = true;
+        paymentButton.disabled = true;
+        if (typeof TossPayments === 'undefined') {
+          showPaymentError(
+            '결제 모듈을 불러오지 못했습니다. 네트워크 연결을 확인한 뒤 다시 시도해 주세요.'
+          );
+          return;
+        }
+
+        try {
+          const tossPayments = TossPayments(/*[[${clientKey}]]*/ 'test_client_key');
+          await tossPayments.requestPayment('카드', {
+            amount: payment.amount,
+            orderId: payment.orderId,
+            orderName: payment.planType + ' 플랜 구독',
+            successUrl: window.location.origin + '/payments/success',
+            failUrl: window.location.origin + '/payments/fail'
+          });
+        } catch (error) {
+          showPaymentError(
+            '결제창을 열지 못했습니다. 잠시 후 다시 시도하거나 플랜 선택으로 돌아가 주세요.'
+          );
+        }
+      }
+
+      paymentButton.addEventListener('click', requestPayment);
+      document.getElementById('payment-retry-button').addEventListener('click', () => {
+        window.location.reload();
+      });
+      if (window.tossScriptLoadFailed) {
+        showPaymentError(
+          '결제 모듈을 불러오지 못했습니다. 네트워크 연결을 확인한 뒤 다시 시도해 주세요.'
+        );
+      } else {
+        requestPayment();
+      }
     </script>
   </section>
 </div>

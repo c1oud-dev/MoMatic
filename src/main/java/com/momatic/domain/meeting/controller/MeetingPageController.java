@@ -2,6 +2,7 @@ package com.momatic.domain.meeting.controller;
 
 import com.momatic.domain.meeting.dto.MeetingDetailResponse;
 import com.momatic.domain.meeting.dto.MeetingResponse;
+import com.momatic.domain.meeting.service.MeetingPermissionService;
 import com.momatic.domain.meeting.service.MeetingService;
 import com.momatic.domain.plan.service.PlanAccessChecker;
 import com.momatic.domain.team.dto.TeamResponse;
@@ -27,6 +28,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 public class MeetingPageController {
 
     private final MeetingService meetingService;
+    private final MeetingPermissionService meetingPermissionService;
     private final TeamService teamService;
     private final PlanAccessChecker planAccessChecker;
 
@@ -67,13 +69,17 @@ public class MeetingPageController {
     public String getMeeting(@PathVariable Long meetingId,
                              @AuthenticationPrincipal OAuth2User principal,
                              Model model) {
-        MeetingDetailResponse meeting = MeetingDetailResponse.from(
-                meetingService.getAccessibleMeetingDetail(
-                        meetingId,
-                        AuthenticatedUserResolver.getEmail(principal)
-                )
+        String requesterEmail = AuthenticatedUserResolver.getEmail(principal);
+        MeetingService.MeetingDetail meetingDetail = meetingService.getAccessibleMeetingDetail(
+                meetingId,
+                requesterEmail
         );
+        MeetingDetailResponse meeting = MeetingDetailResponse.from(meetingDetail);
         model.addAttribute("detail", meeting);
+        model.addAttribute(
+                "canManage",
+                meetingPermissionService.isEditable(meetingDetail.meeting(), requesterEmail)
+        );
         model.addAttribute(
                 "calendarAvailable",
                 planAccessChecker.isCalendarAvailable(principal)

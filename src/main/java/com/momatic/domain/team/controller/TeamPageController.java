@@ -12,6 +12,7 @@ import com.momatic.domain.team.service.TeamService;
 import java.util.List;
 
 import com.momatic.global.error.CustomException;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -30,6 +31,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 @RequestMapping("/teams")
 @RequiredArgsConstructor
 public class TeamPageController {
+
+    private static final String INVITE_RESULT_STATUS = "inviteResultStatus";
+    private static final String INVITE_RESULT_TEAM_ID = "inviteResultTeamId";
 
     private final MeetingService meetingService;
     private final TeamService teamService;
@@ -83,20 +87,35 @@ public class TeamPageController {
     /**
      * 팀 초대 수락 또는 거절 결과 페이지를 표시합니다.
      *
-     * @param status 초대 처리 상태
-     * @param teamId 수락한 팀 ID
-     * @param teamName 수락한 팀 이름
+     * @param principal 인증 사용자 정보
+     * @param session 인증 사용자 세션
      * @param model 화면 모델
      * @return 팀 초대 결과 템플릿 경로
      */
     @GetMapping("/invite-result")
-    public String inviteResult(@RequestParam(required = false) String status,
-                               @RequestParam(required = false) Long teamId,
-                               @RequestParam(required = false) String teamName,
+    public String inviteResult(@AuthenticationPrincipal OAuth2User principal,
+                               HttpSession session,
                                Model model) {
-        model.addAttribute("status", status);
-        model.addAttribute("teamId", teamId);
-        model.addAttribute("teamName", teamName);
+        String status = (String) session.getAttribute(INVITE_RESULT_STATUS);
+        Long teamId = (Long) session.getAttribute(INVITE_RESULT_TEAM_ID);
+        session.removeAttribute(INVITE_RESULT_STATUS);
+        session.removeAttribute(INVITE_RESULT_TEAM_ID);
+
+        if ("accepted".equals(status) && teamId != null) {
+            try {
+                TeamResponse team = TeamResponse.from(
+                        teamService.findTeamForMember(teamId, getEmail(principal))
+                );
+                model.addAttribute("status", status);
+                model.addAttribute("teamId", team.id());
+                model.addAttribute("teamName", team.name());
+                return "team/team-invite-result";
+            } catch (CustomException exception) {
+                model.addAttribute("status", "invalid");
+                return "team/team-invite-result";
+            }
+        }
+        model.addAttribute("status", "declined".equals(status) ? status : "invalid");
         return "team/team-invite-result";
     }
 

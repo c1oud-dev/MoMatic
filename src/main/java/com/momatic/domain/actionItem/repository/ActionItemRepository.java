@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 import java.util.Collection;
 import java.util.List;
@@ -71,6 +72,55 @@ public interface ActionItemRepository extends JpaRepository<ActionItem, Long> {
      */
     @EntityGraph(attributePaths = {"meeting"})
     Page<ActionItem> findByMeetingOwnerEmailAndStatus(String ownerEmail, ActionStatus status, Pageable pageable);
+
+    /**
+     * 사용자가 접근 가능한 개인 및 팀 회의의 액션 아이템을 페이징 조회합니다.
+     *
+     * @param email 사용자 이메일
+     * @param pageable 페이징 정보
+     * @return 액션 아이템 페이지
+     */
+    @EntityGraph(attributePaths = {"meeting"})
+    @Query("""
+            SELECT actionItem
+            FROM ActionItem actionItem
+            WHERE (actionItem.meeting.team IS NULL AND actionItem.meeting.owner.email = :email)
+               OR EXISTS (
+                    SELECT member.id
+                    FROM TeamMember member
+                    WHERE member.team = actionItem.meeting.team
+                      AND member.user.email = :email
+               )
+            """)
+    Page<ActionItem> findAccessibleByUserEmail(String email,
+                                               Pageable pageable);
+
+    /**
+     * 사용자가 접근 가능한 개인 및 팀 회의의 지정 상태 액션 아이템을 페이징 조회합니다.
+     *
+     * @param email 사용자 이메일
+     * @param status 액션 아이템 상태
+     * @param pageable 페이징 정보
+     * @return 액션 아이템 페이지
+     */
+    @EntityGraph(attributePaths = {"meeting"})
+    @Query("""
+            SELECT actionItem
+            FROM ActionItem actionItem
+            WHERE actionItem.status = :status
+              AND (
+                   (actionItem.meeting.team IS NULL AND actionItem.meeting.owner.email = :email)
+                   OR EXISTS (
+                        SELECT member.id
+                        FROM TeamMember member
+                        WHERE member.team = actionItem.meeting.team
+                          AND member.user.email = :email
+                   )
+              )
+            """)
+    Page<ActionItem> findAccessibleByUserEmailAndStatus(String email,
+                                                        ActionStatus status,
+                                                        Pageable pageable);
 
     /**
      * 팀의 지정 상태 액션 아이템 수를 조회합니다.

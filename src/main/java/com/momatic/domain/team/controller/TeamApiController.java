@@ -5,6 +5,7 @@ import com.momatic.domain.team.entity.Team;
 import com.momatic.domain.team.service.TeamService;
 import com.momatic.global.api.ApiResponse;
 import com.momatic.global.security.AuthenticatedUserResolver;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -18,6 +19,9 @@ import java.util.List;
 @RequestMapping("/teams")
 @RequiredArgsConstructor
 public class TeamApiController {
+
+    private static final String INVITE_RESULT_STATUS = "inviteResultStatus";
+    private static final String INVITE_RESULT_TEAM_ID = "inviteResultTeamId";
 
     private final TeamService teamService;
 
@@ -78,18 +82,21 @@ public class TeamApiController {
      *
      * @param request 팀 초대 코드 요청
      * @param principal 인증 사용자 정보
+     * @param session 인증 사용자 세션
      * @return 추가된 팀 구성원 응답
      */
     @PostMapping("/invite-confirm")
     public ApiResponse<TeamMemberResponse> acceptInvite(
             @Valid @RequestBody TeamInviteCodeRequest request,
-            @AuthenticationPrincipal OAuth2User principal) {
-        return ApiResponse.ok(TeamMemberResponse.from(
-                teamService.joinTeam(
-                        request.code(),
-                        AuthenticatedUserResolver.getEmail(principal)
-                )
+            @AuthenticationPrincipal OAuth2User principal,
+            HttpSession session) {
+        TeamMemberResponse member = TeamMemberResponse.from(teamService.joinTeam(
+                request.code(),
+                AuthenticatedUserResolver.getEmail(principal)
         ));
+        session.setAttribute(INVITE_RESULT_STATUS, "accepted");
+        session.setAttribute(INVITE_RESULT_TEAM_ID, member.teamId());
+        return ApiResponse.ok(member);
     }
 
     /**
@@ -97,16 +104,21 @@ public class TeamApiController {
      *
      * @param request 팀 초대 코드 요청
      * @param principal 인증 사용자 정보
+     * @param session 인증 사용자 세션
      * @return 거절 완료 응답
      */
     @DeleteMapping("/invite-confirm")
     public ApiResponse<Void> declineInvite(
             @Valid @RequestBody TeamInviteCodeRequest request,
-            @AuthenticationPrincipal OAuth2User principal) {
+            @AuthenticationPrincipal OAuth2User principal,
+            HttpSession session) {
         teamService.declineInvite(
                 request.code(),
                 AuthenticatedUserResolver.getEmail(principal)
         );
+        session.setAttribute(INVITE_RESULT_STATUS, "declined");
+        session.removeAttribute(INVITE_RESULT_TEAM_ID);
+
         return ApiResponse.ok(null);
     }
 

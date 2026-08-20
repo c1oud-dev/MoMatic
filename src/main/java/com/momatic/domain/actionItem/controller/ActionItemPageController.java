@@ -25,7 +25,7 @@ public class ActionItemPageController {
     private final PlanAccessChecker planAccessChecker;
 
     /**
-     * 인증 사용자가 소유한 회의한 전체 액션 아이템 목록 페이지를 표시합니다.
+     * 인증 사용자가 접근 가능한 회의의 전체 액션 아이템 목록 페이지를 표시합니다.
      *
      * @param status 조회할 액션 아이템 상태, 전체 조회이면 null
      * @param sort 정렬할 필드명
@@ -42,7 +42,7 @@ public class ActionItemPageController {
                                   @RequestParam(defaultValue = "20") int size,
                                   @AuthenticationPrincipal OAuth2User principal,
                                   Model model) {
-        Page<ActionItemResponse> actionItems = actionItemService.findAllByOwner(
+        Page<ActionItemResponse> actionItems = actionItemService.findAllAccessible(
                 AuthenticatedUserResolver.getEmail(principal),
                 status,
                 PageRequest.of(page, size, Sort.by(sort))

@@ -40,9 +40,9 @@
       <a th:href="@{/meetings}">목록으로</a>
       <div>
         <h1 id="meeting-title" th:text="${detail.meeting.title}">회의 제목</h1>
-        <button id="title-edit-button" type="button">제목 편집</button>
+        <button th:if="${canManage}" id="title-edit-button" type="button">제목 편집</button>
       </div>
-      <form id="title-edit-form" hidden>
+      <form th:if="${canManage}" id="title-edit-form" hidden>
         <label for="meeting-title-input">회의록 제목</label>
         <input id="meeting-title-input"
                name="title"
@@ -52,10 +52,10 @@
         <button type="submit">저장</button>
         <button id="title-edit-cancel-button" type="button">취소</button>
       </form>
-      <p id="title-edit-result" role="alert" aria-live="polite"></p>
+      <p th:if="${canManage}" id="title-edit-result" role="alert" aria-live="polite"></p>
       <a th:href="@{/meetings/{meetingId}/pdf(meetingId=${detail.meeting.id})}">PDF 다운로드</a>
-      <button id="meeting-delete-button" type="button">회의록 삭제</button>
-      <p id="meeting-delete-result" role="alert" aria-live="polite"></p>
+      <button th:if="${canManage}" id="meeting-delete-button" type="button">회의록 삭제</button>
+      <p th:if="${canManage}" id="meeting-delete-result" role="alert" aria-live="polite"></p>
       <span th:text="${detail.meeting.status}"
             th:class="|status-badge status-${#strings.toLowerCase(detail.meeting.status.name())}|">
                 COMPLETED
@@ -82,12 +82,12 @@
 
     <section>
       <h2>액션 아이템</h2>
-      <p th:unless="${calendarAvailable}">
+      <p th:if="${canManage and !calendarAvailable}">
         Google Calendar 신규 일정 등록은 Pro 이상 플랜에서 사용할 수 있습니다.
         <a th:href="@{/plans}">플랜 확인</a>
       </p>
-      <button id="action-item-create-button" type="button">새 액션 아이템 추가</button>
-      <form id="action-item-create-form" hidden>
+      <button th:if="${canManage}" id="action-item-create-button" type="button">새 액션 아이템 추가</button>
+      <form th:if="${canManage}" id="action-item-create-form" hidden>
         <div class="action-item-fields">
           <label>
             내용
@@ -105,7 +105,7 @@
         <button type="submit">추가</button>
         <button class="action-item-create-cancel" type="button">취소</button>
       </form>
-      <p id="action-item-result" role="alert" aria-live="polite"></p>
+      <p th:if="${canManage}" id="action-item-result" role="alert" aria-live="polite"></p>
       <p id="action-item-empty" th:hidden="${!#lists.isEmpty(detail.actionItems)}">
         등록된 액션 아이템이 없습니다.
       </p>
@@ -121,7 +121,7 @@
                   th:hidden="${actionItem.dueDate == null}"
                   th:datetime="${actionItem.dueDate}"
                   th:text="|마감일: ${actionItem.dueDate}|">마감일: 2026-06-01</time>
-            <div class="action-item-controls">
+            <div th:if="${canManage}" class="action-item-controls">
               <select class="action-item-status"
                       th:data-action-item-id="${actionItem.id}"
                       aria-label="액션 아이템 상태">
@@ -143,7 +143,7 @@
               <button class="action-item-delete-button" type="button">삭제</button>
             </div>
           </div>
-          <form class="action-item-edit-form" hidden>
+          <form th:if="${canManage}" class="action-item-edit-form" hidden>
             <div class="action-item-fields">
               <label>
                 내용
@@ -161,13 +161,13 @@
             <button type="submit">저장</button>
             <button class="action-item-edit-cancel" type="button">취소</button>
           </form>
-          <p class="action-item-row-result" role="alert" aria-live="polite"></p>
+          <p th:if="${canManage}" class="action-item-row-result" role="alert" aria-live="polite"></p>
         </li>
       </ul>
     </section>
   </section>
 </div>
-<script th:inline="javascript">
+<script th:if="${canManage}" th:inline="javascript">
   const meetingId = /*[[${detail.meeting.id}]]*/ 0;
   const calendarAvailable = /*[[${calendarAvailable}]]*/ false;
   const csrfToken = document.querySelector('meta[name="_csrf"]').content;
