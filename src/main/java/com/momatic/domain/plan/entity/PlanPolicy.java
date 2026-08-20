@@ -6,15 +6,16 @@ import com.momatic.global.error.ErrorCode;
 import java.math.BigDecimal;
 import java.util.Arrays;
 
-/** 구독 플랜별 업로드 제한 정책을 정의하는 열거형입니다. */
+/** 구독 플랜별 기능 및 사용량 제한 정책을 정의하는 열거형입니다. */
 public enum PlanPolicy {
-    FREE(3L, 26_214_400L, 0L),
-    PRO(200L, 524_288_000L, 19_900L),
-    TEAM(1_000L, 1_073_741_824L, 49_900L);
+    FREE(3L, 26_214_400L, 0L, false),
+    PRO(200L, 524_288_000L, 19_900L, true),
+    TEAM(1_000L, 1_073_741_824L, 49_900L, true);
 
     private final long monthlyUploadCount;
     private final long maxFileSizeBytes;
     private final BigDecimal price;
+    private final boolean calendarAvailable;
 
     /**
      * 플랜 정책을 생성합니다.
@@ -22,13 +23,16 @@ public enum PlanPolicy {
      * @param monthlyUploadCount 월 업로드 가능 횟수
      * @param maxFileSizeBytes 파일당 최대 업로드 바이트 수
      * @param price 월 결제 금액
+     * @param calendarAvailable Google Calendar 신규 일정 등록 가능 여부
      */
     PlanPolicy(long monthlyUploadCount,
                long maxFileSizeBytes,
-               long price) {
+               long price,
+               boolean calendarAvailable) {
         this.monthlyUploadCount = monthlyUploadCount;
         this.maxFileSizeBytes = maxFileSizeBytes;
         this.price = BigDecimal.valueOf(price);
+        this.calendarAvailable = calendarAvailable;
     }
 
     /**
@@ -73,6 +77,15 @@ public enum PlanPolicy {
      */
     public BigDecimal getPrice() {
         return price;
+    }
+
+    /**
+     * Google Calendar 신규 일정 등록 가능 여부를 조회합니다.
+     *
+     * @return 신규 일정 등록 가능 여부
+     */
+    public boolean isCalendarAvailable() {
+        return calendarAvailable;
     }
 }
 

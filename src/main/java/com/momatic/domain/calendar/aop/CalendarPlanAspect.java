@@ -25,6 +25,6 @@ public class CalendarPlanAspect {
     @Before("@annotation(com.momatic.domain.calendar.aop.CalendarPlanCheck)")
     public void validateCalendarPlan(JoinPoint joinPoint) {
         OAuth2User principal = OAuth2PrincipalResolver.resolve(joinPoint.getArgs());
-        planAccessChecker.requireNotFree(principal);
+        planAccessChecker.requireCalendarAccess(principal);
     }
 }

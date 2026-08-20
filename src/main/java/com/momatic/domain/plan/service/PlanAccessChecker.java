@@ -24,11 +24,42 @@ public class PlanAccessChecker {
      * @param principal OAuth2 인증 사용자 정보
      */
     public void requireNotFree(OAuth2User principal) {
-        User user = userRepository.findByEmail(principal.getAttribute("email"))
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-        PlanPolicy planPolicy = subscriptionService.getActivePlan(user.getId());
+        PlanPolicy planPolicy = getActivePlan(principal);
         if (planPolicy == PlanPolicy.FREE) {
             throw new CustomException(ErrorCode.FORBIDDEN);
         }
+    }
+
+    /**
+     * 인증 사용자가 Google Calendar 신규 일정을 등록할 수 있는지 검증합니다.
+     *
+     * @param principal OAuth2 인증 사용자 정보
+     */
+    public void requireCalendarAccess(OAuth2User principal) {
+        if (!isCalendarAvailable(principal)) {
+            throw new CustomException(ErrorCode.CALENDAR_PLAN_REQUIRED);
+        }
+    }
+
+    /**
+     * 인증 사용자가 Google Calendar 신규 일정을 등록할 수 있는지 확인합니다.
+     *
+     * @param principal OAuth2 인증 사용자 정보
+     * @return 신규 일정 등록 가능 여부
+     */
+    public boolean isCalendarAvailable(OAuth2User principal) {
+        return getActivePlan(principal).isCalendarAvailable();
+    }
+
+    /**
+     * OAuth2 인증 사용자의 활성 플랜을 조회합니다.
+     *
+     * @param principal OAuth2 인증 사용자 정보
+     * @return 활성 플랜
+     */
+    private PlanPolicy getActivePlan(OAuth2User principal) {
+        User user = userRepository.findByEmail(principal.getAttribute("email"))
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        return subscriptionService.getActivePlan(user.getId());
     }
 }
