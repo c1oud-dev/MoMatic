@@ -9,7 +9,7 @@
     <title th:text="${pageTitle} ?: 'MoMatic'">MoMatic</title>
 </head>
 <body>
-<div class="layout-root">
+<div th:fragment="layout(content)" class="layout-root">
     <div th:replace="~{fragments/header :: header}"></div>
 
     <!--
@@ -19,7 +19,7 @@
             <section>Page Content</section>
         </div>
     -->
-    <main th:fragment="layout(content)" class="layout-content">
+    <main class="layout-content">
         <th:block th:replace="${content}"></th:block>
     </main>
 
