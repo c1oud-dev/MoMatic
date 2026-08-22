@@ -74,16 +74,7 @@
                         inviteResult.textContent = result.message || '초대 처리에 실패했습니다.';
                         return;
                     }
-                    if (method === 'POST') {
-                        const query = new URLSearchParams({
-                            status: 'accepted',
-                            teamId: result.data.teamId,
-                            teamName: result.data.teamName
-                        });
-                        window.location.href = `/teams/invite-result?${query.toString()}`;
-                        return;
-                    }
-                    window.location.href = '/teams/invite-result?status=declined';
+                    window.location.href = '/teams/invite-result';
                 } catch (error) {
                     inviteResult.textContent = '초대 처리 요청 중 오류가 발생했습니다.';
                 } finally {

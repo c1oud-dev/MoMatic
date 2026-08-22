@@ -8,7 +8,7 @@
 <div th:replace="~{layouts/default :: layout(~{::section})}">
     <section>
         <header>
-            <a th:href="@{/teams}">팀 목록으로</a>
+            <a th:href="@{/teams/list}">팀 목록으로</a>
             <h1>새 팀 생성</h1>
             <p>함께 회의록과 액션 아이템을 관리할 팀을 만들어 보세요.</p>
         </header>
@@ -28,7 +28,7 @@
             <p id="team-name-help">팀을 구분할 수 있는 이름을 입력해 주세요.</p>
 
             <button id="create-button" type="submit">생성</button>
-            <a th:href="@{/teams}">취소</a>
+            <a th:href="@{/teams/list}">취소</a>
         </form>
 
         <p id="create-result" role="alert" aria-live="polite"></p>

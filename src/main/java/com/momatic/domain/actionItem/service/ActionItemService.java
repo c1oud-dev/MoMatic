@@ -112,21 +112,25 @@ public class ActionItemService {
     }
 
     /**
-     * 소유자 이메일과 상태 조건으로 액션 아이템을 페이징 조회합니다.
+     * 사용자가 접근 가능한 회의의 액션 아이템을 상태 조건으로 페이징 조회합니다.
      *
-     * @param ownerEmail 회의 소유자 이메일
+     * @param requesterEmail 요청자 이메일
      * @param status 조회할 액션 아이템 상태, 전체 조회이면 null
      * @param pageable 페이징 정보
      * @return 액션 아이템 페이지
      */
     @Transactional(readOnly = true)
-    public Page<ActionItem> findAllByOwner(String ownerEmail,
-                                           ActionStatus status,
-                                           Pageable pageable) {
+    public Page<ActionItem> findAllAccessible(String requesterEmail,
+                                              ActionStatus status,
+                                              Pageable pageable) {
         if (status == null) {
-            return actionItemRepository.findByMeetingOwnerEmail(ownerEmail, pageable);
+            return actionItemRepository.findAccessibleByUserEmail(requesterEmail, pageable);
         }
-        return actionItemRepository.findByMeetingOwnerEmailAndStatus(ownerEmail, status, pageable);
+        return actionItemRepository.findAccessibleByUserEmailAndStatus(
+                requesterEmail,
+                status,
+                pageable
+        );
     }
 
     /**

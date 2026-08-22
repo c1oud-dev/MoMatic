@@ -62,6 +62,25 @@ public class MeetingPermissionService {
     }
 
     /**
+     * 회의 편집 가능 여부를 확인합니다.
+     *
+     * @param meeting 회의
+     * @param requesterEmail 요청자 이메일
+     * @return 회의 편집 가능 여부
+     */
+    public boolean isEditable(Meeting meeting,
+                              String requesterEmail) {
+        User requester = findUser(requesterEmail);
+        if (!meeting.hasTeam()) {
+            return meeting.getOwner().getId().equals(requester.getId());
+        }
+        return teamPermissionService.requireMembership(
+                meeting.getTeam().getId(),
+                requester.getId()
+        ).canManageTeam();
+    }
+
+    /**
      * 사용자 이메일로 사용자를 조회합니다.
      *
      * @param email 사용자 이메일
