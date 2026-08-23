@@ -2,12 +2,14 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8" />
+  <link rel="stylesheet" th:href="@{/css/common.css}" />
   <title>팀 멤버 관리</title>
 </head>
 <body>
 <div th:replace="~{layouts/default :: layout(~{::section})}">
   <section>
     <header>
+      <a th:href="@{/teams/list}">팀 목록</a>
       <a th:href="@{/teams/{teamId}/dashboard(teamId=${team.id})}">팀 대시보드</a>
       <a th:href="@{/teams/{teamId}/meetings(teamId=${team.id})}">팀 회의록</a>
       <h1 th:text="|${team.name} 멤버 관리|">팀 멤버 관리</h1>

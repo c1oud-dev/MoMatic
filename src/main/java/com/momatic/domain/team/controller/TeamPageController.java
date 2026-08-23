@@ -133,10 +133,13 @@ public class TeamPageController {
                                @AuthenticationPrincipal OAuth2User principal,
                                @PageableDefault(size = 10) Pageable pageable,
                                Model model) {
-        Page<MeetingResponse> meetings = meetingService.findTeamMeetings(teamId, getEmail(principal), pageable)
+        String requesterEmail = getEmail(principal);
+        TeamMember requester = teamService.findRequesterMember(teamId, requesterEmail);
+        Page<MeetingResponse> meetings = meetingService.findTeamMeetings(teamId, requesterEmail, pageable)
                 .map(MeetingResponse::from);
-        model.addAttribute("team", TeamResponse.from(teamService.findTeamForMember(teamId, getEmail(principal))));
+        model.addAttribute("team", TeamResponse.from(teamService.findTeamForMember(teamId, requesterEmail)));
         model.addAttribute("meetings", meetings);
+        model.addAttribute("canManage", requester.canManageTeam());
         return "meeting/list";
     }
 
@@ -152,8 +155,11 @@ public class TeamPageController {
     public String teamDashboard(@PathVariable Long teamId,
                                 @AuthenticationPrincipal OAuth2User principal,
                                 Model model) {
-        TeamDashboardResponse dashboard = teamDashboardService.getDashboard(teamId, getEmail(principal));
+        String requesterEmail = getEmail(principal);
+        TeamMember requester = teamService.findRequesterMember(teamId, requesterEmail);
+        TeamDashboardResponse dashboard = teamDashboardService.getDashboard(teamId, requesterEmail);
         model.addAttribute("dashboard", dashboard);
+        model.addAttribute("canManage", requester.canManageTeam());
         return "team/team-dashboard";
     }
 

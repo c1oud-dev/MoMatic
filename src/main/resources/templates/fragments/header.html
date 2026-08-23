@@ -16,16 +16,28 @@
 <header th:fragment="header" class="site-header">
     <nav class="site-nav" aria-label="Global Navigation">
         <a th:href="@{/}" class="nav-item">Home</a>
-        <a th:href="@{/dashboard}" class="nav-item">Dashboard</a>
         <a th:href="@{/plans}" class="nav-item">Plans</a>
-        <a th:href="@{/meetings}" class="nav-item">Meetings</a>
-        <a th:href="@{/teams/list}" class="nav-item">Teams</a>
-        <a th:href="@{/users/settings}" class="nav-item">Profile</a>
 
-        <span class="nav-auth" style="margin-left: auto;">
+        <th:block sec:authorize="isAuthenticated()">
+            <a th:href="@{/dashboard}" class="nav-item">Dashboard</a>
+            <a th:href="@{/meetings}" class="nav-item">Meetings</a>
+            <a th:href="@{/action-items}" class="nav-item">Action Items</a>
+            <a th:href="@{/teams/list}" class="nav-item">Teams</a>
+            <a th:href="@{/subscription}" class="nav-item">Subscription</a>
+            <a th:href="@{/payments}" class="nav-item">Payments</a>
+            <a th:href="@{/users/settings}" class="nav-item">Profile</a>
+        </th:block>
+
+        <a sec:authorize="hasRole('ADMIN')"
+           th:href="@{/admin/users}"
+           class="nav-item">Admin</a>
+
+        <span class="nav-auth">
             <th:block sec:authorize="isAuthenticated()">
                 <span class="user-name" th:text="${#authentication.name}">User</span>
-                <a th:href="@{/logout}" class="nav-item">Logout</a>
+                <form th:action="@{/logout}" method="post" class="logout-form">
+                    <button type="submit" class="nav-button">Logout</button>
+                </form>
             </th:block>
             <th:block sec:authorize="!isAuthenticated()">
                 <a th:href="@{/oauth2/authorization/google}" class="nav-item">Login</a>

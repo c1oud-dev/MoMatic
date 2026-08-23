@@ -2,6 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8" />
+  <link rel="stylesheet" th:href="@{/css/common.css}" />
   <title>회의록 목록</title>
   <style>
     .status-badge {
@@ -27,8 +28,10 @@
     <header>
       <h1 th:text="${team != null} ? |${team.name} 회의록| : '회의록 목록'">회의록 목록</h1>
       <nav th:if="${team != null}">
+        <a th:href="@{/teams/list}">팀 목록</a>
         <a th:href="@{/teams/{teamId}/dashboard(teamId=${team.id})}">팀 대시보드</a>
-        <a th:href="@{/teams/{teamId}/members(teamId=${team.id})}">팀 멤버 관리</a>
+        <a th:if="${canManage}"
+           th:href="@{/teams/{teamId}/members(teamId=${team.id})}">팀 멤버 관리</a>
       </nav>
       <a th:href="@{/meetings/upload}">회의록 업로드</a>
       <form method="get" action="/meetings" th:if="${team == null}">

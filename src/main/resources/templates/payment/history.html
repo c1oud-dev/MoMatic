@@ -2,12 +2,16 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8" />
+  <link rel="stylesheet" th:href="@{/css/common.css}" />
   <title>결제 내역</title>
 </head>
 <body>
 <div th:replace="~{layouts/default :: layout(~{::section})}">
   <section>
-    <h1>결제 내역</h1>
+    <header>
+      <a th:href="@{/subscription}">구독 현황으로</a>
+      <h1>결제 내역</h1>
+    </header>
     <p th:if="${payments.empty}">결제 내역이 없습니다.</p>
     <table th:unless="${payments.empty}">
       <thead>

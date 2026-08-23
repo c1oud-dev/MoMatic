@@ -2,6 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8" />
+    <link rel="stylesheet" th:href="@{/css/common.css}" />
     <title>사용자 설정</title>
     <meta name="_csrf" th:content="${_csrf.token}" />
     <meta name="_csrf_header" th:content="${_csrf.headerName}" />
@@ -10,6 +11,7 @@
 <div th:replace="~{layouts/default :: layout(~{::section})}">
     <section>
         <header>
+            <a th:href="@{/dashboard}">대시보드로</a>
             <h1>사용자 설정</h1>
         </header>
 
