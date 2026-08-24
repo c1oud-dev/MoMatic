@@ -21,6 +21,8 @@ import java.util.List;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class User extends BaseEntity {
 
+    private static final String ROLE_PREFIX = "ROLE_";
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -54,16 +56,38 @@ public class User extends BaseEntity {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Subscription> subscriptions = new ArrayList<>();
 
-    /** 사용자 엔티티를 생성합니다. */
+    /**
+     * 사용자 엔티티를 생성합니다.
+     *
+     * <p>Spring Security의 {@code hasRole}이 {@code ROLE_} 접두사가 포함된 권한을
+     * 조회하므로 저장 시점에 권한 값을 동일한 형식으로 정규화합니다.</p>
+     *
+     * @param email 사용자 이메일
+     * @param name 사용자 이름
+     * @param role 사용자 권한
+     * @param provider OAuth2 제공자
+     * @param providerId OAuth2 제공자 사용자 ID
+     * @return 생성된 사용자
+     */
     public static User create(String email, String name, String role,
                               String provider, String providerId) {
         User user = new User();
         user.email = email;
         user.name = name;
-        user.role = role;
+        user.role = normalizeRole(role);
         user.provider = provider;
         user.providerId = providerId;
         return user;
+    }
+
+    /**
+     * 권한 값을 Spring Security 권한 형식으로 정규화합니다.
+     *
+     * @param role 정규화할 권한
+     * @return {@code ROLE_} 접두사가 포함된 권한
+     */
+    private static String normalizeRole(String role) {
+        return role.startsWith(ROLE_PREFIX) ? role : ROLE_PREFIX + role;
     }
 
     /**
