@@ -248,6 +248,17 @@ public class PaymentService {
         return planPolicy.getPrice();
     }
 
+    /** 생성 후 한 시간이 지난 승인 대기 결제를 만료 처리합니다. */
+    @Transactional
+    public void expirePendingPayments() {
+        int expiredCount = paymentRepository.expirePendingCreatedBefore(
+                LocalDateTime.now().minusHours(1L)
+        );
+        if (expiredCount > 0) {
+            log.info("승인 대기 결제를 만료 처리했습니다: count={}", expiredCount);
+        }
+    }
+
     /**
      * Webhook 승인 완료 이벤트를 반영합니다.
      *

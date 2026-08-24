@@ -43,6 +43,21 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
                                                     LocalDateTime threshold);
 
     /**
+     * 기준 시각 이전에 생성된 승인 대기 결제를 원자적으로 만료 처리합니다.
+     *
+     * @param threshold 생성 시각 기준
+     * @return 변경된 행 수
+     */
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+            update Payment payment
+               set payment.status = com.momatic.domain.payment.entity.PaymentStatus.EXPIRED
+             where payment.status = com.momatic.domain.payment.entity.PaymentStatus.PENDING
+               and payment.createdAt < :threshold
+            """)
+    int expirePendingCreatedBefore(@Param("threshold") LocalDateTime threshold);
+
+    /**
      * 주문 ID에 해당하는 결제를 조회합니다.
      *
      * @param orderId 주문 ID
