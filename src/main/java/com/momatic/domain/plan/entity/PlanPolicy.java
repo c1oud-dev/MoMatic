@@ -87,5 +87,15 @@ public enum PlanPolicy {
     public boolean isCalendarAvailable() {
         return calendarAvailable;
     }
+
+    /**
+     * 현재 플랜에서 이 플랜으로의 변경이 업그레이드인지 확인합니다.
+     *
+     * @param currentPlan 현재 플랜
+     * @return 상위 플랜이면 {@code true}
+     */
+    public boolean isUpgradeFrom(PlanPolicy currentPlan) {
+        return ordinal() > currentPlan.ordinal();
+    }
 }
 

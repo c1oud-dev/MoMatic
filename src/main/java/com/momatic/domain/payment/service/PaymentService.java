@@ -15,6 +15,7 @@ import com.momatic.infra.toss.TossPaymentClient;
 import com.momatic.infra.toss.TossPaymentNetworkException;
 import com.momatic.infra.toss.TossPaymentResponse;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -50,6 +51,10 @@ public class PaymentService {
         PlanPolicy planPolicy = PlanPolicy.from(planType);
         if (planPolicy == PlanPolicy.FREE) {
             throw new CustomException(ErrorCode.INVALID_PLAN_TYPE);
+        }
+        PlanPolicy currentPlan = subscriptionService.getActivePlan(user.getId());
+        if (!planPolicy.isUpgradeFrom(currentPlan)) {
+            throw new CustomException(ErrorCode.PLAN_DOWNGRADE_NOT_ALLOWED);
         }
         return paymentRepository.save(Payment.createPending(
                 UUID.randomUUID().toString(),
