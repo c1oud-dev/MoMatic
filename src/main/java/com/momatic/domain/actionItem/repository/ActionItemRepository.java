@@ -16,6 +16,14 @@ import java.util.Optional;
 public interface ActionItemRepository extends JpaRepository<ActionItem, Long> {
 
     /**
+     * 회의 소유자의 액션 아이템 존재 여부를 확인합니다.
+     *
+     * @param ownerId 회의 소유자 ID
+     * @return 액션 아이템이 있으면 {@code true}
+     */
+    boolean existsByMeetingOwnerId(Long ownerId);
+
+    /**
      * 액션 아이템 ID로 회의 정보를 함께 조회합니다.
      *
      * @param id 액션 아이템 ID

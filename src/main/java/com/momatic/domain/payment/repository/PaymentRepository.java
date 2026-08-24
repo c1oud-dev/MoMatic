@@ -58,6 +58,14 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     int expirePendingCreatedBefore(@Param("threshold") LocalDateTime threshold);
 
     /**
+     * 사용자 결제 이력 존재 여부를 확인합니다.
+     *
+     * @param userId 사용자 ID
+     * @return 결제 이력이 있으면 {@code true}
+     */
+    boolean existsByUserId(Long userId);
+
+    /**
      * 주문 ID에 해당하는 결제를 조회합니다.
      *
      * @param orderId 주문 ID

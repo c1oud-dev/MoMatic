@@ -66,10 +66,10 @@ public class BaseInitData implements ApplicationRunner {
     public void run(ApplicationArguments args) {
         User owner = userRepository.findByEmail(DEFAULT_EMAIL)
                 .orElseGet(() -> userRepository.save(
-                        User.create(DEFAULT_EMAIL, "개발자", "ROLE_USER", "google", DEFAULT_EMAIL)
+                        User.create(DEFAULT_EMAIL, "개발자", "USER", "google", DEFAULT_EMAIL)
                 ));
         List<Meeting> meetings = createMeetingsIfEmpty(owner);
-        createActionItemsIfEmpty(meetings);
+        createActionItemsIfEmpty(owner, meetings);
         createPaymentsIfEmpty(owner);
         createFileDeletionQueueIfEmpty();
         log.info("QA base data initialization completed for {}", DEFAULT_EMAIL);
@@ -82,8 +82,9 @@ public class BaseInitData implements ApplicationRunner {
      * @return 액션 아이템을 연결할 회의 목록
      */
     private List<Meeting> createMeetingsIfEmpty(User owner) {
-        if (meetingRepository.count() > 0) {
-            return meetingRepository.findAllByOwnerId(owner.getId());
+        List<Meeting> existingMeetings = meetingRepository.findAllByOwnerId(owner.getId());
+        if (!existingMeetings.isEmpty()) {
+            return existingMeetings;
         }
 
         Team team = teamRepository.findByName(QA_TEAM_NAME)
@@ -178,10 +179,12 @@ public class BaseInitData implements ApplicationRunner {
     /**
      * 상태와 마감일이 고르게 분포된 액션 아이템을 생성합니다.
      *
+     * @param owner 액션 아이템 소유자
      * @param meetings 연결 가능한 회의 목록
      */
-    private void createActionItemsIfEmpty(List<Meeting> meetings) {
-        if (actionItemRepository.count() > 0) {
+    private void createActionItemsIfEmpty(User owner,
+                                          List<Meeting> meetings) {
+        if (actionItemRepository.existsByMeetingOwnerId(owner.getId())) {
             return;
         }
         if (meetings.isEmpty()) {
@@ -208,7 +211,7 @@ public class BaseInitData implements ApplicationRunner {
      * @param owner 결제 사용자
      */
     private void createPaymentsIfEmpty(User owner) {
-        if (paymentRepository.count() > 0) {
+        if (paymentRepository.existsByUserId(owner.getId())) {
             return;
         }
         for (int index = 1; index <= DATA_COUNT; index++) {
@@ -232,7 +235,8 @@ public class BaseInitData implements ApplicationRunner {
 
     /** PENDING, GIVEN_UP, RESOLVED 상태가 섞인 파일 삭제 재시도 기록을 생성합니다. */
     private void createFileDeletionQueueIfEmpty() {
-        if (failedFileDeletionRepository.count() > 0) {
+        if (failedFileDeletionRepository.existsByStoredFileNameStartingWith(
+                "qa-deletion-missing-")) {
             return;
         }
         for (int index = 1; index <= DATA_COUNT; index++) {
