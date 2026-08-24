@@ -41,3 +41,5 @@ out/
 .env
 *.env
 src/main/resources/*.p12
+
+storage/

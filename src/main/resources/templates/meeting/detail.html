@@ -201,7 +201,7 @@
     const result = await response.json();
 
     if (!response.ok || !result.success) {
-    if (result.errorCode === 'CALENDAR_PLAN_REQUIRED') {
+      if (result.errorCode === 'CALENDAR_PLAN_REQUIRED') {
         throw new Error(
           '구독이 종료되어 캘린더 신규 등록이 제한됩니다. Pro 이상 플랜을 이용해 주세요.'
         );
@@ -490,10 +490,8 @@
           body: JSON.stringify({status: target.value})
         });
 
-        if (!response.ok) {
-          throw new Error('액션 아이템 상태 변경에 실패했습니다.');
-        }
         target.dataset.previousStatus = target.value;
+        resultElement.textContent = '액션 아이템 상태를 변경했습니다.';
       } catch (error) {
         target.value = previousStatus;
         resultElement.textContent = error.message || '액션 아이템 상태 변경에 실패했습니다.';
@@ -502,7 +500,7 @@
       }
     });
     select.dataset.previousStatus = select.value;
-    }
+  }
 
   actionItemCreateButton.addEventListener('click', () => {
     actionItemCreateForm.hidden = false;
