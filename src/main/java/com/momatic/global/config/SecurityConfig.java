@@ -4,6 +4,7 @@ import com.momatic.domain.user.service.CustomOAuth2UserService;
 import com.momatic.global.security.CustomLogoutSuccessHandler;
 import com.momatic.global.security.MockAuthenticationFilter;
 import com.momatic.global.security.OAuth2LoginSuccessHandler;
+import com.momatic.global.security.SecurityErrorHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,6 +23,7 @@ public class SecurityConfig {
                                                    CustomOAuth2UserService customOAuth2UserService,
                                                    OAuth2LoginSuccessHandler successHandler,
                                                    CustomLogoutSuccessHandler logoutSuccessHandler,
+                                                   SecurityErrorHandler securityErrorHandler,
                                                    @Autowired(required = false) MockAuthenticationFilter mockAuthenticationFilter) throws Exception {
         http.authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", "/login", "/plans", "/payments/webhook", "/css/**", "/js/**", "/error/**").permitAll()
@@ -31,6 +33,9 @@ public class SecurityConfig {
                         .userInfoEndpoint(user -> user.oidcUserService(customOAuth2UserService))
                         .successHandler(successHandler))
                 .logout(logout -> logout.logoutUrl("/logout").logoutSuccessHandler(logoutSuccessHandler))
+                .exceptionHandling(exception -> exception
+                        .accessDeniedHandler(securityErrorHandler)
+                        .authenticationEntryPoint(securityErrorHandler))
                 .csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                         .ignoringRequestMatchers("/api/public/**", "/payments/webhook", "/users/me"));
 

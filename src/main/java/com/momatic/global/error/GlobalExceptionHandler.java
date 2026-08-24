@@ -2,6 +2,7 @@ package com.momatic.global.error;
 
 import com.momatic.global.api.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -18,12 +19,14 @@ public class GlobalExceptionHandler {
      *
      * @param exception 커스텀 예외
      * @param request HTTP 요청
+     * @param response HTTP 응답
      * @return 페이지 뷰 이름 혹은 JSON 응답
      */
     @ExceptionHandler(CustomException.class)
     public Object handleCustomException(CustomException exception,
-                                        HttpServletRequest request) {
-        if (isAjaxRequest(request)) {
+                                        HttpServletRequest request,
+                                        HttpServletResponse response) {
+        if (RequestTypeResolver.isAjaxRequest(request)) {
             return handleAjax(exception);
         }
         if (isPlanUpgradeRequired(exception.getErrorCode())) {
@@ -32,6 +35,7 @@ public class GlobalExceptionHandler {
 
         request.setAttribute("errorCode", exception.getErrorCode().name());
         request.setAttribute("errorMessage", exception.getMessage());
+        response.setStatus(exception.getErrorCode().getStatus().value());
         return "error/common";
     }
 
@@ -40,18 +44,21 @@ public class GlobalExceptionHandler {
      *
      * @param exception 예외
      * @param request HTTP 요청
+     * @param response HTTP 응답
      * @return 페이지 뷰 이름 혹은 JSON 응답
      */
     @ExceptionHandler(Exception.class)
     public Object handleException(Exception exception,
-                                  HttpServletRequest request) {
-        if (isAjaxRequest(request)) {
+                                  HttpServletRequest request,
+                                  HttpServletResponse response) {
+        if (RequestTypeResolver.isAjaxRequest(request)) {
             return ResponseEntity.internalServerError()
                     .body(ApiResponse.fail(ErrorCode.INTERNAL_ERROR.name(), ErrorCode.INTERNAL_ERROR.getMessage()));
         }
 
         request.setAttribute("errorCode", ErrorCode.INTERNAL_ERROR.name());
         request.setAttribute("errorMessage", ErrorCode.INTERNAL_ERROR.getMessage());
+        response.setStatus(ErrorCode.INTERNAL_ERROR.getStatus().value());
         return "error/common";
     }
 
@@ -78,18 +85,4 @@ public class GlobalExceptionHandler {
         return errorCode == ErrorCode.UPLOAD_MONTHLY_LIMIT_EXCEEDED
                 || errorCode == ErrorCode.UPLOAD_FILE_SIZE_EXCEEDED;
     }
-
-    /**
-     * AJAX 또는 JSON 응답 요청 여부를 확인합니다.
-     *
-     * @param request HTTP 요청
-     * @return AJAX 또는 JSON 응답 요청 여부
-     */
-    private boolean isAjaxRequest(HttpServletRequest request) {
-        String requestedWith = request.getHeader("X-Requested-With");
-        String accept = request.getHeader("Accept");
-        return "XMLHttpRequest".equalsIgnoreCase(requestedWith)
-                || (accept != null && accept.contains("application/json"));
-    }
 }
-
