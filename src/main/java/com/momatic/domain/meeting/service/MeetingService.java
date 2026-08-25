@@ -96,7 +96,7 @@ public class MeetingService {
     @Transactional(readOnly = true)
     public Meeting findMeeting(Long id) {
         return meetingRepository.findById(id)
-                .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REQUEST));
+                .orElseThrow(() -> new CustomException(ErrorCode.MEETING_NOT_FOUND));
     }
 
     /**

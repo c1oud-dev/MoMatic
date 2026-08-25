@@ -2,6 +2,8 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8" />
+  <meta name="_csrf" th:content="${_csrf.token}" />
+  <meta name="_csrf_header" th:content="${_csrf.headerName}" />
   <link rel="stylesheet" th:href="@{/css/common.css}" />
   <title>회의록 업로드</title>
   <style>
@@ -39,7 +41,7 @@
         음성 파일을 끌어다 놓거나 선택하세요.
         <input id="file-input" type="file" name="file" accept=".mp3,.mp4,.wav,.m4a" required />
       </label>
-      <button type="submit">업로드</button>
+      <button id="upload-button" type="submit">업로드</button>
     </form>
     <p id="upload-status" aria-live="polite"></p>
 
@@ -49,16 +51,25 @@
       const fileInput = document.getElementById('file-input');
       const statusMessage = document.getElementById('upload-status');
 
-      function csrfHeader() {
-          const tokenCookie = document.cookie
-              .split('; ')
-              .find((cookie) => cookie.startsWith('XSRF-TOKEN='));
-          return tokenCookie ? decodeURIComponent(tokenCookie.split('=')[1]) : '';
-      }
+      const uploadButton = document.getElementById('upload-button');
+      const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+      const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
 
       function pollStatus(meetingId) {
           const poller = window.setInterval(async () => {
-              const response = await fetch(`/meetings/${meetingId}/status`);
+              const response = await fetch(`/meetings/${meetingId}/status`, {
+                  credentials: 'same-origin',
+                  headers: {
+                      'Accept': 'application/json',
+                      'X-Requested-With': 'XMLHttpRequest'
+                  }
+              });
+              if (!response.ok) {
+                  window.clearInterval(poller);
+                  statusMessage.textContent = '회의록 처리 상태를 확인하지 못했습니다.';
+                  uploadButton.disabled = false;
+                  return;
+              }
               const result = await response.json();
               const status = result.data.status;
               statusMessage.textContent = `처리 상태: ${status}`;
@@ -69,6 +80,7 @@
               } else if (status === 'FAILED') {
                   window.clearInterval(poller);
                   statusMessage.textContent = '회의록 처리에 실패했습니다.';
+                  uploadButton.disabled = false;
               }
           }, 5000);
       }
@@ -84,24 +96,37 @@
 
       form.addEventListener('submit', async (event) => {
           event.preventDefault();
+          uploadButton.disabled = true;
           statusMessage.textContent = '파일을 업로드하고 있습니다.';
 
-          const response = await fetch(form.action, {
-              method: 'POST',
-              headers: {
-                  'X-XSRF-TOKEN': csrfHeader()
-              },
-              body: new FormData(form)
-          });
-          const result = await response.json();
+          try {
+              const response = await fetch(form.action, {
+                  method: 'POST',
+                  credentials: 'same-origin',
+                  headers: {
+                      'Accept': 'application/json',
+                      'X-Requested-With': 'XMLHttpRequest',
+                      [csrfHeader]: csrfToken
+                  },
+                  body: new FormData(form)
+              });
+              const contentType = response.headers.get('content-type') || '';
+              const result = contentType.includes('application/json')
+                  ? await response.json()
+                  : null;
 
-          if (!response.ok || !result.success) {
-              statusMessage.textContent = '파일 업로드에 실패했습니다.';
-              return;
-          }
+          if (!response.ok || !result?.success) {
+                  statusMessage.textContent = result?.message || '파일 업로드에 실패했습니다.';
+                  uploadButton.disabled = false;
+                  return;
+              }
 
           statusMessage.textContent = `처리 상태: ${result.data.status}`;
-          pollStatus(result.data.meetingId);
+              pollStatus(result.data.meetingId);
+          } catch (error) {
+              statusMessage.textContent = '파일 업로드 요청 중 오류가 발생했습니다.';
+              uploadButton.disabled = false;
+          }
       });
     </script>
   </section>

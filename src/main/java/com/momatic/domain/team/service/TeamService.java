@@ -178,7 +178,8 @@ public class TeamService {
 
         TeamMember member = invite.getTeam().addMember(user, TeamRole.MEMBER);
         invite.accept();
-        return teamMemberRepository.save(member);
+        TeamMember savedMember = teamMemberRepository.save(member);
+        return findTeamMember(invite.getTeam().getId(), savedMember.getId());
     }
 
     /**

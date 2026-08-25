@@ -7,6 +7,7 @@ import com.momatic.global.error.ErrorCode;
 import java.io.File;
 import java.io.IOException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
@@ -18,6 +19,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 /** OpenAI Whisper STT API를 호출하는 클라이언트입니다. */
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class WhisperClient {
@@ -58,6 +60,7 @@ public class WhisperClient {
             ResponseBody responseBody = response.body();
             String body = responseBody == null ? "" : responseBody.string();
             if (!response.isSuccessful()) {
+                log.error("Whisper API 호출 실패: status={}, body={}", response.code(), body);
                 throw new CustomException(ErrorCode.INTERNAL_ERROR);
             }
             return parseText(body);
