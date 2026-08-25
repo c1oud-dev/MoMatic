@@ -18,18 +18,27 @@ class ApiRequestError extends Error {
 }
 
 /**
- * 쿠키에 저장된 CSRF 토큰을 반환한다.
+ * 메타 태그에서 CSRF 설정을 읽고, 토큰이 없으면 CSRF 쿠키를 확인한다.
  *
- * @returns {string} 디코딩된 CSRF 토큰
+ * 헤더 이름을 서버가 제공하지 않은 경우에는 CSRF 헤더를 임의로 만들지 않는다.
+  *
+  * @returns {{headerName: string, token: string}} CSRF 헤더 이름과 토큰
  */
-function getCsrfToken() {
+function getCsrfInfo() {
+    const tokenMeta = document.querySelector('meta[name="_csrf"]');
+    const headerMeta = document.querySelector('meta[name="_csrf_header"]');
+    const metaToken = tokenMeta?.content || '';
+    const csrfCookieName = 'XSRF-TOKEN';
     const tokenCookie = document.cookie
         .split('; ')
-        .find((cookie) => cookie.startsWith('XSRF-TOKEN='));
+        .find((cookie) => cookie.startsWith(`${csrfCookieName}=`));
 
-    return tokenCookie
-        ? decodeURIComponent(tokenCookie.substring('XSRF-TOKEN='.length))
-        : '';
+    return {
+            headerName: headerMeta?.content || '',
+            token: metaToken || (tokenCookie
+                ? decodeURIComponent(tokenCookie.substring(csrfCookieName.length + 1))
+                : '')
+        };
 }
 
 /**
@@ -44,9 +53,12 @@ function getCsrfToken() {
 async function apiRequest(url, options = {}) {
     const {json, headers: optionHeaders, ...requestOptions} = options;
     const headers = new Headers(optionHeaders || {});
+    const csrfInfo = getCsrfInfo();
     headers.set('Accept', 'application/json');
     headers.set('X-Requested-With', 'XMLHttpRequest');
-    headers.set('X-XSRF-TOKEN', getCsrfToken());
+    if (csrfInfo.headerName && csrfInfo.token) {
+            headers.set(csrfInfo.headerName, csrfInfo.token);
+        }
 
     if (json !== undefined) {
         headers.set('Content-Type', 'application/json');
