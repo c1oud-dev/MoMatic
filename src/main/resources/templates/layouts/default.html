@@ -10,6 +10,7 @@
 </head>
 <body>
 <div th:fragment="layout(content)" class="layout-root">
+    <script th:src="@{/js/api-request.js}"></script>
     <div th:replace="~{fragments/header :: header}"></div>
 
     <!--

@@ -63,9 +63,6 @@
     </section>
 </div>
 <script>
-    const csrfToken = document.querySelector('meta[name="_csrf"]').content;
-    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
-
     document.querySelectorAll('.plan-change-button').forEach((button) => {
       button.addEventListener('click', async (event) => {
         const target = event.currentTarget;
@@ -74,20 +71,10 @@
         target.disabled = true;
 
         try {
-          const response = await fetch(`/admin/users/${userId}/plan`, {
+          await apiRequest(`/admin/users/${userId}/plan`, {
             method: 'POST',
-            headers: {
-              'Accept': 'application/json',
-              'Content-Type': 'application/json',
-              'X-Requested-With': 'XMLHttpRequest',
-              [csrfHeader]: csrfToken
-            },
-            body: JSON.stringify({planType: select.value})
+            json: {planType: select.value}
           });
-
-          if (!response.ok) {
-            throw new Error('플랜 변경에 실패했습니다.');
-          }
 
           window.location.reload();
         } catch (error) {

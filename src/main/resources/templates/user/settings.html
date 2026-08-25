@@ -24,8 +24,6 @@
     </section>
 </div>
 <script>
-    const csrfToken = document.querySelector('meta[name="_csrf"]').content;
-    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
     const deleteAccountButton = document.getElementById('delete-account-button');
 
     deleteAccountButton.addEventListener('click', async () => {
@@ -36,18 +34,9 @@
         deleteAccountButton.disabled = true;
 
         try {
-            const response = await fetch('/users/me', {
-                method: 'DELETE',
-                headers: {
-                    'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    [csrfHeader]: csrfToken
-                }
+            await apiRequest('/users/me', {
+                method: 'DELETE'
             });
-
-            if (!response.ok) {
-                throw new Error('회원 탈퇴에 실패했습니다.');
-            }
 
             window.location.href = '/';
         } catch (error) {

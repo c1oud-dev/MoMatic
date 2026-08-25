@@ -52,34 +52,26 @@
       const statusMessage = document.getElementById('upload-status');
 
       const uploadButton = document.getElementById('upload-button');
-      const csrfToken = document.querySelector('meta[name="_csrf"]').content;
-      const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
 
       function pollStatus(meetingId) {
           const poller = window.setInterval(async () => {
-              const response = await fetch(`/meetings/${meetingId}/status`, {
-                  credentials: 'same-origin',
-                  headers: {
-                      'Accept': 'application/json',
-                      'X-Requested-With': 'XMLHttpRequest'
-                  }
-              });
-              if (!response.ok) {
-                  window.clearInterval(poller);
-                  statusMessage.textContent = '회의록 처리 상태를 확인하지 못했습니다.';
-                  uploadButton.disabled = false;
-                  return;
-              }
-              const result = await response.json();
-              const status = result.data.status;
-              statusMessage.textContent = `처리 상태: ${status}`;
+              try {
+                  const result = await apiRequest(`/meetings/${meetingId}/status`);
+                  const status = result.status;
+                  statusMessage.textContent = `처리 상태: ${status}`;
 
               if (status === 'COMPLETED') {
+                      window.clearInterval(poller);
+                      window.location.href = `/meetings/${meetingId}`;
+                  } else if (status === 'FAILED') {
+                      window.clearInterval(poller);
+                      statusMessage.textContent = '회의록 처리에 실패했습니다.';
+                      uploadButton.disabled = false;
+                  }
+              } catch (error) {
                   window.clearInterval(poller);
-                  window.location.href = `/meetings/${meetingId}`;
-              } else if (status === 'FAILED') {
-                  window.clearInterval(poller);
-                  statusMessage.textContent = '회의록 처리에 실패했습니다.';
+                  statusMessage.textContent = error.message
+                      || '회의록 처리 상태를 확인하지 못했습니다.';
                   uploadButton.disabled = false;
               }
           }, 5000);
@@ -100,31 +92,14 @@
           statusMessage.textContent = '파일을 업로드하고 있습니다.';
 
           try {
-              const response = await fetch(form.action, {
+              const result = await apiRequest(form.action, {
                   method: 'POST',
-                  credentials: 'same-origin',
-                  headers: {
-                      'Accept': 'application/json',
-                      'X-Requested-With': 'XMLHttpRequest',
-                      [csrfHeader]: csrfToken
-                  },
                   body: new FormData(form)
               });
-              const contentType = response.headers.get('content-type') || '';
-              const result = contentType.includes('application/json')
-                  ? await response.json()
-                  : null;
-
-          if (!response.ok || !result?.success) {
-                  statusMessage.textContent = result?.message || '파일 업로드에 실패했습니다.';
-                  uploadButton.disabled = false;
-                  return;
-              }
-
-          statusMessage.textContent = `처리 상태: ${result.data.status}`;
-              pollStatus(result.data.meetingId);
+              statusMessage.textContent = `처리 상태: ${result.status}`;
+              pollStatus(result.meetingId);
           } catch (error) {
-              statusMessage.textContent = '파일 업로드 요청 중 오류가 발생했습니다.';
+              statusMessage.textContent = error.message || '파일 업로드에 실패했습니다.';
               uploadButton.disabled = false;
           }
       });

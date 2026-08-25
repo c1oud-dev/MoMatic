@@ -102,13 +102,6 @@
       const inviteResult = document.getElementById('invite-result');
       const memberResult = document.getElementById('member-result');
 
-      function csrfHeader() {
-          const tokenCookie = document.cookie
-              .split('; ')
-              .find((cookie) => cookie.startsWith('XSRF-TOKEN='));
-          return tokenCookie ? decodeURIComponent(tokenCookie.split('=')[1]) : '';
-      }
-
       async function copyInviteLink(code) {
           const inviteLink = `${window.location.origin}/teams/invite-confirm?code=${code}`;
           await navigator.clipboard.writeText(inviteLink);
@@ -121,28 +114,16 @@
               const name = teamNameInput.value.trim();
 
               try {
-                  const response = await fetch(`/teams/${teamId}/name`, {
+                  await apiRequest(`/teams/${teamId}/name`, {
                       method: 'PATCH',
-                      headers: {
-                          'Accept': 'application/json',
-                          'X-Requested-With': 'XMLHttpRequest',
-                          'Content-Type': 'application/json',
-                          'X-XSRF-TOKEN': csrfHeader()
-                      },
-                      body: JSON.stringify({name})
+                      json: {name}
                   });
-                  const result = await response.json();
-
-                  if (!response.ok || !result.success) {
-                      teamNameResult.textContent = result.message || '팀 이름 변경에 실패했습니다.';
-                      return;
-                  }
 
                   document.querySelector('header h1').textContent = `${name} 멤버 관리`;
                   teamNameInput.value = name;
                   teamNameResult.textContent = '팀 이름을 변경했습니다.';
               } catch (error) {
-                  teamNameResult.textContent = '팀 이름 변경 요청 중 오류가 발생했습니다.';
+                  teamNameResult.textContent = error.message || '팀 이름 변경에 실패했습니다.';
               }
           });
       }
@@ -153,45 +134,27 @@
           }
 
           try {
-              const response = await fetch(`/teams/${teamId}/leave`, {
-                  method: 'DELETE',
-                  headers: {
-                      'Accept': 'application/json',
-                      'X-Requested-With': 'XMLHttpRequest',
-                      'X-XSRF-TOKEN': csrfHeader()
-                  }
+              await apiRequest(`/teams/${teamId}/leave`, {
+                  method: 'DELETE'
               });
-              const result = await response.json();
-
-              if (!response.ok || !result.success) {
-                  leaveTeamResult.textContent = result.message || '팀 탈퇴에 실패했습니다.';
-                  return;
-              }
 
               window.location.href = '/teams/list';
           } catch (error) {
-              leaveTeamResult.textContent = '팀 탈퇴 요청 중 오류가 발생했습니다.';
+              leaveTeamResult.textContent = error.message || '팀 탈퇴에 실패했습니다.';
           }
       });
 
       inviteForm?.addEventListener('submit', async (event) => {
           event.preventDefault();
-          const response = await fetch(`/teams/${teamId}/invites`, {
-              method: 'POST',
-              headers: {
-                  'Accept': 'application/json',
-                  'X-Requested-With': 'XMLHttpRequest',
-                  'Content-Type': 'application/json',
-                  'X-XSRF-TOKEN': csrfHeader()
-              },
-              body: JSON.stringify({email: inviteEmail.value})
-          });
-          const result = await response.json();
-          if (!response.ok || !result.success) {
-              inviteResult.textContent = '초대 링크 생성에 실패했습니다.';
-              return;
+          try {
+              const invite = await apiRequest(`/teams/${teamId}/invites`, {
+                  method: 'POST',
+                  json: {email: inviteEmail.value}
+              });
+              await copyInviteLink(invite.code);
+          } catch (error) {
+              inviteResult.textContent = error.message || '초대 링크 생성에 실패했습니다.';
           }
-          await copyInviteLink(result.data.code);
       });
 
       document.querySelectorAll('.role-update-button').forEach((button) => {
@@ -199,17 +162,15 @@
               const row = button.closest('tr');
               const memberId = row.dataset.memberId;
               const role = row.querySelector('.role-select').value;
-              const response = await fetch(`/teams/${teamId}/members/${memberId}/role`, {
-                  method: 'PATCH',
-                  headers: {
-                      'Accept': 'application/json',
-                      'X-Requested-With': 'XMLHttpRequest',
-                      'Content-Type': 'application/json',
-                      'X-XSRF-TOKEN': csrfHeader()
-                  },
-                  body: JSON.stringify({role})
-              });
-              memberResult.textContent = response.ok ? '권한을 변경했습니다.' : '권한 변경에 실패했습니다.';
+              try {
+                  await apiRequest(`/teams/${teamId}/members/${memberId}/role`, {
+                      method: 'PATCH',
+                      json: {role}
+                  });
+                  memberResult.textContent = '권한을 변경했습니다.';
+              } catch (error) {
+                  memberResult.textContent = error.message || '권한 변경에 실패했습니다.';
+              }
           });
       });
 
@@ -217,19 +178,14 @@
           button.addEventListener('click', async () => {
               const row = button.closest('tr');
               const memberId = row.dataset.memberId;
-              const response = await fetch(`/teams/${teamId}/members/${memberId}`, {
-                  method: 'DELETE',
-                  headers: {
-                      'Accept': 'application/json',
-                      'X-Requested-With': 'XMLHttpRequest',
-                      'X-XSRF-TOKEN': csrfHeader()
-                  }
-              });
-              if (response.ok) {
+              try {
+                  await apiRequest(`/teams/${teamId}/members/${memberId}`, {
+                      method: 'DELETE'
+                  });
                   row.remove();
                   memberResult.textContent = '멤버를 추방했습니다.';
-              } else {
-                  memberResult.textContent = '멤버 추방에 실패했습니다.';
+              } catch (error) {
+                  memberResult.textContent = error.message || '멤버 추방에 실패했습니다.';
               }
           });
       });

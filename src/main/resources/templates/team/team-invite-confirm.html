@@ -50,8 +50,6 @@
             const acceptButton = document.getElementById('accept-button');
             const declineButton = document.getElementById('decline-button');
             const inviteResult = document.getElementById('invite-result');
-            const csrfToken = document.querySelector('meta[name="_csrf"]').content;
-            const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
 
             async function submitInvite(method) {
                 acceptButton.disabled = true;
@@ -59,26 +57,13 @@
                 inviteResult.textContent = '초대 요청을 처리하고 있습니다.';
 
                 try {
-                    const response = await fetch('/teams/invite-confirm', {
+                    await apiRequest('/teams/invite-confirm', {
                         method,
-                        credentials: 'same-origin',
-                        headers: {
-                            'Accept': 'application/json',
-                            'X-Requested-With': 'XMLHttpRequest',
-                            'Content-Type': 'application/json',
-                            [csrfHeader]: csrfToken
-                        },
-                        body: JSON.stringify({code: inviteCode})
+                        cjson: {code: inviteCode}
                     });
-                    const result = await response.json();
-
-                    if (!response.ok || !result.success) {
-                        inviteResult.textContent = result.message || '초대 처리에 실패했습니다.';
-                        return;
-                    }
                     window.location.href = '/teams/invite-result';
                 } catch (error) {
-                    inviteResult.textContent = '초대 처리 요청 중 오류가 발생했습니다.';
+                    inviteResult.textContent = error.message || '초대 처리에 실패했습니다.';
                 } finally {
                     acceptButton.disabled = false;
                     declineButton.disabled = false;

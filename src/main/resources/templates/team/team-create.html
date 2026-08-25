@@ -40,13 +40,6 @@
             const createButton = document.getElementById('create-button');
             const createResult = document.getElementById('create-result');
 
-            function csrfHeader() {
-                const tokenCookie = document.cookie
-                    .split('; ')
-                    .find((cookie) => cookie.startsWith('XSRF-TOKEN='));
-                return tokenCookie ? decodeURIComponent(tokenCookie.split('=')[1]) : '';
-            }
-
             form.addEventListener('submit', async (event) => {
                 event.preventDefault();
 
@@ -61,27 +54,13 @@
                 createResult.textContent = '팀을 생성하고 있습니다.';
 
                 try {
-                    const response = await fetch(form.action, {
+                    await apiRequest(form.action, {
                         method: 'POST',
-                        credentials: 'same-origin',
-                        headers: {
-                            'Accept': 'application/json',
-                            'X-Requested-With': 'XMLHttpRequest',
-                            'Content-Type': 'application/json',
-                            'X-XSRF-TOKEN': csrfHeader()
-                        },
-                        body: JSON.stringify({name})
+                        json: {name}
                     });
-                    const result = await response.json();
-
-                    if (!response.ok || !result.success) {
-                        createResult.textContent = result.message || '팀 생성에 실패했습니다.';
-                        return;
-                    }
-
                     window.location.href = '/teams/list';
                 } catch (error) {
-                    createResult.textContent = '팀 생성 요청 중 오류가 발생했습니다.';
+                    createResult.textContent = error.message || '팀 생성에 실패했습니다.';
                 } finally {
                     createButton.disabled = false;
                 }

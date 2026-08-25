@@ -124,9 +124,6 @@
     </section>
 </div>
 <script>
-    const csrfToken = document.querySelector('meta[name="_csrf"]').content;
-    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
-
     document.querySelectorAll('.calendar-event-button').forEach((button) => {
         button.addEventListener('click', async () => {
             const resultElement = button.parentElement.querySelector('.calendar-event-result');
@@ -135,31 +132,17 @@
             resultElement.textContent = '';
 
             try {
-                const response = await fetch(
+                await apiRequest(
                     `/action-items/${button.dataset.actionItemId}/calendar`,
-                    {
-                        method: 'POST',
-                        headers: {
-                            'Accept': 'application/json',
-                            'X-Requested-With': 'XMLHttpRequest',
-                            [csrfHeader]: csrfToken
-                        }
-                    }
+                    {method: 'POST'}
                 );
-                const result = await response.json();
-
-                if (!response.ok || !result.success) {
-                if (result.errorCode === 'CALENDAR_PLAN_REQUIRED') {
-                        throw new Error(
-                            '구독이 종료되어 캘린더 신규 등록이 제한됩니다. Pro 이상 플랜을 이용해 주세요.'
-                        );
-                    }
-                    throw new Error(result.message || '캘린더 일정 등록에 실패했습니다.');
-                }
-
                 button.textContent = '등록 완료';
                 resultElement.textContent = 'Google Calendar에 일정을 등록했습니다.';
             } catch (error) {
+                if (error.errorCode === 'CALENDAR_PLAN_REQUIRED') {
+                    error.message =
+                        '구독이 종료되어 캘린더 신규 등록이 제한됩니다. Pro 이상 플랜을 이용해 주세요.';
+                }
                 button.disabled = false;
                 button.textContent = '캘린더 등록';
                 resultElement.textContent = error.message || '캘린더 일정 등록에 실패했습니다.';

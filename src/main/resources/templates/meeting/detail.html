@@ -171,8 +171,6 @@
 <script th:if="${canManage}" th:inline="javascript">
   const meetingId = /*[[${detail.meeting.id}]]*/ 0;
   const calendarAvailable = /*[[${calendarAvailable}]]*/ false;
-  const csrfToken = document.querySelector('meta[name="_csrf"]').content;
-  const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
   const meetingTitle = document.getElementById('meeting-title');
   const titleEditButton = document.getElementById('title-edit-button');
   const titleEditForm = document.getElementById('title-edit-form');
@@ -194,21 +192,6 @@
       assignee: formData.get('assignee').trim() || null,
       dueDate: formData.get('dueDate') || null
     };
-  }
-
-  async function requestJson(url, options) {
-    const response = await fetch(url, options);
-    const result = await response.json();
-
-    if (!response.ok || !result.success) {
-      if (result.errorCode === 'CALENDAR_PLAN_REQUIRED') {
-        throw new Error(
-          '구독이 종료되어 캘린더 신규 등록이 제한됩니다. Pro 이상 플랜을 이용해 주세요.'
-        );
-      }
-      throw new Error(result.message || '요청을 처리하지 못했습니다.');
-    }
-    return result.data;
   }
 
   function updateEmptyState() {
@@ -306,29 +289,17 @@
     submitButton.disabled = true;
 
     try {
-      const response = await fetch(`/meetings/${meetingId}/title`, {
+      await apiRequest(`/meetings/${meetingId}/title`, {
         method: 'PATCH',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-          [csrfHeader]: csrfToken
-        },
-        body: JSON.stringify({title})
+        json: {title}
       });
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
-        titleEditResult.textContent = result.message || '회의록 제목 변경에 실패했습니다.';
-        return;
-      }
 
       meetingTitle.textContent = title;
       titleInput.value = title;
       titleEditResult.textContent = '회의록 제목을 변경했습니다.';
       closeTitleEditForm();
     } catch (error) {
-      titleEditResult.textContent = '회의록 제목 변경 요청 중 오류가 발생했습니다.';
+      titleEditResult.textContent = error.message || '회의록 제목 변경에 실패했습니다.';
     } finally {
       submitButton.disabled = false;
     }
@@ -343,24 +314,13 @@
     meetingDeleteResult.textContent = '';
 
     try {
-      const response = await fetch(`/meetings/${meetingId}`, {
-        method: 'DELETE',
-        headers: {
-          'Accept': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-          [csrfHeader]: csrfToken
-        }
+      await apiRequest(`/meetings/${meetingId}`, {
+        method: 'DELETE'
       });
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
-        meetingDeleteResult.textContent = result.message || '회의록 삭제에 실패했습니다.';
-        return;
-      }
 
       window.location.href = '/meetings';
     } catch (error) {
-      meetingDeleteResult.textContent = '회의록 삭제 요청 중 오류가 발생했습니다.';
+      meetingDeleteResult.textContent = error.message || '회의록 삭제에 실패했습니다.';
     } finally {
       meetingDeleteButton.disabled = false;
     }
@@ -381,17 +341,16 @@
       resultElement.textContent = '';
 
       try {
-        await requestJson(`/action-items/${item.dataset.actionItemId}/calendar`, {
-          method: 'POST',
-          headers: {
-            'Accept': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-            [csrfHeader]: csrfToken
-          }
+        await apiRequest(`/action-items/${item.dataset.actionItemId}/calendar`, {
+          method: 'POST'
         });
         calendarButton.textContent = '캘린더 등록 완료';
         resultElement.textContent = 'Google Calendar에 일정을 등록했습니다.';
       } catch (error) {
+        if (error.errorCode === 'CALENDAR_PLAN_REQUIRED') {
+          error.message =
+            '구독이 종료되어 캘린더 신규 등록이 제한됩니다. Pro 이상 플랜을 이용해 주세요.';
+        }
         calendarButton.disabled = false;
         calendarButton.textContent = '캘린더 등록';
         resultElement.textContent = error.message || '캘린더 일정 등록에 실패했습니다.';
@@ -425,15 +384,9 @@
       resultElement.textContent = '';
 
       try {
-        await requestJson(`/action-items/${item.dataset.actionItemId}`, {
+        await apiRequest(`/action-items/${item.dataset.actionItemId}`, {
           method: 'PATCH',
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-            [csrfHeader]: csrfToken
-          },
-          body: JSON.stringify(payload)
+          json: payload
         });
         updateActionItemView(item, payload);
         editForm.hidden = true;
@@ -455,13 +408,8 @@
       resultElement.textContent = '';
 
       try {
-        await requestJson(`/action-items/${item.dataset.actionItemId}`, {
-          method: 'DELETE',
-          headers: {
-            'Accept': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-            [csrfHeader]: csrfToken
-          }
+        await apiRequest(`/action-items/${item.dataset.actionItemId}`, {
+          method: 'DELETE'
         });
         item.remove();
         updateEmptyState();
@@ -479,15 +427,9 @@
       resultElement.textContent = '';
 
       try {
-        await requestJson(`/action-items/${target.dataset.actionItemId}/status`, {
+        await apiRequest(`/action-items/${target.dataset.actionItemId}/status`, {
           method: 'PATCH',
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-            [csrfHeader]: csrfToken
-          },
-          body: JSON.stringify({status: target.value})
+          json: {status: target.value}
         });
 
         target.dataset.previousStatus = target.value;
@@ -530,15 +472,9 @@
     actionItemResult.textContent = '';
 
     try {
-      const actionItem = await requestJson(`/meetings/${meetingId}/action-items`, {
+      const actionItem = await apiRequest(`/meetings/${meetingId}/action-items`, {
         method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-          [csrfHeader]: csrfToken
-        },
-        body: JSON.stringify(payload)
+        json: payload
       });
       actionItemList.append(createActionItemElement(actionItem));
       actionItemCreateForm.reset();
