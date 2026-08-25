@@ -76,10 +76,21 @@ public class TossPaymentClient {
                         response.code(),
                         body
                 );
-                throw new CustomException(ErrorCode.PAYMENT_CONFIRM_FAILED);
+                throw new CustomException(
+                        ErrorCode.PAYMENT_CONFIRM_FAILED,
+                        new IllegalStateException(
+                                "Toss confirm status=" + response.code() + ", body=" + body
+                        )
+                );
             }
             return objectMapper.readValue(body, TossPaymentResponse.class);
         } catch (IOException exception) {
+            log.error(
+                    "토스페이먼츠 승인 통신 실패: orderId={}, reason={}",
+                    request.orderId(),
+                    exception.getMessage(),
+                    exception
+            );
             throw new TossPaymentNetworkException(exception);
         }
     }
@@ -110,10 +121,21 @@ public class TossPaymentClient {
                         response.code(),
                         body
                 );
-                throw new CustomException(ErrorCode.PAYMENT_CONFIRM_FAILED);
+                throw new CustomException(
+                        ErrorCode.PAYMENT_CONFIRM_FAILED,
+                        new IllegalStateException(
+                                "Toss lookup status=" + response.code() + ", body=" + body
+                        )
+                );
             }
             return Optional.of(objectMapper.readValue(body, TossPaymentResponse.class));
         } catch (IOException exception) {
+            log.error(
+                    "토스페이먼츠 결제 조회 통신 실패: orderId={}, reason={}",
+                    orderId,
+                    exception.getMessage(),
+                    exception
+            );
             throw new TossPaymentNetworkException(exception);
         }
     }
@@ -180,7 +202,13 @@ public class TossPaymentClient {
                     "amount", request.amount()
             ));
         } catch (JsonProcessingException exception) {
-            throw new CustomException(ErrorCode.INTERNAL_ERROR);
+            log.error(
+                    "토스페이먼츠 승인 요청 직렬화 실패: orderId={}, reason={}",
+                    request.orderId(),
+                    exception.getMessage(),
+                    exception
+            );
+            throw new CustomException(ErrorCode.INTERNAL_ERROR, exception);
         }
     }
 }

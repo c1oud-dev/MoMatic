@@ -61,11 +61,15 @@ public class WhisperClient {
             String body = responseBody == null ? "" : responseBody.string();
             if (!response.isSuccessful()) {
                 log.error("Whisper API 호출 실패: status={}, body={}", response.code(), body);
-                throw new CustomException(ErrorCode.INTERNAL_ERROR);
+                throw new CustomException(
+                        ErrorCode.INTERNAL_ERROR,
+                        new IllegalStateException("Whisper API status=" + response.code() + ", body=" + body)
+                );
             }
             return parseText(body);
         } catch (IOException exception) {
-            throw new CustomException(ErrorCode.INTERNAL_ERROR);
+            log.error("Whisper API 통신 실패: reason={}", exception.getMessage(), exception);
+            throw new CustomException(ErrorCode.INTERNAL_ERROR, exception);
         }
     }
 
@@ -84,7 +88,8 @@ public class WhisperClient {
             }
             return textNode.asText();
         } catch (IOException exception) {
-            throw new CustomException(ErrorCode.INTERNAL_ERROR);
+            log.error("Whisper API 응답 파싱 실패: body={}", responseBody, exception);
+            throw new CustomException(ErrorCode.INTERNAL_ERROR, exception);
         }
     }
 }
