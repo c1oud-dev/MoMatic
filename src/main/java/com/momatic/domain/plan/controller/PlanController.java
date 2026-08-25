@@ -6,6 +6,9 @@ import com.momatic.domain.subscription.entity.Subscription;
 import com.momatic.domain.subscription.service.SubscriptionService;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -38,11 +41,15 @@ public class PlanController {
 
         if (principal != null) {
             String email = principal.getAttribute("email");
-            String currentPlan = subscriptionService.getActiveSubscription(email)
+            PlanPolicy currentPlan = subscriptionService.getActiveSubscription(email)
                     .map(Subscription::getPlanType)
-                    .orElse(PlanPolicy.FREE)
-                    .name();
-            model.addAttribute("currentPlan", currentPlan);
+                    .orElse(PlanPolicy.FREE);
+            Set<String> upgradePlans = Arrays.stream(PlanPolicy.values())
+                    .filter(plan -> plan.isUpgradeFrom(currentPlan))
+                    .map(PlanPolicy::name)
+                    .collect(Collectors.toSet());
+            model.addAttribute("currentPlan", currentPlan.name());
+            model.addAttribute("upgradePlans", upgradePlans);
         }
 
         return "plan/index";

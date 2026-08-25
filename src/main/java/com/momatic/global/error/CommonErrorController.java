@@ -59,8 +59,8 @@ public class CommonErrorController implements ErrorController {
      */
     private ErrorCode resolveErrorCode(HttpServletRequest request) {
         Object statusAttribute = request.getAttribute(RequestDispatcher.ERROR_STATUS_CODE);
-        int status = statusAttribute instanceof Integer
-                ? (Integer) statusAttribute
+        int status = statusAttribute instanceof Number number
+                ? number.intValue()
                 : HttpStatus.INTERNAL_SERVER_ERROR.value();
         return Map.of(
                         HttpStatus.UNAUTHORIZED.value(), ErrorCode.UNAUTHORIZED,

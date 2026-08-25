@@ -15,6 +15,7 @@ public enum ErrorCode {
     TEAM_INVITE_NOT_FOUND(HttpStatus.NOT_FOUND, "유효하지 않은 초대 링크입니다"),
     INVALID_REQUEST(HttpStatus.BAD_REQUEST, "잘못된 요청입니다."),
     INVALID_PLAN_TYPE(HttpStatus.BAD_REQUEST, "지원하지 않는 플랜입니다."),
+    PLAN_DOWNGRADE_NOT_ALLOWED(HttpStatus.CONFLICT, "현재 플랜보다 높은 플랜만 결제할 수 있습니다."),
     SUBSCRIPTION_NOT_FOUND(HttpStatus.NOT_FOUND, "구독 정보를 찾을 수 없습니다."),
     SUBSCRIPTION_ALREADY_CANCEL_REQUESTED(HttpStatus.CONFLICT, "이미 구독 취소가 예약되어 있습니다."),
     TEAM_PLAN_REQUIRED(HttpStatus.FORBIDDEN, "팀 플랜 사용자만 팀을 생성할 수 있습니다."),

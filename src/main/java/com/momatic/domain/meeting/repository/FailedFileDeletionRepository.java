@@ -15,6 +15,14 @@ import org.springframework.data.jpa.repository.Lock;
 public interface FailedFileDeletionRepository extends JpaRepository<FailedFileDeletion, Long> {
 
     /**
+     * 지정한 저장 파일명 접두사의 삭제 기록 존재 여부를 확인합니다.
+     *
+     * @param storedFileNamePrefix 저장 파일명 접두사
+     * @return 일치하는 기록이 있으면 {@code true}
+     */
+    boolean existsByStoredFileNameStartingWith(String storedFileNamePrefix);
+
+    /**
      * 상태에 해당하는 파일 삭제 실패 기록 목록을 조회합니다.
      *
      * @param status 조회할 삭제 실패 상태

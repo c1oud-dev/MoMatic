@@ -34,7 +34,7 @@ public class UserSyncService {
                     return userRepository.save(found);
                 })
                 .orElseGet(() -> userRepository.save(
-                        User.create(email, name, "ROLE_USER", "google", email)
+                        User.create(email, name, "USER", "google", email)
                 ));
     }
 }

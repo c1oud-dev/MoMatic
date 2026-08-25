@@ -94,4 +94,11 @@ public class Payment extends BaseEntity {
     public void cancel() {
         this.status = PaymentStatus.CANCELLED;
     }
+
+    /** 승인 대기 결제를 만료 상태로 변경합니다. */
+    public void expire() {
+        if (this.status == PaymentStatus.PENDING) {
+            this.status = PaymentStatus.EXPIRED;
+        }
+    }
 }
