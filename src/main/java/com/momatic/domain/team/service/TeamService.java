@@ -145,8 +145,19 @@ public class TeamService {
         }
 
         TeamInvite invite = teamInviteRepository.save(TeamInvite.create(team, inviter, inviteeEmail));
+        initializeInviteMailAssociations(invite);
         sendTeamInviteAfterCommit(invite);
         return invite;
+    }
+
+    /**
+     * 커밋 이후 메일 발송에서 사용할 초대 연관 정보를 트랜잭션 안에서 초기화합니다.
+     *
+     * @param invite 초기화할 팀 초대
+     */
+    private void initializeInviteMailAssociations(TeamInvite invite) {
+        invite.getTeam().getName();
+        invite.getInviter().getName();
     }
 
     /**
