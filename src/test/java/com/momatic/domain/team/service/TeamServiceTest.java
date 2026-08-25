@@ -227,6 +227,10 @@ class TeamServiceTest {
         when(teamMemberRepository.existsByTeamIdAndUserId(TEAM_ID, member.getId()))
                 .thenReturn(false);
         when(teamMemberRepository.countByTeamId(TEAM_ID)).thenReturn(1L);
+        when(teamMemberRepository.save(any(TeamMember.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(teamMemberRepository.findByIdAndTeamId(any(), any()))
+                .thenReturn(Optional.of(mock(TeamMember.class)));
 
         // when
         teamService.joinTeam(invite.getCode(), INVITEE_EMAIL);
