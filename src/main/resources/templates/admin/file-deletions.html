@@ -4,8 +4,6 @@
     <meta charset="UTF-8" />
     <link rel="stylesheet" th:href="@{/css/common.css}" />
     <title>관리자 파일 삭제 재시도 큐</title>
-    <meta name="_csrf" th:content="${_csrf.token}" />
-    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
 </head>
 <body>
 <div th:replace="~{layouts/default :: layout(~{::section})}">
@@ -55,8 +53,6 @@
     </section>
 </div>
 <script>
-    const csrfToken = document.querySelector('meta[name="_csrf"]').content;
-    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
     const statusLabels = {
       PENDING: '대기 중',
       GIVEN_UP: '포기',
@@ -86,11 +82,6 @@
       return cell;
     }
 
-    async function parseError(response, fallbackMessage) {
-      const body = await response.json().catch(() => null);
-      return body?.message || fallbackMessage;
-    }
-
     async function retryDeletion(id, button) {
       if (!window.confirm('이 파일 삭제를 다시 시도하시겠습니까?')) {
         return;
@@ -98,17 +89,9 @@
 
       button.disabled = true;
       try {
-        const response = await fetch(`/admin/file-deletions/${id}/retry`, {
-          method: 'POST',
-          headers: {
-            'Accept': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-            [csrfHeader]: csrfToken
-          }
+        await apiRequest(`/admin/file-deletions/${id}/retry`, {
+          method: 'POST'
         });
-        if (!response.ok) {
-          throw new Error(await parseError(response, '수동 재시도 요청에 실패했습니다.'));
-        }
         document.getElementById('result-message').textContent = '재시도 대기 상태로 변경했습니다.';
         currentPage = 0;
         await loadDeletions();
@@ -164,17 +147,8 @@
       }
 
       try {
-        const response = await fetch(`/admin/file-deletions?${params}`, {
-          headers: {
-            'Accept': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest'
-          }
-        });
-        if (!response.ok) {
-          throw new Error(await parseError(response, '목록을 불러오지 못했습니다.'));
-        }
-        const body = await response.json();
-        renderPage(body.data);
+        const data = await apiRequest(`/admin/file-deletions?${params}`);
+        renderPage(data);
       } catch (error) {
         document.getElementById('result-message').textContent = error.message;
       }

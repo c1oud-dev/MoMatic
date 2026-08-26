@@ -19,6 +19,7 @@ import java.util.Set;
 
 import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -27,6 +28,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 /** 회의 파일 업로드 서비스입니다. */
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class MeetingUploadService {
 
@@ -142,7 +144,16 @@ public class MeetingUploadService {
             /** 업로드 트랜잭션 커밋 이후 회의 처리를 요청합니다. */
             @Override
             public void afterCommit() {
-                meetingProcessingService.processMeeting(meetingId);
+                try {
+                    meetingProcessingService.processMeeting(meetingId);
+                } catch (RuntimeException exception) {
+                    log.error(
+                            "커밋 후 회의 처리 요청 실패: meetingId={}, reason={}",
+                            meetingId,
+                            exception.getMessage(),
+                            exception
+                    );
+                }
             }
         });
     }

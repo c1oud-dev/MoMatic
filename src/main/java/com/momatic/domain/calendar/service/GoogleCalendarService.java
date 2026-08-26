@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
@@ -24,9 +25,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
 
 /** Google Calendar 외부 API 연동을 처리하는 서비스입니다. */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class GoogleCalendarService {
@@ -91,7 +94,8 @@ public class GoogleCalendarService {
             }
             actionItem.assignCalendarEventId(String.valueOf(responseBody.get("id")));
         } catch (RestClientException ex) {
-            throw new CustomException(ErrorCode.INTERNAL_ERROR);
+            logExternalApiFailure("일정 생성", ex);
+            throw new CustomException(ErrorCode.INTERNAL_ERROR, ex);
         }
     }
 
@@ -120,7 +124,8 @@ public class GoogleCalendarService {
                     Void.class
             );
         } catch (RestClientException ex) {
-            throw new CustomException(ErrorCode.INTERNAL_ERROR);
+            logExternalApiFailure("일정 삭제", ex);
+            throw new CustomException(ErrorCode.INTERNAL_ERROR, ex);
         }
     }
 
@@ -176,8 +181,35 @@ public class GoogleCalendarService {
             user.updateGoogleToken(accessToken, user.getGoogleRefreshToken(), expiresAt);
             return accessToken;
         } catch (RestClientException ex) {
-            throw new CustomException(ErrorCode.INTERNAL_ERROR);
+            logExternalApiFailure("토큰 갱신", ex);
+            throw new CustomException(ErrorCode.INTERNAL_ERROR, ex);
         }
+    }
+
+    /**
+     * Google 외부 API 실패의 응답 상태와 본문 또는 통신 실패 원인을 기록합니다.
+     *
+     * @param operation 실패한 작업
+     * @param exception 외부 API 호출 예외
+     */
+    private void logExternalApiFailure(String operation,
+                                       RestClientException exception) {
+        if (exception instanceof RestClientResponseException responseException) {
+            log.error(
+                    "Google Calendar API {} 실패: status={}, body={}",
+                    operation,
+                    responseException.getStatusCode().value(),
+                    responseException.getResponseBodyAsString(),
+                    exception
+            );
+            return;
+        }
+        log.error(
+                "Google Calendar API {} 통신 실패: reason={}",
+                operation,
+                exception.getMessage(),
+                exception
+        );
     }
 
     /**

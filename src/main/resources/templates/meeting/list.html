@@ -35,7 +35,7 @@
       </nav>
       <a th:href="@{/meetings/upload}">회의록 업로드</a>
       <form method="get" action="/meetings" th:if="${team == null}">
-        <input type="text" name="keyword" th:value="${keyword}" placeholder="제목 또는 내용 검색" />
+        <input type="text" name="keyword" th:value="${keyword}" placeholder="제목 또는 요약 검색" />
         <button type="submit">검색</button>
       </form>
     </header>

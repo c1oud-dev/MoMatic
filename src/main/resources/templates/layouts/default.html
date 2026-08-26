@@ -10,6 +10,11 @@
 </head>
 <body>
 <div th:fragment="layout(content)" class="layout-root">
+    <th:block th:if="${_csrf != null}">
+        <meta name="_csrf" th:content="${_csrf.token}" />
+        <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+    </th:block>
+    <script th:src="@{/js/api-request.js}"></script>
     <div th:replace="~{fragments/header :: header}"></div>
 
     <!--

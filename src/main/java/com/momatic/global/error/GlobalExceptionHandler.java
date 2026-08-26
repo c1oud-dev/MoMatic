@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 /**
@@ -16,6 +17,34 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 @ControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
+
+    /**
+     * 서버 멀티파트 제한을 초과한 요청을 요청 유형에 맞게 처리합니다.
+     *
+     * @param exception 멀티파트 업로드 크기 초과 예외
+     * @param request HTTP 요청
+     * @param response HTTP 응답
+     * @return 공통 오류 화면 또는 JSON 응답
+     */
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public Object handleMaxUploadSizeExceeded(MaxUploadSizeExceededException exception,
+                                              HttpServletRequest request,
+                                              HttpServletResponse response) {
+        ErrorCode errorCode = ErrorCode.UPLOAD_REQUEST_SIZE_EXCEEDED;
+        log.warn("멀티파트 업로드 크기가 서버 제한을 초과했습니다: method={}, uri={}",
+                request.getMethod(),
+                request.getRequestURI(),
+                exception);
+        if (RequestTypeResolver.isAjaxRequest(request)) {
+            return ResponseEntity.status(errorCode.getStatus())
+                    .body(ApiResponse.fail(errorCode.name(), errorCode.getMessage()));
+        }
+
+        request.setAttribute("errorCode", errorCode.name());
+        request.setAttribute("errorMessage", errorCode.getMessage());
+        response.setStatus(errorCode.getStatus().value());
+        return "error/common";
+    }
 
     /**
      * 존재하지 않는 정적 리소스 요청을 404 응답으로 처리합니다.

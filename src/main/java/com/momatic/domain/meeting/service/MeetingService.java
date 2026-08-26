@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.util.List;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.lang.Nullable;
@@ -27,6 +28,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 /**
  * 회의 도메인 서비스입니다.
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class MeetingService {
@@ -96,7 +98,7 @@ public class MeetingService {
     @Transactional(readOnly = true)
     public Meeting findMeeting(Long id) {
         return meetingRepository.findById(id)
-                .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REQUEST));
+                .orElseThrow(() -> new CustomException(ErrorCode.MEETING_NOT_FOUND));
     }
 
     /**
@@ -256,8 +258,23 @@ public class MeetingService {
             public void afterCommit() {
                 try {
                     meetingFileStorageService.deleteFile(storedFileName);
-                } catch (IOException exception) {
-                    meetingFileDeletionRetryService.recordFailure(storedFileName);
+                } catch (RuntimeException | IOException exception) {
+                    log.error(
+                            "커밋 후 회의 파일 삭제 실패: storedFileName={}, reason={}",
+                            storedFileName,
+                            exception.getMessage(),
+                            exception
+                    );
+                    try {
+                        meetingFileDeletionRetryService.recordFailure(storedFileName);
+                    } catch (RuntimeException retryException) {
+                        log.error(
+                                "회의 파일 삭제 재시도 기록 실패: storedFileName={}, reason={}",
+                                storedFileName,
+                                retryException.getMessage(),
+                                retryException
+                        );
+                    }
                 }
             }
         });

@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Component;
 
 /** OpenAI GPT API를 호출하여 회의 요약과 액션 아이템을 생성하는 클라이언트입니다. */
 @Component
+@Slf4j
 @RequiredArgsConstructor
 public class GptClient {
 
@@ -53,11 +55,16 @@ public class GptClient {
             ResponseBody responseBody = response.body();
             String body = responseBody == null ? "" : responseBody.string();
             if (!response.isSuccessful()) {
-                throw new CustomException(ErrorCode.INTERNAL_ERROR);
+                log.error("GPT API 호출 실패: status={}, body={}", response.code(), body);
+                throw new CustomException(
+                        ErrorCode.INTERNAL_ERROR,
+                        new IllegalStateException("GPT API status=" + response.code() + ", body=" + body)
+                );
             }
             return parseResult(body);
         } catch (IOException exception) {
-            throw new CustomException(ErrorCode.INTERNAL_ERROR);
+            log.error("GPT API 통신 실패: reason={}", exception.getMessage(), exception);
+            throw new CustomException(ErrorCode.INTERNAL_ERROR, exception);
         }
     }
 
@@ -88,7 +95,8 @@ public class GptClient {
         try {
             return objectMapper.writeValueAsString(request);
         } catch (JsonProcessingException exception) {
-            throw new CustomException(ErrorCode.INTERNAL_ERROR);
+            log.error("GPT API 요청 직렬화 실패: reason={}", exception.getMessage(), exception);
+            throw new CustomException(ErrorCode.INTERNAL_ERROR, exception);
         }
     }
 
@@ -109,7 +117,8 @@ public class GptClient {
             validateResult(result);
             return result;
         } catch (IOException exception) {
-            throw new CustomException(ErrorCode.INTERNAL_ERROR);
+            log.error("GPT API 응답 파싱 실패: body={}", responseBody, exception);
+            throw new CustomException(ErrorCode.INTERNAL_ERROR, exception);
         }
     }
 

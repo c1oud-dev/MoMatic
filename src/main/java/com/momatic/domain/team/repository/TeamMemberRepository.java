@@ -65,7 +65,7 @@ public interface TeamMemberRepository extends JpaRepository<TeamMember, Long> {
      * @param teamId 팀 ID
      * @return 팀 구성원 목록
      */
-    @EntityGraph(attributePaths = {"user"})
+    @EntityGraph(attributePaths = {"team", "user"})
     List<TeamMember> findAllByTeamIdOrderByCreatedAtAsc(Long teamId);
 
     /**

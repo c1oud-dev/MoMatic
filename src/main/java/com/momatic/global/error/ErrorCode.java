@@ -13,6 +13,7 @@ public enum ErrorCode {
     TEAM_NOT_FOUND(HttpStatus.NOT_FOUND, "팀을 찾을 수 없습니다."),
     TEAM_MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "팀 구성원을 찾을 수 없습니다."),
     TEAM_INVITE_NOT_FOUND(HttpStatus.NOT_FOUND, "유효하지 않은 초대 링크입니다"),
+    MEETING_NOT_FOUND(HttpStatus.NOT_FOUND, "회의를 찾을 수 없습니다."),
     INVALID_REQUEST(HttpStatus.BAD_REQUEST, "잘못된 요청입니다."),
     INVALID_PLAN_TYPE(HttpStatus.BAD_REQUEST, "지원하지 않는 플랜입니다."),
     PLAN_DOWNGRADE_NOT_ALLOWED(HttpStatus.CONFLICT, "현재 플랜보다 높은 플랜만 결제할 수 있습니다."),
@@ -38,6 +39,7 @@ public enum ErrorCode {
     FILE_DELETION_RETRY_NOT_GIVEN_UP(HttpStatus.CONFLICT, "포기 상태인 파일 삭제 기록만 수동 재시도할 수 있습니다."),
     INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다."),
     UPLOAD_INVALID_FILE_TYPE(HttpStatus.BAD_REQUEST, "허용되지 않은 파일 형식입니다."),
+    UPLOAD_REQUEST_SIZE_EXCEEDED(HttpStatus.PAYLOAD_TOO_LARGE, "서버에서 처리할 수 있는 업로드 크기를 초과했습니다."),
     UPLOAD_FILE_SIZE_EXCEEDED(HttpStatus.BAD_REQUEST, "플랜 허용 파일 크기를 초과했습니다. 요금제를 업그레이드해 주세요."),
     UPLOAD_MONTHLY_LIMIT_EXCEEDED(HttpStatus.TOO_MANY_REQUESTS, "월 업로드 가능 횟수를 초과했습니다. 요금제를 업그레이드해 주세요.");
 

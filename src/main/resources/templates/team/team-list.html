@@ -61,21 +61,10 @@
 
             async function loadTeams() {
                 try {
-                    const response = await fetch('/teams', {
-                        headers: {
-                            'Accept': 'application/json'
-                        }
-                    });
-                    const result = await response.json();
-
-                    if (!response.ok || !result.success) {
-                        statusMessage.textContent = result.message || '팀 목록을 불러오지 못했습니다.';
-                        return;
-                    }
-
-                    renderTeams(result.data || []);
+                    const teams = await apiRequest('/teams');
+                    renderTeams(teams || []);
                 } catch (error) {
-                    statusMessage.textContent = '팀 목록 요청 중 오류가 발생했습니다.';
+                    statusMessage.textContent = error.message || '팀 목록을 불러오지 못했습니다.';
                 }
             }
 
