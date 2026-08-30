@@ -15,6 +15,7 @@ import java.time.LocalDate;
  * @param dueDate 마감일
  * @param status 진행 상태
  * @param calendarEventRegistered Google Calendar 일정 등록 여부
+ * @param editable 요청 사용자의 편집 가능 여부
  */
 public record ActionItemResponse(
         Long id,
@@ -23,7 +24,8 @@ public record ActionItemResponse(
         String assignee,
         LocalDate dueDate,
         ActionStatus status,
-        boolean calendarEventRegistered
+        boolean calendarEventRegistered,
+        boolean editable
 ) {
 
     /**
@@ -33,6 +35,18 @@ public record ActionItemResponse(
      * @return 액션 아이템 응답 DTO
      */
     public static ActionItemResponse from(ActionItem actionItem) {
+        return from(actionItem, true);
+    }
+
+    /**
+     * 엔티티와 요청 사용자의 편집 권한을 DTO로 변환합니다.
+     *
+     * @param actionItem 액션 아이템 엔티티
+     * @param editable 요청 사용자의 편집 가능 여부
+     * @return 액션 아이템 응답 DTO
+     */
+    public static ActionItemResponse from(ActionItem actionItem,
+                                          boolean editable) {
         return new ActionItemResponse(
                 actionItem.getId(),
                 actionItem.getMeeting().getTitle(),
@@ -40,7 +54,8 @@ public record ActionItemResponse(
                 actionItem.getAssignee(),
                 actionItem.getDueDate(),
                 actionItem.getStatus(),
-                actionItem.getGoogleCalendarEventId() != null
+                actionItem.getGoogleCalendarEventId() != null,
+                editable
         );
     }
 }

@@ -57,7 +57,7 @@
                 try {
                     await apiRequest('/teams/invite-confirm', {
                         method,
-                        cjson: {code: inviteCode}
+                        json: {code: inviteCode}
                     });
                     window.location.href = '/teams/invite-result';
                 } catch (error) {

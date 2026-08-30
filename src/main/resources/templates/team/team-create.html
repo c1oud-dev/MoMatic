@@ -14,7 +14,14 @@
             <p>함께 회의록과 액션 아이템을 관리할 팀을 만들어 보세요.</p>
         </header>
 
-        <form id="team-create-form" th:action="@{/teams}" method="post">
+        <p th:unless="${canCreateTeam}">
+            팀 생성은 Team 플랜에서 사용할 수 있습니다.
+            <a th:href="@{/plans}">플랜 확인</a>
+        </p>
+        <form th:if="${canCreateTeam}"
+              id="team-create-form"
+              th:action="@{/teams}"
+              method="post">
             <label for="team-name">팀 이름</label>
             <input
                     id="team-name"
@@ -34,7 +41,7 @@
 
         <p id="create-result" role="alert" aria-live="polite"></p>
 
-        <script>
+        <script th:if="${canCreateTeam}">
             const form = document.getElementById('team-create-form');
             const nameInput = document.getElementById('team-name');
             const createButton = document.getElementById('create-button');

@@ -3,6 +3,7 @@ package com.momatic.domain.actionItem.controller;
 import com.momatic.domain.actionItem.dto.ActionItemResponse;
 import com.momatic.domain.actionItem.entity.ActionStatus;
 import com.momatic.domain.actionItem.service.ActionItemService;
+import com.momatic.domain.meeting.service.MeetingPermissionService;
 import com.momatic.domain.plan.service.PlanAccessChecker;
 import com.momatic.global.security.AuthenticatedUserResolver;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 public class ActionItemPageController {
 
     private final ActionItemService actionItemService;
+    private final MeetingPermissionService meetingPermissionService;
     private final PlanAccessChecker planAccessChecker;
 
     /**
@@ -42,11 +44,15 @@ public class ActionItemPageController {
                                   @RequestParam(defaultValue = "20") int size,
                                   @AuthenticationPrincipal OAuth2User principal,
                                   Model model) {
+        String requesterEmail = AuthenticatedUserResolver.getEmail(principal);
         Page<ActionItemResponse> actionItems = actionItemService.findAllAccessible(
-                AuthenticatedUserResolver.getEmail(principal),
+                requesterEmail,
                 status,
                 PageRequest.of(page, size, Sort.by(sort))
-        ).map(ActionItemResponse::from);
+        ).map(actionItem -> ActionItemResponse.from(
+                actionItem,
+                meetingPermissionService.isEditable(actionItem.getMeeting(), requesterEmail)
+        ));
         model.addAttribute("actionItems", actionItems);
         model.addAttribute("selectedStatus", status);
         model.addAttribute("statuses", ActionStatus.values());

@@ -39,6 +39,7 @@ public interface ActionItemRepository extends JpaRepository<ActionItem, Long> {
      * @param meetingId 회의 ID
      * @return 액션 아이템 목록
      */
+    @EntityGraph(attributePaths = {"meeting", "meeting.owner", "meeting.team"})
     List<ActionItem> findByMeetingId(Long meetingId);
 
     /**
@@ -67,7 +68,7 @@ public interface ActionItemRepository extends JpaRepository<ActionItem, Long> {
      * @param pageable 페이징 정보
      * @return 액션 아이템 페이지
      */
-    @EntityGraph(attributePaths = {"meeting"})
+    @EntityGraph(attributePaths = {"meeting", "meeting.owner", "meeting.team"})
     Page<ActionItem> findByMeetingOwnerEmail(String ownerEmail, Pageable pageable);
 
     /**
@@ -88,7 +89,7 @@ public interface ActionItemRepository extends JpaRepository<ActionItem, Long> {
      * @param pageable 페이징 정보
      * @return 액션 아이템 페이지
      */
-    @EntityGraph(attributePaths = {"meeting"})
+    @EntityGraph(attributePaths = {"meeting", "meeting.owner", "meeting.team"})
     @Query("""
             SELECT actionItem
             FROM ActionItem actionItem
@@ -111,7 +112,7 @@ public interface ActionItemRepository extends JpaRepository<ActionItem, Long> {
      * @param pageable 페이징 정보
      * @return 액션 아이템 페이지
      */
-    @EntityGraph(attributePaths = {"meeting"})
+    @EntityGraph(attributePaths = {"meeting", "meeting.owner", "meeting.team"})
     @Query("""
             SELECT actionItem
             FROM ActionItem actionItem

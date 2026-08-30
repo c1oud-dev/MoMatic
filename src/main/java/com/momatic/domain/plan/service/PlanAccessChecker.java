@@ -52,6 +52,16 @@ public class PlanAccessChecker {
     }
 
     /**
+     * 인증 사용자가 팀을 생성할 수 있는지 확인합니다.
+     *
+     * @param principal OAuth2 인증 사용자 정보
+     * @return 팀 플랜 사용자이면 {@code true}
+     */
+    public boolean isTeamCreationAvailable(OAuth2User principal) {
+        return getActivePlan(principal) == PlanPolicy.TEAM;
+    }
+
+    /**
      * OAuth2 인증 사용자의 활성 플랜을 조회합니다.
      *
      * @param principal OAuth2 인증 사용자 정보
