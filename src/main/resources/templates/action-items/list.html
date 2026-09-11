@@ -94,7 +94,8 @@
           </span>
                 </td>
                 <td>
-                    <button class="calendar-event-button"
+                    <button th:if="${actionItem.editable}"
+                            class="calendar-event-button"
                             type="button"
                             th:data-action-item-id="${actionItem.id}"
                             th:disabled="${actionItem.calendarEventRegistered
@@ -104,6 +105,7 @@
                                 : (${calendarAvailable} ? '캘린더 등록' : 'Pro 이상 플랜 필요')">
                         캘린더 등록
                     </button>
+                    <span th:unless="${actionItem.editable}">조회 전용</span>
                     <span class="calendar-event-result"
                           role="alert"
                           aria-live="polite"></span>

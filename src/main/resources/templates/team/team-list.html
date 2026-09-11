@@ -11,7 +11,11 @@
         <header>
             <h1>팀 목록</h1>
             <p>소속된 팀을 선택해 팀 대시보드로 이동하세요.</p>
-            <a th:href="@{/teams/create}">새 팀 생성</a>
+            <a th:if="${canCreateTeam}" th:href="@{/teams/create}">새 팀 생성</a>
+            <span th:unless="${canCreateTeam}">
+                팀 생성은 Team 플랜에서 사용할 수 있습니다.
+                <a th:href="@{/plans}">플랜 확인</a>
+            </span>
         </header>
 
         <p id="team-list-status" aria-live="polite">팀 목록을 불러오고 있습니다.</p>

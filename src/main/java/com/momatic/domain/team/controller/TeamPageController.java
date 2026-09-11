@@ -2,6 +2,7 @@ package com.momatic.domain.team.controller;
 
 import com.momatic.domain.meeting.dto.MeetingResponse;
 import com.momatic.domain.meeting.service.MeetingService;
+import com.momatic.domain.plan.service.PlanAccessChecker;
 import com.momatic.domain.team.dto.TeamDashboardResponse;
 import com.momatic.domain.team.dto.TeamMemberResponse;
 import com.momatic.domain.team.dto.TeamResponse;
@@ -38,24 +39,39 @@ public class TeamPageController {
     private final MeetingService meetingService;
     private final TeamService teamService;
     private final TeamDashboardService teamDashboardService;
+    private final PlanAccessChecker planAccessChecker;
 
     /**
      * 팀 목록 페이지를 표시합니다.
      *
+     * @param principal 인증 사용자 정보
+     * @param model 화면 모델
      * @return 팀 목록 템플릿 경로
      */
     @GetMapping("/list")
-    public String teamList() {
+    public String teamList(@AuthenticationPrincipal OAuth2User principal,
+                           Model model) {
+        model.addAttribute(
+                "canCreateTeam",
+                planAccessChecker.isTeamCreationAvailable(principal)
+        );
         return "team/team-list";
     }
 
     /**
      * 팀 생성 폼 페이지를 표시합니다.
      *
+     * @param principal 인증 사용자 정보
+     * @param model 화면 모델
      * @return 팀 생성 폼 템플릿 경로
      */
     @GetMapping("/create")
-    public String createTeamForm() {
+    public String createTeamForm(@AuthenticationPrincipal OAuth2User principal,
+                                 Model model) {
+        model.addAttribute(
+                "canCreateTeam",
+                planAccessChecker.isTeamCreationAvailable(principal)
+        );
         return "team/team-create";
     }
 
